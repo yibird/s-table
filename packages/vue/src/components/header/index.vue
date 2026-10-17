@@ -42,12 +42,12 @@
 import { computed, proxyRefs, useTemplateRef } from 'vue';
 import type { HeaderGroup, RowData, TableFeatures } from '@tanstack/vue-table';
 import { injectTableHeaderContext, injectTablePresentationContext } from '../../context/table';
-import { createFixedColumnStyleAccessors } from '../../hooks/useFixedColumnModel';
-import { useFlipDropAnimation } from '../../hooks/useFlipAnimation';
+import { createFixedColumnStyleAccessors } from '../../utils/columnMetrics';
+import { useFlipDropAnimation } from '../../interaction/useFlipAnimation';
 import HeaderCell from './HeaderCell.vue';
 import { useMouseColumnDragBridge } from './useMouseColumnDragBridge';
 import type { STableSlots } from '../../types';
-import type { STableRenderedColumn } from '../../hooks/useColumnVirtual';
+import type { STableRenderedColumn } from '../../types';
 
 const props = withDefaults(
   defineProps<{

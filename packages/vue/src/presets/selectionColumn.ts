@@ -1,12 +1,12 @@
 import { createCommentVNode, h } from 'vue';
 import type { ColumnDef, Row, RowData, TableFeatures } from '@tanstack/vue-table';
-import { SELECTION_COLUMN_ID } from '../../constants';
-import type { STableCheckboxProps, STableRowKey, STableRowSelection } from '../../types';
-import { toColumnDef } from '../../utils';
-import { getRowVisibleIndex } from '../../adapter/tableDisplayOrder';
-import SelectionDropdown from '../header/SelectionDropdown.vue';
-import { Checkbox } from '../../ui/checkbox';
-import { Radio } from '../../ui/radio';
+import { SELECTION_COLUMN_ID } from '../constants';
+import type { STableCheckboxProps, STableRowKey, STableRowSelection } from '../types';
+import { toColumnDef } from '../utils';
+import { getRowVisibleIndex } from '../adapter/tableDisplayOrder';
+import SelectionDropdown from '../components/header/SelectionDropdown.vue';
+import { Checkbox } from '../ui/checkbox';
+import { Radio } from '../ui/radio';
 
 type SelectionRowPresentation<TData extends RowData> = {
   key: STableRowKey;

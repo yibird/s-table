@@ -59,7 +59,7 @@
 
 <script lang="ts" setup>
 import { computed, nextTick, shallowRef, useId, useTemplateRef, watch } from 'vue';
-import { useLocales } from '../../hooks/useLocales';
+import { useLocales } from '../../locales/useLocales';
 import { SearchIcon } from '../icon';
 import { useFloatingDropdown } from './useFloatingDropdown';
 

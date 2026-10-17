@@ -21,7 +21,7 @@
 import { computed, nextTick, useTemplateRef, watch } from 'vue';
 import { useFloating, offset, flip, shift, autoUpdate } from '@floating-ui/vue';
 import type { RowData } from '@tanstack/vue-table';
-import type { STableThemeVariables } from '../../hooks/useThemeVariables';
+import type { STableThemeVariables } from '../../theme/useThemeVariables';
 import { getOwnerDocument } from '../../utils/dom';
 
 const props = withDefaults(

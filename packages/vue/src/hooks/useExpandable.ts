@@ -10,7 +10,7 @@ import type {
 } from '@tanstack/vue-table';
 import type { STableExpandable, STableRowKey, STableRowKeyField, STableTree } from '../types';
 import { decodeRowKey, encodeRowKey, resolveRowStateEntries } from '../utils';
-import { createExpandColumn } from '../components/expand/createExpandColumn';
+import { createExpandColumn } from '../presets/expandColumn';
 import { useModelState } from './useModelState';
 
 type STableInstance<TData extends RowData> = Table<TableFeatures, TData>;

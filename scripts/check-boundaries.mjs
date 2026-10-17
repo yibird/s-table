@@ -58,32 +58,7 @@ const RULES = [
 ];
 
 /** 允许暂时保留的既有违规（只减不增）。 */
-const ALLOWLIST = new Set([
-  // 批次 2 归位后清空。
-  'packages/vue/src/hooks/useExpandable.ts -> packages/vue/src/components/expand/createExpandColumn',
-  'packages/vue/src/hooks/useRowDrag.ts -> packages/vue/src/components/icon',
-  'packages/vue/src/hooks/useRowSelection.ts -> packages/vue/src/components/selection/createSelectionColumn',
-  'packages/vue/src/components/body/index.vue -> packages/vue/src/hooks/useLocales',
-  'packages/vue/src/components/body/index.vue -> packages/vue/src/hooks/useFixedColumnModel',
-  'packages/vue/src/components/body/index.vue -> packages/vue/src/hooks/useFlipAnimation',
-  'packages/vue/src/components/body/index.vue -> packages/vue/src/hooks/useColumnVirtual',
-  'packages/vue/src/components/body/useBodyRowRendering.ts -> packages/vue/src/hooks/useColumnVirtual',
-  'packages/vue/src/components/context-menu/index.vue -> packages/vue/src/hooks/useThemeVariables',
-  'packages/vue/src/components/empty/index.vue -> packages/vue/src/hooks/useLocales',
-  'packages/vue/src/components/header/Filter.vue -> packages/vue/src/hooks/useLocales',
-  'packages/vue/src/components/header/index.vue -> packages/vue/src/hooks/useFixedColumnModel',
-  'packages/vue/src/components/header/index.vue -> packages/vue/src/hooks/useFlipAnimation',
-  'packages/vue/src/components/header/index.vue -> packages/vue/src/hooks/useColumnVirtual',
-  'packages/vue/src/components/header/Resizer.vue -> packages/vue/src/hooks/useLocales',
-  'packages/vue/src/components/header/Search.vue -> packages/vue/src/hooks/useLocales',
-  'packages/vue/src/components/header/SelectionDropdown.vue -> packages/vue/src/hooks/useLocales',
-  'packages/vue/src/components/header/useFloatingDropdown.ts -> packages/vue/src/hooks/useThemeVariables',
-  'packages/vue/src/components/loading/index.vue -> packages/vue/src/hooks',
-  'packages/vue/src/components/pagination/index.vue -> packages/vue/src/hooks',
-  'packages/vue/src/context/summary.ts -> packages/vue/src/hooks/useFixedColumnModel',
-  'packages/vue/src/context/table.ts -> packages/vue/src/hooks/useFixedColumnModel',
-  'packages/vue/src/setup/useView.ts -> packages/vue/src/components/body/api',
-]);
+const ALLOWLIST = new Set([]);
 
 const IMPORT_PATTERNS = [
   /(?:^|\n)\s*(?:import|export)\s[^;]*?from\s*["']([^"']+)["']/g,
@@ -117,7 +92,9 @@ const matches = (target, forbidden) =>
   });
 
 const violations = [];
-const files = (await Promise.all(sourceRoots.map((root) => collectFiles(join(repoRoot, root))))).flat();
+const files = (
+  await Promise.all(sourceRoots.map((root) => collectFiles(join(repoRoot, root))))
+).flat();
 
 for (const absoluteFile of files) {
   const file = toPosix(relative(repoRoot, absoluteFile));
@@ -155,7 +132,5 @@ if (staleAllowlist.length > 0) {
 
 if (unexpected.length === 0) {
   const remaining = violations.length - unexpected.length;
-  console.log(
-    `✓ 依赖边界检查通过（${files.length} 个文件，${remaining} 条既有豁免待清理）。`
-  );
+  console.warn(`✓ 依赖边界检查通过（${files.length} 个文件，${remaining} 条既有豁免待清理）。`);
 }

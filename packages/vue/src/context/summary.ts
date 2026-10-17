@@ -1,5 +1,5 @@
 import type { CSSProperties, InjectionKey, Ref } from 'vue';
-import type { STableFixedColumnStyle } from '../hooks/useFixedColumnModel';
+import type { STableFixedColumnStyle } from '../utils/columnMetrics';
 
 /** Summary 上下文，提供固定列样式和可见叶子列信息 */
 export interface SummaryContext {

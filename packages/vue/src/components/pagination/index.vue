@@ -26,7 +26,7 @@
 
 <script lang="ts" setup>
 import { Pagination as UIPagination } from '../../ui/pagination';
-import { useLocales } from '../../hooks';
+import { useLocales } from '../../locales/useLocales';
 import type { PaginationPlacement } from '../../types';
 
 const locale = useLocales();

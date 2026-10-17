@@ -1,6 +1,6 @@
 import { computed, onBeforeUnmount, shallowRef, watch, type ShallowRef } from 'vue';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/vue';
-import { useThemeVariables } from '../../hooks/useThemeVariables';
+import { useThemeVariables } from '../../theme/useThemeVariables';
 import { getOwnerDocument } from '../../utils';
 
 type ElementRef = Readonly<ShallowRef<HTMLElement | null>>;

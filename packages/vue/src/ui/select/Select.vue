@@ -127,7 +127,7 @@ import {
 } from '@floating-ui/vue';
 import { useComponentSize } from '../useComponentSize';
 import { showWave } from '../wave';
-import { useThemeVariables } from '../../hooks/useThemeVariables';
+import { useThemeVariables } from '../../theme/useThemeVariables';
 import { getOwnerDocument } from '../../utils/dom';
 import type { SelectOption, SelectProps, SelectValue } from './types';
 import './styles.less';

@@ -1,12 +1,10 @@
 import { computed, type Ref } from 'vue';
 import { useVirtualizer } from '@tanstack/vue-virtual';
 import type { RowData, Table, TableFeatures } from '@tanstack/vue-table';
-import type { STableVirtualProps } from '../types';
+import type { STableRenderedColumn, STableVirtualProps } from '../types';
 import { isColumnVirtualEnabled } from '../utils';
 
-export type STableRenderedColumn =
-  | { type: 'column'; id: string }
-  | { type: 'spacer'; id: string; colSpan: number; width: number };
+export type { STableRenderedColumn } from '../types';
 
 type VisibleColumn = { id: string; size: number; hasExplicitWidth: boolean };
 

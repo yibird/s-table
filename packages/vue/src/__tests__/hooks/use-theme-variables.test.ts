@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collectThemeVariables, invalidateThemeVariableCache } from '../../hooks/useThemeVariables';
+import { collectThemeVariables, invalidateThemeVariableCache } from '../../theme/useThemeVariables';
 import { getOwnerDocument, getOwnerWindow } from '../../utils/dom';
 
 describe('useThemeVariables', () => {

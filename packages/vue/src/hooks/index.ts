@@ -1,7 +1,7 @@
 export * from './useModelState';
 export * from './useDrag';
-export * from './useFlipAnimation';
-export * from './useLocales';
+export * from '../interaction/useFlipAnimation';
+export * from '../locales/useLocales';
 export * from './useRafValue';
 export * from './useSelectionIntent';
 export * from './useSTable';
@@ -23,4 +23,4 @@ export * from './useSeq';
 export * from './useSortFilter';
 export * from './useSorting';
 export * from './useVirtual';
-export * from './useThemeVariables';
+export * from '../theme/useThemeVariables';

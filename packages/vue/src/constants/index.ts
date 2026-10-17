@@ -1,2 +1,2 @@
 export * from './column';
-export { THEME_VARIABLES } from './theme';
+export { THEME_VARIABLES } from '../theme/tokens';

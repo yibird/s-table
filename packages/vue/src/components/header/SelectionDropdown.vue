@@ -80,7 +80,7 @@
 
 <script lang="ts" setup>
 import { computed, defineComponent, useTemplateRef, type PropType, type VNodeChild } from 'vue';
-import { useLocales } from '../../hooks/useLocales';
+import { useLocales } from '../../locales/useLocales';
 import { ArrowDownIcon } from '../icon';
 import { useFloatingDropdown } from './useFloatingDropdown';
 

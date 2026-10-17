@@ -1,12 +1,9 @@
-import { computed, type CSSProperties, type Ref, type ShallowRef } from 'vue';
+import { computed, type Ref, type ShallowRef } from 'vue';
 import type { RowData, Table, TableFeatures } from '@tanstack/vue-table';
 import { useRafValue } from './useRafValue';
+import type { STableFixedColumnStyle } from '../utils/columnMetrics';
 
-export type STableFixedColumnStyle = {
-  className: string;
-  headerStyle: CSSProperties;
-  bodyStyle: CSSProperties;
-};
+export type { STableFixedColumnStyle } from '../utils/columnMetrics';
 
 type FixedColumnModel = {
   styles: Map<string, STableFixedColumnStyle>;
@@ -23,21 +20,6 @@ const sameVariables = (left: Record<string, string>, right: Record<string, strin
   const keys = Object.keys(left);
   if (keys.length !== Object.keys(right).length) return false;
   return keys.every((key) => left[key] === right[key]);
-};
-
-/**
- * 创建固定列样式查找器。偏移已由模型预计算，渲染热路径只做一次 Map 查询。
- * 这是无状态闭包而非 Vue Hook，使用 `create` 明确它不注册响应式副作用或生命周期。
- */
-export const createFixedColumnStyleAccessors = (
-  fixedColumnStyles: Readonly<Ref<Map<string, STableFixedColumnStyle>>>,
-  layer: 'header' | 'body'
-) => {
-  const styleKey = layer === 'header' ? 'headerStyle' : 'bodyStyle';
-  const getFixedClassName = (columnId: string) => fixedColumnStyles.value.get(columnId)?.className;
-  const getFixedStyle = (columnId: string): CSSProperties | undefined =>
-    fixedColumnStyles.value.get(columnId)?.[styleKey];
-  return { getFixedClassName, getFixedStyle };
 };
 
 /**

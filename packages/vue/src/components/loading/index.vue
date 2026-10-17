@@ -13,7 +13,7 @@
 <script lang="ts" setup>
 import { computed, useSlots } from 'vue';
 import { hasRenderableSlot } from '../../utils';
-import { useLocales } from '../../hooks';
+import { useLocales } from '../../locales/useLocales';
 
 const locale = useLocales();
 const slots = useSlots();

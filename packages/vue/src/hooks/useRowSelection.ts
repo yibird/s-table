@@ -17,7 +17,7 @@ import type {
   STableSelectionChangeInfo,
 } from '../types';
 import { decodeRowKey, encodeRowKey, resolveRowKey, resolveRowStateEntries } from '../utils';
-import { createSelectionColumn } from '../components/selection/createSelectionColumn';
+import { createSelectionColumn } from '../presets/selectionColumn';
 import { useModelState } from './useModelState';
 import {
   cloneSelectionIntent,

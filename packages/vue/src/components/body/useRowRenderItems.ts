@@ -2,7 +2,7 @@ import { computed, type CSSProperties } from 'vue';
 import type { Row, RowData, TableFeatures } from '@tanstack/vue-table';
 import type { STableEditingState } from '../../types';
 import { decodeRowKey } from '../../utils';
-import type { BodyEditingApi, BodyVirtualApi } from './api';
+import type { BodyEditingApi, BodyVirtualApi } from '../../types';
 
 // 行状态位掩码：把影响行渲染的四类布尔输入（选中 / 展开 / 拖拽源 / 拖拽目标）
 // 预计算为单个数字进入 v-memo，避免 memo 数组里每行做多次函数调用。

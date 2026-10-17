@@ -1,9 +1,9 @@
 import { h } from 'vue';
 import type { ColumnDef, Row, RowData, TableFeatures } from '@tanstack/vue-table';
-import { EXPAND_COLUMN_ID } from '../../constants';
-import type { STableExpandable, STableRowKey } from '../../types';
-import { toColumnDef } from '../../utils';
-import { ExpandIcon } from '../icon';
+import { EXPAND_COLUMN_ID } from '../constants';
+import type { STableExpandable, STableRowKey } from '../types';
+import { toColumnDef } from '../utils';
+import { ExpandIcon } from '../components/icon';
 
 type CreateExpandColumnOptions<TData extends RowData> = {
   config: STableExpandable<TData>;

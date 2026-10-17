@@ -23,3 +23,5 @@ export type {
 } from './column';
 export type * from './interaction';
 export type * from './selection';
+export type * from './virtual';
+export type * from './body';

@@ -1,6 +1,6 @@
 import { onBeforeUnmount, shallowRef, watch, type Ref } from 'vue';
 import { getOwnerWindow } from '../utils/dom';
-import { THEME_VARIABLES } from '../constants';
+import { THEME_VARIABLES } from './tokens';
 
 export type STableThemeVariables = Record<`--s-${string}`, string>;
 

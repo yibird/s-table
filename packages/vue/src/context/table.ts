@@ -1,6 +1,6 @@
 import { inject, type InjectionKey, type Ref } from 'vue';
 import type { RowData } from '@tanstack/vue-table';
-import type { STableFixedColumnStyle } from '../hooks/useFixedColumnModel';
+import type { STableFixedColumnStyle } from '../utils/columnMetrics';
 import type { STableColumn } from '../types';
 import type { STableCellRange, STableClasses, STableStyles, STableDropPosition } from '../types';
 

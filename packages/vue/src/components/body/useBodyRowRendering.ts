@@ -1,7 +1,7 @@
 import { computed, type CSSProperties } from 'vue';
 import type { Cell, Row, RowData, TableFeatures } from '@tanstack/vue-table';
 import { isInternalColumn } from '../../utils/column';
-import type { STableRenderedColumn } from '../../hooks/useColumnVirtual';
+import type { STableRenderedColumn } from '../../types';
 import type { STableColumn, STableGroupRowSlotContext } from '../../types';
 import { getCachedCell } from '../../utils/cachedCell';
 

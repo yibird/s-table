@@ -30,7 +30,7 @@
 </template>
 <script lang="ts" setup>
 import { computed, useSlots } from 'vue';
-import { useLocales } from '../../hooks/useLocales';
+import { useLocales } from '../../locales/useLocales';
 import { hasRenderableSlot } from '../../utils';
 
 const locale = useLocales();

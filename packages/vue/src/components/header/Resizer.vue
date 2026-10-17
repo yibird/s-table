@@ -21,7 +21,7 @@
 </template>
 <script lang="ts" setup generic="TData extends RowData = RowData">
 import type { Header, RowData, TableFeatures } from '@tanstack/vue-table';
-import { useLocales } from '../../hooks/useLocales';
+import { useLocales } from '../../locales/useLocales';
 
 const locale = useLocales();
 

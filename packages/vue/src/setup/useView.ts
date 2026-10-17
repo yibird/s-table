@@ -3,7 +3,7 @@ import type { RowData } from '@tanstack/vue-table';
 import type { ShallowRef } from 'vue';
 import { isRowVirtualEnabled } from '../utils';
 import { useColumnVirtual, useScroll, useVirtual } from '../hooks';
-import type { BodyEditingApi, BodyVirtualApi } from '../components/body/api';
+import type { BodyEditingApi, BodyVirtualApi } from '../types';
 import type { useCellRangeBridge } from './useCellRangeBridge';
 import type { useDataState } from './useDataState';
 import type { useTableModel } from './useTableModel';

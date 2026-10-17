@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { computed, createApp, h, nextTick, shallowRef } from 'vue';
 import { en_US, LocaleContextKey, type STableLocale } from '../../locales';
-import { useLocales } from '../../hooks/useLocales';
+import { useLocales } from '../../locales/useLocales';
 
 describe('useLocales', () => {
   it('falls back to the default locale without a provider', () => {

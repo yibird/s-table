@@ -246,19 +246,19 @@
 import { computed, proxyRefs, toRefs, useTemplateRef, type CSSProperties } from 'vue';
 import Empty from '../empty/index.vue';
 import type { Cell, Row, RowData, TableFeatures } from '@tanstack/vue-table';
-import type { BodyEditingApi, BodyVirtualApi } from './api';
+import type { BodyEditingApi, BodyVirtualApi } from '../../types';
 import type { STableEditingState, STableSlots } from '../../types';
 import { injectTableBodyContext, injectTablePresentationContext } from '../../context/table';
-import { useLocales } from '../../hooks/useLocales';
-import { createFixedColumnStyleAccessors } from '../../hooks/useFixedColumnModel';
-import { useFlipDropAnimation } from '../../hooks/useFlipAnimation';
+import { useLocales } from '../../locales/useLocales';
+import { createFixedColumnStyleAccessors } from '../../utils/columnMetrics';
+import { useFlipDropAnimation } from '../../interaction/useFlipAnimation';
 import BodyCell from './BodyCell.vue';
 import CachedCellContent from './CachedCellContent';
 import { createCellRenderCache } from './cellRenderCache';
 import { useBodyEventDelegation, type BodyEventMap } from './useBodyEventDelegation';
 import { useBodyRowRendering } from './useBodyRowRendering';
 import { usePinnedRowMeasurements } from './usePinnedRowMeasurements';
-import type { STableRenderedColumn } from '../../hooks/useColumnVirtual';
+import type { STableRenderedColumn } from '../../types';
 import ExpandIcon from '../icon/ExpandIcon.vue';
 import { createCellRangePresentation } from './useCellRangePresentation';
 import {

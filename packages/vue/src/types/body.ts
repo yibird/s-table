@@ -1,5 +1,5 @@
 import type { VirtualItem } from '@tanstack/vue-virtual';
-import type { STableEditingState } from '../../types';
+import type { STableEditingState } from './features';
 
 /** 虚拟滚动 API（父层预计算直传，保持热路径稳定性）。 */
 export type BodyVirtualApi = {

@@ -115,7 +115,7 @@
 <script lang="ts" setup>
 import { computed, nextTick, shallowRef, useId, useTemplateRef, watch } from 'vue';
 import type { STableFilterMode, STableFilterOption } from '../../types';
-import { useLocales } from '../../hooks/useLocales';
+import { useLocales } from '../../locales/useLocales';
 import { Button } from '../../ui/button';
 import { FilterIcon, CheckIcon } from '../icon';
 import { useFloatingDropdown } from './useFloatingDropdown';

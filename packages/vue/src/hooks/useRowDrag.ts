@@ -1,12 +1,9 @@
-import { computed, createVNode, shallowRef, type Ref } from 'vue';
+import { computed, shallowRef, type Ref } from 'vue';
 import { useDrag } from './useDrag';
 import type { ColumnDef, Row, RowData, TableFeatures } from '@tanstack/vue-table';
-import { DRAG_COLUMN_ID } from '../constants';
-import { toColumnDef } from '../utils';
 import { decodeRowKey } from '../utils';
 import { getTreeChildren } from '@zchengfeng/s-table-core';
-import { getRowVisibleIndex } from '../adapter/tableDisplayOrder';
-import { DragHandleIcon } from '../components/icon';
+import { createDragHandleColumn } from '../presets/dragHandleColumn';
 import type {
   STableDropPosition,
   STableRowDragConfig,
@@ -229,48 +226,13 @@ export const useRowDrag = <TData extends RowData>({
     handleRowDragEndBase();
   };
 
-  // 拖拽句柄列定义
+  // 拖拽句柄列定义（视图细节由 presets 持有，hook 只提供交互回调）。
   const dragColumn = computed<ColumnDef<TableFeatures, TData, unknown> | undefined>(() => {
     if (!enabled.value) return undefined;
-    const reorderingEnabled = canReorder?.() !== false;
-
-    return toColumnDef({
-      id: DRAG_COLUMN_ID,
-      header: () => '',
-      cell: (context: { row: Row<TableFeatures, TData> }) => {
-        const record = context.row.original;
-        const index = getRowVisibleIndex(context.row);
-
-        const handleContent = renderDragHandle
-          ? renderDragHandle({ record, index })
-          : createVNode(DragHandleIcon);
-
-        return createVNode(
-          'div',
-          {
-            class: ['s-table-drag-handle', { 's-table-drag-handle-disabled': !reorderingEnabled }],
-            draggable: reorderingEnabled ? 'true' : 'false',
-            'aria-disabled': reorderingEnabled ? undefined : 'true',
-            onDragstart: (e: DragEvent) => {
-              e.stopPropagation();
-              if (!reorderingEnabled || index < 0) {
-                e.preventDefault();
-                return;
-              }
-              handleRowDragStart(index);
-            },
-          },
-          [handleContent]
-        );
-      },
-      // 收窄默认列宽：拖拽句柄仅需容纳一个图标（40）。
-      size: 40,
-      minSize: 40,
-      maxSize: 40,
-      enableResizing: false,
-      enableCellSelection: false,
-      meta: { align: 'center' },
-      fixed: 'left',
+    return createDragHandleColumn<TData>({
+      getCanReorder: () => canReorder?.() !== false,
+      renderDragHandle,
+      onDragStart: handleRowDragStart,
     });
   });
 
