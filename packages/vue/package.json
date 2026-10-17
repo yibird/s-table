@@ -57,14 +57,15 @@
   },
   "dependencies": {
     "@floating-ui/vue": "^2.0.1",
-    "@tanstack/table-core": "9.2.4",
-    "@tanstack/vue-table": "9.2.4",
-    "@tanstack/vue-virtual": "3.13.37",
+    "@tanstack/table-core": "9.3.1",
+    "@tanstack/vue-table": "9.3.1",
+    "@tanstack/vue-virtual": "3.13.47",
     "@zchengfeng/s-table-core": "workspace:*"
   },
   "devDependencies": {
-    "vue": "^3.5.42",
-    "vue-tsc": "^3.3.11"
+    "typescript": "^6.0.3",
+    "vue": "^3.5.44",
+    "vue-tsc": "^3.3.13"
   },
   "peerDependencies": {
     "vue": "^3.5.0"

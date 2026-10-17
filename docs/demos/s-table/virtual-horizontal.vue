@@ -12,15 +12,12 @@ const metricCount = 60;
 const columns: STableColumn<MatrixRow>[] = [
   { id: 'id', accessorKey: 'id', header: 'ID', width: 100, fixed: 'left' },
   { id: 'name', accessorKey: 'name', header: '名称', width: 140, fixed: 'left' },
-  ...Array.from(
-    { length: metricCount },
-    (_, index): STableColumn<MatrixRow> => ({
-      id: `metric-${index + 1}`,
-      header: `指标 ${index + 1}`,
-      width: 120,
-      accessorFn: (record) => record.values[index],
-    })
-  ),
+  ...Array.from({ length: metricCount }, (_, index): STableColumn<MatrixRow> => ({
+    id: `metric-${index + 1}`,
+    header: `指标 ${index + 1}`,
+    width: 120,
+    accessorFn: (record) => record.values[index],
+  })),
   {
     id: 'total',
     header: '合计',

@@ -35,7 +35,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.build.json"
   },
   "dependencies": {
-    "@tanstack/table-core": "9.2.4"
+    "@tanstack/table-core": "9.3.1"
   },
   "engines": {
     "node": ">=20"

@@ -61,15 +61,12 @@ const virtualConfig: STableVirtualProps = {
 const wideColumns: STableColumn<VirtualRow>[] = [
   { id: 'id', accessorKey: 'id', header: 'ID', width: 90, fixed: 'left' },
   { id: 'name', accessorKey: 'name', header: 'Name', width: 180, fixed: 'left' },
-  ...Array.from(
-    { length: 80 },
-    (_, index): STableColumn<VirtualRow> => ({
-      id: `metric-${index + 1}`,
-      header: `Metric ${index + 1}`,
-      width: 120,
-      accessorFn: (record) => record.value + index,
-    })
-  ),
+  ...Array.from({ length: 80 }, (_, index): STableColumn<VirtualRow> => ({
+    id: `metric-${index + 1}`,
+    header: `Metric ${index + 1}`,
+    width: 120,
+    accessorFn: (record) => record.value + index,
+  })),
   {
     id: 'tail',
     header: 'Tail',
