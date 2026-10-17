@@ -21,6 +21,7 @@
         ref="floatingRef"
         class="s-table-search-dropdown"
         :style="floatingStyles"
+        :data-placement="placement"
         role="dialog"
         :aria-label="`${locale.accessibility.searchColumn}: ${columnId}`"
         @click.stop
@@ -90,7 +91,7 @@ const floatingRef = useTemplateRef<HTMLElement>('floatingRef');
 const teleportTarget = computed(() => triggerRef.value?.ownerDocument.body ?? null);
 const inputRef = useTemplateRef<HTMLInputElement>('inputRef');
 const dropdownId = `s-table-search-${useId()}`;
-const { isOpen, floatingStyles } = useFloatingDropdown(triggerRef, floatingRef);
+const { isOpen, floatingStyles, placement } = useFloatingDropdown(triggerRef, floatingRef);
 
 // 本地临时输入状态
 const localValue = shallowRef(props.searchValue);

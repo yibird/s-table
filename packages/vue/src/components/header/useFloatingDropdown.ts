@@ -9,7 +9,7 @@ export const useFloatingDropdown = (referenceRef: ElementRef, floatingRef: Eleme
   const isOpen = shallowRef(false);
   let listenerDocument: Document | undefined;
 
-  const { floatingStyles: positionStyles } = useFloating(referenceRef, floatingRef, {
+  const { floatingStyles: positionStyles, placement } = useFloating(referenceRef, floatingRef, {
     open: isOpen,
     placement: 'bottom-start',
     strategy: 'fixed',
@@ -54,5 +54,5 @@ export const useFloatingDropdown = (referenceRef: ElementRef, floatingRef: Eleme
 
   onBeforeUnmount(removeOutsideListener);
 
-  return { isOpen, floatingStyles };
+  return { isOpen, floatingStyles, placement };
 };

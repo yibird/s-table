@@ -20,6 +20,7 @@
         ref="floatingRef"
         class="s-table-filter-dropdown"
         :style="floatingStyles"
+        :data-placement="placement"
         role="dialog"
         :aria-label="`${locale.accessibility.filterColumn}: ${columnId}`"
         @keydown.esc.stop.prevent="closeDropdown(true)"
@@ -154,7 +155,7 @@ const triggerButtonRef = useTemplateRef<HTMLButtonElement>('triggerButtonRef');
 const floatingRef = useTemplateRef<HTMLElement>('floatingRef');
 const teleportTarget = computed(() => triggerRef.value?.ownerDocument.body ?? null);
 const dropdownId = `s-table-filter-${useId()}`;
-const { isOpen, floatingStyles } = useFloatingDropdown(triggerRef, floatingRef);
+const { isOpen, floatingStyles, placement } = useFloatingDropdown(triggerRef, floatingRef);
 
 // 本地临时选择状态（打开面板时编辑，确认时提交）
 const localValues = shallowRef<FilterValue[]>([...props.filteredValues]);

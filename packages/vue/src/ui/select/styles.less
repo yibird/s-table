@@ -162,7 +162,9 @@
   box-sizing: border-box;
   overflow-y: auto;
   z-index: var(--s-z-index-dropdown, 1050);
-  animation: s-table-popover-in var(--s-duration-normal) var(--s-ease-out);
+  transform-origin: top center;
+  --s-popover-shift: -4px;
+  animation: s-table-popover-in var(--s-duration-popover, 0.16s) var(--s-ease-emphasized);
 
   .s-select-item-option {
     display: flex;

@@ -18,6 +18,7 @@
         class="s-table-selection-dropdown-menu"
         role="menu"
         :style="floatingStyles"
+        :data-placement="placement"
       >
         <button
           type="button"
@@ -108,7 +109,7 @@ const customOptions = computed(() => props.customOptions ?? []);
 const containerRef = useTemplateRef<HTMLElement>('containerRef');
 const floatingRef = useTemplateRef<HTMLElement>('floatingRef');
 const teleportTarget = computed(() => containerRef.value?.ownerDocument.body ?? null);
-const { isOpen, floatingStyles } = useFloatingDropdown(containerRef, floatingRef);
+const { isOpen, floatingStyles, placement } = useFloatingDropdown(containerRef, floatingRef);
 
 type SelectionAction = 'selectAll' | 'clearAll' | 'selectOdd' | 'selectEven' | 'selectCurrentPage';
 

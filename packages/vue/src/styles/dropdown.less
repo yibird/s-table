@@ -1,6 +1,29 @@
 @import './mixins.less';
 
 // 过滤/搜索/选择下拉面板（Teleport 到 body，全局作用域）
+// 入场动画围绕触发元素展开：默认向下，flip 到上/左/右时调整原点与位移方向。
+.s-table-filter-dropdown,
+.s-table-search-dropdown,
+.s-table-selection-dropdown-menu {
+  transform-origin: top center;
+  --s-popover-shift: -4px;
+
+  &[data-placement^='top'] {
+    transform-origin: bottom center;
+    --s-popover-shift: 4px;
+  }
+
+  &[data-placement^='left'] {
+    transform-origin: center right;
+    --s-popover-shift: 0px;
+  }
+
+  &[data-placement^='right'] {
+    transform-origin: center left;
+    --s-popover-shift: 0px;
+  }
+}
+
 // 过滤下拉面板（Teleport 到 body，全局作用域）
 .s-table-filter-dropdown {
   z-index: var(--s-z-index-dropdown);
@@ -11,7 +34,7 @@
   color: var(--s-color-text);
   border-radius: var(--s-radius-lg, 8px);
   box-shadow: var(--s-shadow-elevated, var(--s-shadow-dropdown));
-  animation: s-table-popover-in var(--s-duration-normal) var(--s-ease-out);
+  animation: s-table-popover-in var(--s-duration-popover, 0.16s) var(--s-ease-emphasized);
 
   &-content {
     padding: 8px 0;
@@ -180,7 +203,7 @@
   color: var(--s-color-text);
   border-radius: var(--s-radius-lg, 8px);
   box-shadow: var(--s-shadow-elevated, var(--s-shadow-dropdown));
-  animation: s-table-popover-in var(--s-duration-normal) var(--s-ease-out);
+  animation: s-table-popover-in var(--s-duration-popover, 0.16s) var(--s-ease-emphasized);
 
   &-content {
     padding: 12px;
@@ -335,7 +358,7 @@
   color: var(--s-color-text);
   border-radius: var(--s-radius-lg, 8px);
   box-shadow: var(--s-shadow-elevated, var(--s-shadow-menu));
-  animation: s-table-popover-in var(--s-duration-normal) var(--s-ease-out);
+  animation: s-table-popover-in var(--s-duration-popover, 0.16s) var(--s-ease-emphasized);
 }
 
 .s-table-selection-dropdown-item {
@@ -372,14 +395,16 @@
   background-color: var(--s-color-border);
 }
 
-// 仅使用独立 scale 属性：floating-ui 通过 transform 定位，动画不能覆盖它。
+// 使用独立 translate / scale 属性：floating-ui 通过 transform 定位，动画不能覆盖它。
 @keyframes s-table-popover-in {
   from {
     opacity: 0;
-    scale: 0.98;
+    scale: 0.96;
+    translate: 0 var(--s-popover-shift, -4px);
   }
   to {
     opacity: 1;
     scale: 1;
+    translate: 0 0;
   }
 }

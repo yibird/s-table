@@ -77,9 +77,11 @@
 | `--s-control-height-lg`  | `40px`                       | 大尺寸控件高度         |
 | `--s-duration-fast`      | `0.1s`                       | 微交互动效             |
 | `--s-duration-normal`    | `0.2s`                       | 面板动效               |
+| `--s-duration-popover`   | `0.16s`                      | 浮层入场动效           |
 | `--s-duration-slow`      | `0.3s`                       | 长动效                 |
 | `--s-ease-out`           | 标准缓出曲线                 | 交互过渡               |
 | `--s-ease-in-out`        | 标准缓入缓出曲线             | 面板/状态过渡          |
+| `--s-ease-emphasized`    | 快速起步、柔和收尾曲线       | 浮层入场               |
 | `--s-z-index-cell-fixed` | `2`                          | 固定列单元格           |
 | `--s-z-index-header`     | `10`                         | 固定表头               |
 | `--s-z-index-resizer`    | `15`                         | 列宽拖拽手柄           |
