@@ -1,4 +1,5 @@
 /** 内部工具统一入口，业务模块只依赖该目录，避免散落深层导入路径。 */
+export * from './column';
 export * from './columnDef';
 export * from './columnIndex';
 export * from './columnMetrics';

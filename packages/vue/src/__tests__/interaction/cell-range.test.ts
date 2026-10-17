@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { nextTick, reactive, type App } from 'vue';
 import { mountSTable } from '../helpers';
+import { SELECTION_COLUMN_ID } from '../../constants';
 import type { STableCellRange, STableColumn, STableInstance } from '../../types';
 import { createCellRangeClipboard } from '../../utils';
 
@@ -362,7 +363,7 @@ describe('cellRangeSelection', () => {
     expect(await instance!.copyCellRange({ writeToClipboard: false })).toBe('');
   });
 
-  it('框选复制跳过选择列等内部列', async () => {
+  it('行框选覆盖选择列，复制仍跳过内部列', async () => {
     let instance: STableInstance<Row> | null = null;
     const mounted = mountSTable<Row>({
       columns,
@@ -381,11 +382,13 @@ describe('cellRangeSelection', () => {
     host.querySelector<HTMLElement>('tbody tr.s-table-row')!.click();
     await nextTick();
     const table = instance!.getTanStackTable();
-    expect(table.getCellSelectionColumnIds()).toEqual(['id', 'name']);
-    expect(table.getSelectedCellRangesData()).toEqual([[[1, 'A']]]);
+    // row 模式整行高亮，范围包含内部选择列。
+    expect(table.getCellSelectionColumnIds()).toEqual([SELECTION_COLUMN_ID, 'id', 'name']);
+    expect(table.getSelectedCellRangesData()).toEqual([[[undefined, 1, 'A']]]);
     expect(
       host.querySelector<HTMLElement>('tbody tr.s-table-row td.s-table-cell')?.classList
-    ).not.toContain('s-table-cell-range-selected');
+    ).toContain('s-table-cell-range-selected');
+    // 复制仍然只输出业务列。
     expect(await instance!.copyCellRange({ writeToClipboard: false })).toBe('1\tA');
   });
 

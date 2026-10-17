@@ -71,10 +71,25 @@ export const useCellRangeBridge = <TData extends RowData>(
   // 两个公开查询入口共享同一份不可变快照，避免调用方修改内部响应式对象。
   const getCellRangeSnapshot = () => (cellRange.value ? { ...cellRange.value } : null);
 
+  /**
+   * 剪贴板列 id 会过滤内部列；row 模式下值矩阵包含内部列，
+   * 必须按同一组列索引过滤，避免复制结果错位。
+   */
+  const getCopySelectedValues = () => {
+    const grid = table.getSelectedCellRangesData().at(-1);
+    if (!grid || cellRangeSelection.value?.mode !== 'row') return grid;
+    const keepIndexes: number[] = [];
+    const columnIds = table.getCellSelectionColumnIds();
+    for (let index = 0; index < columnIds.length; index++) {
+      if (!isInternalColumn(columnIds[index]!)) keepIndexes.push(index);
+    }
+    return grid.map((row) => keepIndexes.map((index) => row[index]));
+  };
+
   const { serialize: serializeCellRange } = createCellRangeClipboard({
     getRange: () => (cellRange.value ? { ...cellRange.value } : null),
     getColumnIds: () => table.getCellSelectionColumnIds(),
-    getSelectedValues: () => table.getSelectedCellRangesData().at(-1),
+    getSelectedValues: getCopySelectedValues,
     getColumnHeader: (columnId) => getColumnById(columnId)?.header,
     isInternalColumn,
   });

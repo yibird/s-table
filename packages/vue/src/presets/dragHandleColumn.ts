@@ -54,7 +54,6 @@ export const createDragHandleColumn = <TData extends RowData>({
     minSize: 40,
     maxSize: 40,
     enableResizing: false,
-    enableCellSelection: false,
     meta: { align: 'center' },
     fixed: 'left',
   });

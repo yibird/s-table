@@ -1,5 +1,6 @@
 import { computed, shallowRef, watch, type ComputedRef, type Ref } from 'vue';
 import {
+  type Cell,
   type ColumnDef,
   type ColumnFiltersState,
   type ColumnOrderState,
@@ -55,7 +56,7 @@ import {
 } from '@tanstack/vue-table';
 import type { STableExpandable, STableProps } from '../types';
 import type { STableColumnMeta } from '../types/column';
-import { createRowIdAllocator, encodeRowKey, resolveRowKey } from '../utils';
+import { createRowIdAllocator, encodeRowKey, isInternalColumn, resolveRowKey } from '../utils';
 import { getTreeChildren } from '@zchengfeng/s-table-core';
 import { useColumnMetrics } from './useColumnMetrics';
 import { installPinnedRowsDisplayOrder, useTableAtoms } from '../adapter';
@@ -255,6 +256,18 @@ export const useSTable = <TData extends RowData>({
   const canSelectRow = (row: Row<TableFeatures, TData>) =>
     !props.rowSelection?.getCheckboxProps?.(row.original)?.disabled;
 
+  /**
+   * 单元格是否参与框选：
+   * - 未启用框选：全部不可选；
+   * - row 模式：整行可选（含选择/展开/拖拽/序号等内部列），行点击才能真正覆盖整行；
+   * - cell 模式：排除内部列，避免框选/复制进入功能列。
+   */
+  const canSelectCell = (cell: Cell<TableFeatures, TData>): boolean => {
+    const config = props.cellRangeSelection;
+    if (!config) return false;
+    return config.mode === 'row' || !isInternalColumn(cell.column.id);
+  };
+
   // v9 adapter 会同时观察 options 级依赖和受控 state 切片。
   // 使用稳定对象 + getter，让 options 级依赖只看到同一个 state 引用，切片变化只走
   // adapter 的受控 state watcher，避免一次排序 / 筛选触发两次 setOptions。
@@ -364,9 +377,7 @@ export const useSTable = <TData extends RowData>({
       return props.rowSelection?.type !== 'radio';
     },
     // 单元格范围只由 TanStack 管理；组件层仅把 ID 角点适配成公开的索引范围。
-    get enableCellSelection() {
-      return Boolean(props.cellRangeSelection);
-    },
+    enableCellSelection: canSelectCell,
     get enableCellRangeSelection() {
       return props.cellRangeSelection?.mode === 'cell';
     },

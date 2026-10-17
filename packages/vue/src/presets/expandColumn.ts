@@ -70,7 +70,6 @@ export const createExpandColumn = <TData extends RowData>({
     minSize: columnWidth,
     maxSize: columnWidth,
     enableResizing: false,
-    enableCellSelection: false,
     meta: { align: 'center' },
     ...(isFixed && { fixed: 'left' as const }),
   });

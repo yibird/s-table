@@ -127,7 +127,6 @@ export const createSelectionColumn = <TData extends RowData>({
     minSize: size,
     maxSize: size,
     enableResizing: false,
-    enableCellSelection: false,
     meta: { align },
     ...(isFixed && { fixed: 'left' as const }),
   });

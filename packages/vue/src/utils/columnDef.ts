@@ -22,8 +22,6 @@ interface InternalColumnInit<TData extends RowData> {
   maxSize: number;
   /** 禁止列宽拖拽。 */
   enableResizing: false;
-  /** 内部功能列不属于业务数据范围，不参与 TanStack 单元格框选。 */
-  enableCellSelection: false;
   /** 自定义元数据（对齐方式等）。 */
   meta: STableColumnMeta;
   /** 列固定位置（可选）。 */

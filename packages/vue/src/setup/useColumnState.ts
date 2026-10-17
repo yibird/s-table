@@ -26,6 +26,7 @@ export const useColumnState = <TData extends RowData>(
     seq,
     slots,
     emit,
+    cellRangeSelection,
   } = context;
   const {
     leafColumnIds,
@@ -111,7 +112,10 @@ export const useColumnState = <TData extends RowData>(
     if (selectionColumn.value) extraCols.push(selectionColumn.value);
     if (expandColumn.value) extraCols.push(expandColumn.value);
     if (seqColumn.value) extraCols.push(seqColumn.value);
-    return extraCols;
+    // row 模式需要整行高亮（含选择/展开/拖拽/序号），内部列必须参与框选；
+    // cell 模式仍通过 columnDef opt-out 排除内部列，保持复制与范围索引对齐。
+    const enableCellSelection = cellRangeSelection.value?.mode === 'row';
+    return extraCols.map((column) => ({ ...column, enableCellSelection }));
   });
 
   const tanstackColumnOrder = computed(() => {

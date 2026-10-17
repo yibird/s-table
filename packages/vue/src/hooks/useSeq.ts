@@ -96,7 +96,6 @@ export const useSeq = <TData extends RowData>({
       minSize: columnWidth,
       maxSize: columnWidth,
       enableResizing: false,
-      enableCellSelection: false,
       meta: { align },
       ...(isFixed && { fixed: 'left' as const }),
     });
