@@ -1,7 +1,5 @@
 import { shallowRef, watch, type Ref } from 'vue';
 import type { ColumnOrderState, RowData, Updater } from '@tanstack/vue-table';
-import { resolveColumnId } from '../utils/column';
-import { walkColumnTree } from '../utils/columnTree';
 import type { STableColumn, STableColumnDragConfig } from '../types';
 import { sameValues } from '../utils';
 import {
@@ -23,24 +21,10 @@ interface STableColumnOrderChangeEvent<TData extends RowData, TValue> {
 
 type UseSTableColumnDragOptions<TData extends RowData, TValue> = {
   columns: Readonly<Ref<STableColumn<TData, TValue>[]>>;
-  /** 复用用户列分析阶段生成的叶子列顺序，避免再次遍历列树。 */
-  leafColumnIds?: Readonly<Ref<readonly string[]>>;
+  /** 用户列分析阶段生成的叶子列顺序（唯一来源，避免重复遍历列树）。 */
+  leafColumnIds: Readonly<Ref<readonly string[]>>;
   columnDrag?: Readonly<Ref<STableColumnDragConfig<TData> | undefined>>;
   onColumnOrderChange?: (payload: STableColumnOrderChangeEvent<TData, TValue>) => void;
-};
-
-/** 按定义树顺序收集叶子列 ID；分组列自身不进入 TanStack columnOrder。 */
-export const collectLeafColumnIds = <TData extends RowData, TValue>(
-  columns: readonly STableColumn<TData, TValue>[]
-): string[] => {
-  const ids: string[] = [];
-  walkColumnTree(columns, (column, _depth, children) => {
-    if (children.length === 0) {
-      const id = resolveColumnId(column);
-      if (id) ids.push(id);
-    }
-  });
-  return ids;
 };
 
 const sameColumnOrder = (left: readonly string[], right: readonly string[]) =>
@@ -56,7 +40,7 @@ export const useColumnDrag = <TData extends RowData, TValue = unknown>({
   columnDrag,
   onColumnOrderChange,
 }: UseSTableColumnDragOptions<TData, TValue>) => {
-  const sourceLeafIds = () => [...(leafColumnIds?.value ?? collectLeafColumnIds(columns.value))];
+  const sourceLeafIds = () => [...leafColumnIds.value];
   const columnOrder = shallowRef<ColumnOrderState>(sourceLeafIds());
 
   const applyColumnOrder = (nextOrder: readonly string[]) => {

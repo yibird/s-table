@@ -191,8 +191,6 @@ export const useApi = <TData extends RowData>(options: {
     // 框选相关方法
     getCellRange: getCellRangeSnapshot,
     clearCellRange,
-    getSelectedRange: getCellRangeSnapshot,
-    clearAllSelectedRange: clearCellRange,
     // 列顺序方法直接复用 TanStack columnOrderingFeature 的状态入口。
     getColumnOrder,
     setColumnOrder,

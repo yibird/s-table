@@ -145,10 +145,6 @@ export interface STableInstance<TData extends RowData = RowData> {
    * @desc 清除框选范围
    */
   clearCellRange(): void;
-  /** 返回当前框选范围；保留用于兼容选择型表格 API。 */
-  getSelectedRange(): STableCellRange | null;
-  /** 清除当前框选范围；保留用于兼容选择型表格 API。 */
-  clearAllSelectedRange(): void;
 
   // ============ 列顺序方法 ============
   /**

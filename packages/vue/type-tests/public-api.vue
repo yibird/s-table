@@ -101,11 +101,12 @@ type HasLegacyMethods = Extract<
   keyof STableInstance<User>
 >;
 const removedLegacyMethods: HasLegacyMethods extends never ? true : false = true;
-type RangeCompatibilityMethod = 'getSelectedRange' | 'clearAllSelectedRange';
-type HasRangeCompatibilityMethods = RangeCompatibilityMethod extends keyof STableInstance<User>
-  ? true
-  : false;
-const hasRangeCompatibilityMethods: HasRangeCompatibilityMethods = true;
+// 框选兼容别名已移除；仅保留 getCellRange / clearCellRange。
+type HasRangeCompatibilityMethods =
+  Extract<'getSelectedRange' | 'clearAllSelectedRange', keyof STableInstance<User>> extends never
+    ? true
+    : false;
+const removedRangeCompatibilityMethods: HasRangeCompatibilityMethods = true;
 // 全局 Plugin API 已删除；若未来误加回 `use`，此赋值会在编译期失败。
 type HasPluginUse = 'use' extends keyof typeof STable ? true : false;
 const removedPluginApi: HasPluginUse = false;
@@ -155,7 +156,7 @@ defineExpose({
   hasTableFeaturesProp,
   removedLegacyProps,
   removedLegacyMethods,
-  hasRangeCompatibilityMethods,
+  removedRangeCompatibilityMethods,
   removedPluginApi,
 });
 

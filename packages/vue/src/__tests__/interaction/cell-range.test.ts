@@ -231,7 +231,6 @@ describe('cellRangeSelection', () => {
 
     const selectedCount = () => host!.querySelectorAll('.s-table-cell-range-selected').length;
     expect(instance!.getCellRange()).toEqual({ startRow: 0, startCol: 0, endRow: 0, endCol: 1 });
-    expect(instance!.getSelectedRange()).toEqual(instance!.getCellRange());
     const rangeSnapshot = instance!.getCellRange()!;
     rangeSnapshot.endCol = 0;
     expect(instance!.getCellRange()).toEqual({ startRow: 0, startCol: 0, endRow: 0, endCol: 1 });
@@ -250,9 +249,9 @@ describe('cellRangeSelection', () => {
 
     host.querySelector<HTMLElement>('tbody tr.s-table-row')!.click();
     await nextTick();
-    instance!.clearAllSelectedRange();
+    instance!.clearCellRange();
     await nextTick();
-    expect(instance!.getSelectedRange()).toBeNull();
+    expect(instance!.getCellRange()).toBeNull();
   });
 
   it('dataSource 重建相同行集合时保留框选；行增删时清空并同步 null', async () => {

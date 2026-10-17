@@ -88,6 +88,13 @@ packages/react                             规划中；接入前请先参考 cor
 
 依赖方向严格单向：`vue → core`。core 不引入任何框架依赖。
 
+core 按领域组织：`columns/`（列归一化与列序）、`state/`（分页 / 排序 / 选择状态机）、
+`clipboard/`（RFC 4180 与公式注入防护）、`interaction/`、`scroll/`、`editing/`、`utils/`。
+
+Vue 适配层：`setup/` 是唯一组合根；`adapter/` 负责 TanStack 响应式桥；`presets/` 持有内置注入列；
+`hooks/` 只放状态与交互 hook（不得依赖组件）；`components/` 不得依赖 hooks/setup；
+`locales/`、`theme/`、`types/` 为共享领域模块。依赖边界由 `pnpm check:boundaries` 静态校验。
+
 ## 性能基准
 
 以下为 Node 环境 row model 基准（`pnpm bench:performance`），不代表浏览器渲染帧率：

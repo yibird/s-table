@@ -19,15 +19,14 @@ STable 已具备替换 SurelyVue Table 的主要业务能力，但不是同名 A
 
 ## 常用映射
 
-| SurelyVue                                    | STable                                                           |
-| -------------------------------------------- | ---------------------------------------------------------------- |
-| `xVirtual`                                   | `virtual: { y: false, x: true }`                                 |
-| `childrenColumnName` / `indentSize`          | `tree: { childrenColumnName, indentSize }`                       |
-| `rowDrag` / `columnDrag`                     | `rowDrag` / `columnDrag` Feature Config                          |
-| `rowDragEnd` / `columnDragEnd`               | `rowOrderChange` / `columnOrderChange`                           |
-| `openEditor` / `closeEditor`                 | `startCellEdit`、`startRowEdit`、`commitEdit`、`cancelEdit`      |
-| `getSelectedRange` / `clearAllSelectedRange` | 已保留为框选兼容实例方法；推荐 `getCellRange` / `clearCellRange` |
-| `ensureRowVisible` / `ensureColumnVisible`   | `scrollToRow` / `scrollToColumn`                                 |
+| SurelyVue                                  | STable                                                      |
+| ------------------------------------------ | ----------------------------------------------------------- |
+| `xVirtual`                                 | `virtual: { y: false, x: true }`                            |
+| `childrenColumnName` / `indentSize`        | `tree: { childrenColumnName, indentSize }`                  |
+| `rowDrag` / `columnDrag`                   | `rowDrag` / `columnDrag` Feature Config                     |
+| `rowDragEnd` / `columnDragEnd`             | `rowOrderChange` / `columnOrderChange`                      |
+| `openEditor` / `closeEditor`               | `startCellEdit`、`startRowEdit`、`commitEdit`、`cancelEdit` |
+| `ensureRowVisible` / `ensureColumnVisible` | `scrollToRow` / `scrollToColumn`                            |
 
 ## 需要改造的地方
 

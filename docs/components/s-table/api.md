@@ -132,57 +132,55 @@ function resetQueryState() {
 </template>
 ```
 
-| 方法                    | 参数                         | 返回值                        | 用途                                             |
-| ----------------------- | ---------------------------- | ----------------------------- | ------------------------------------------------ |
-| `getTanStackTable`      | 无                           | `Table<TableFeatures, TData>` | 获取底层 TanStack 实例                           |
-| `getSelectedRows`       | 无                           | `TData[]`                     | 获取当前可解析的选中行快照                       |
-| `getSelectedRowKeys`    | 无                           | `STableRowKey[]`              | 获取选中键快照；intent `all` 模式返回 `[]`       |
-| `getSelectionIntent`    | 无                           | `STableSelectionIntent`       | 获取选择意图快照                                 |
-| `setSelectionIntent`    | `intent`                     | `void`                        | 设置选择意图                                     |
-| `selectAll`             | 无                           | `void`                        | 选择可选行                                       |
-| `clearSelection`        | 无                           | `void`                        | 清空选择                                         |
-| `toggleRowSelection`    | `row, selected?`             | `void`                        | 切换或设置指定行选择状态                         |
-| `clearSort`             | 无                           | `void`                        | 清空排序                                         |
-| `getSorting`            | 无                           | `STableSortItem[]`            | 获取多列排序快照                                 |
-| `setSorting`            | `STableSortItem[]`           | `void`                        | 设置完整多列排序                                 |
-| `clearFilter`           | 无                           | `void`                        | 清空列过滤                                       |
-| `clearSearch`           | 无                           | `void`                        | 清空列搜索                                       |
-| `getEditing`            | 无                           | `STableEditingState \| null`  | 获取当前编辑草稿快照                             |
-| `startCellEdit`         | `rowKey, columnId`           | `boolean`                     | 打开单元格编辑                                   |
-| `startRowEdit`          | `rowKey`                     | `boolean`                     | 打开整行编辑                                     |
-| `setEditValue`          | `columnId, value`            | `void`                        | 更新草稿值                                       |
-| `commitEdit`            | 无                           | `Promise<boolean>`            | 校验并提交草稿                                   |
-| `cancelEdit`            | 无                           | `void`                        | 取消草稿                                         |
-| `copyCellRange`         | `options?`                   | `Promise<string>`             | 复制当前框选；拒绝或无范围时返回空串             |
-| `getExpandedRowKeys`    | 无                           | `STableRowKey[]`              | 获取展开键快照                                   |
-| `toggleExpand`          | `rowKey`                     | `void`                        | 切换指定行展开状态                               |
-| `expandRow`             | `rowKey`                     | `void`                        | 展开指定行                                       |
-| `collapseRow`           | `rowKey`                     | `void`                        | 收起指定行                                       |
-| `expandAll`             | 无                           | `void`                        | 展开所有可展开行                                 |
-| `collapseAll`           | 无                           | `void`                        | 收起所有行                                       |
-| `getGroupBy`            | 无                           | `string[]`                    | 获取当前分组列 ID 快照                           |
-| `setGroupBy`            | `groupBy: string[]`          | `void`                        | 设置分组列；数组顺序即层级                       |
-| `expandAllGroups`       | 无                           | `void`                        | 展开全部分组行                                   |
-| `collapseAllGroups`     | 无                           | `void`                        | 折叠全部分组行                                   |
-| `toggleGroup`           | `groupRowId: string`         | `void`                        | 切换指定分组行展开状态                           |
-| `pinRow`                | `rowKey, position`           | `boolean`                     | 固定到顶/底，或 `false` 取消；行不存在返回 false |
-| `getPinnedRowKeys`      | 无                           | `STablePinnedRowKeys`         | 获取固定行键快照                                 |
-| `scrollToRow`           | `rowKey`                     | `boolean`                     | 定位指定行；发起滚动时返回 true                  |
-| `scrollToTop`           | 无                           | `void`                        | 滚动到顶部                                       |
-| `scrollToBottom`        | 无                           | `void`                        | 滚动到底部                                       |
-| `scrollToColumn`        | `columnId`                   | `boolean`                     | 横向定位指定列                                   |
-| `getScrollPosition`     | 无                           | `{ left, top }`               | 获取滚动位置快照                                 |
-| `scrollTo`              | `{ left?, top?, behavior? }` | `void`                        | 设置横纵滚动位置                                 |
-| `getCellRange`          | 无                           | `STableCellRange \| null`     | 获取框选范围快照                                 |
-| `clearCellRange`        | 无                           | `void`                        | 清空框选                                         |
-| `getSelectedRange`      | 无                           | `STableCellRange \| null`     | 框选兼容查询                                     |
-| `clearAllSelectedRange` | 无                           | `void`                        | 框选兼容清空                                     |
-| `getColumnOrder`        | 无                           | `string[]`                    | 获取用户叶子列 ID 顺序                           |
-| `setColumnOrder`        | `nextOrder: string[]`        | `void`                        | 设置列顺序并规范无效/缺失 ID                     |
-| `resetColumnOrder`      | 无                           | `void`                        | 恢复声明顺序                                     |
-| `swapColumns`           | `columnIdA, columnIdB`       | `void`                        | 交换两列                                         |
-| `moveColumn`            | `columnId, targetColumnId`   | `void`                        | 移动列到目标列位置                               |
-| `moveColumnByIndex`     | `fromIndex, toIndex`         | `void`                        | 按叶子列索引移动                                 |
+| 方法                 | 参数                         | 返回值                        | 用途                                             |
+| -------------------- | ---------------------------- | ----------------------------- | ------------------------------------------------ |
+| `getTanStackTable`   | 无                           | `Table<TableFeatures, TData>` | 获取底层 TanStack 实例                           |
+| `getSelectedRows`    | 无                           | `TData[]`                     | 获取当前可解析的选中行快照                       |
+| `getSelectedRowKeys` | 无                           | `STableRowKey[]`              | 获取选中键快照；intent `all` 模式返回 `[]`       |
+| `getSelectionIntent` | 无                           | `STableSelectionIntent`       | 获取选择意图快照                                 |
+| `setSelectionIntent` | `intent`                     | `void`                        | 设置选择意图                                     |
+| `selectAll`          | 无                           | `void`                        | 选择可选行                                       |
+| `clearSelection`     | 无                           | `void`                        | 清空选择                                         |
+| `toggleRowSelection` | `row, selected?`             | `void`                        | 切换或设置指定行选择状态                         |
+| `clearSort`          | 无                           | `void`                        | 清空排序                                         |
+| `getSorting`         | 无                           | `STableSortItem[]`            | 获取多列排序快照                                 |
+| `setSorting`         | `STableSortItem[]`           | `void`                        | 设置完整多列排序                                 |
+| `clearFilter`        | 无                           | `void`                        | 清空列过滤                                       |
+| `clearSearch`        | 无                           | `void`                        | 清空列搜索                                       |
+| `getEditing`         | 无                           | `STableEditingState \| null`  | 获取当前编辑草稿快照                             |
+| `startCellEdit`      | `rowKey, columnId`           | `boolean`                     | 打开单元格编辑                                   |
+| `startRowEdit`       | `rowKey`                     | `boolean`                     | 打开整行编辑                                     |
+| `setEditValue`       | `columnId, value`            | `void`                        | 更新草稿值                                       |
+| `commitEdit`         | 无                           | `Promise<boolean>`            | 校验并提交草稿                                   |
+| `cancelEdit`         | 无                           | `void`                        | 取消草稿                                         |
+| `copyCellRange`      | `options?`                   | `Promise<string>`             | 复制当前框选；拒绝或无范围时返回空串             |
+| `getExpandedRowKeys` | 无                           | `STableRowKey[]`              | 获取展开键快照                                   |
+| `toggleExpand`       | `rowKey`                     | `void`                        | 切换指定行展开状态                               |
+| `expandRow`          | `rowKey`                     | `void`                        | 展开指定行                                       |
+| `collapseRow`        | `rowKey`                     | `void`                        | 收起指定行                                       |
+| `expandAll`          | 无                           | `void`                        | 展开所有可展开行                                 |
+| `collapseAll`        | 无                           | `void`                        | 收起所有行                                       |
+| `getGroupBy`         | 无                           | `string[]`                    | 获取当前分组列 ID 快照                           |
+| `setGroupBy`         | `groupBy: string[]`          | `void`                        | 设置分组列；数组顺序即层级                       |
+| `expandAllGroups`    | 无                           | `void`                        | 展开全部分组行                                   |
+| `collapseAllGroups`  | 无                           | `void`                        | 折叠全部分组行                                   |
+| `toggleGroup`        | `groupRowId: string`         | `void`                        | 切换指定分组行展开状态                           |
+| `pinRow`             | `rowKey, position`           | `boolean`                     | 固定到顶/底，或 `false` 取消；行不存在返回 false |
+| `getPinnedRowKeys`   | 无                           | `STablePinnedRowKeys`         | 获取固定行键快照                                 |
+| `scrollToRow`        | `rowKey`                     | `boolean`                     | 定位指定行；发起滚动时返回 true                  |
+| `scrollToTop`        | 无                           | `void`                        | 滚动到顶部                                       |
+| `scrollToBottom`     | 无                           | `void`                        | 滚动到底部                                       |
+| `scrollToColumn`     | `columnId`                   | `boolean`                     | 横向定位指定列                                   |
+| `getScrollPosition`  | 无                           | `{ left, top }`               | 获取滚动位置快照                                 |
+| `scrollTo`           | `{ left?, top?, behavior? }` | `void`                        | 设置横纵滚动位置                                 |
+| `getCellRange`       | 无                           | `STableCellRange \| null`     | 获取框选范围快照                                 |
+| `clearCellRange`     | 无                           | `void`                        | 清空框选                                         |
+| `getColumnOrder`     | 无                           | `string[]`                    | 获取用户叶子列 ID 顺序                           |
+| `setColumnOrder`     | `nextOrder: string[]`        | `void`                        | 设置列顺序并规范无效/缺失 ID                     |
+| `resetColumnOrder`   | 无                           | `void`                        | 恢复声明顺序                                     |
+| `swapColumns`        | `columnIdA, columnIdB`       | `void`                        | 交换两列                                         |
+| `moveColumn`         | `columnId, targetColumnId`   | `void`                        | 移动列到目标列位置                               |
+| `moveColumnByIndex`  | `fromIndex, toIndex`         | `void`                        | 按叶子列索引移动                                 |
 
 `rowSelection.strategy = 'intent'` 时请使用 `v-model:selection-intent` / `getSelectionIntent()`。`getSelectedRowKeys()` 在 `mode: 'all'` 时返回空数组，且不会触发 `selectChange` 或 `update:selectedRowKeys`。
 

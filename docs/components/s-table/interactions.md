@@ -17,7 +17,7 @@ STable 提供面向数据工作台的框选和右键菜单能力。两者都依�
 
 `selectRowOnClick: true` 只在 `mode: 'row'` 下生效，并要求同时配置 `rowSelection`。它用于把范围选择同步为行选择；普通业务点击请监听 `rowClick`。
 
-实例方法 `getCellRange()` 返回范围快照，`clearCellRange()` 清空当前范围。为兼容选择型表格 API，也对外提供 `getSelectedRange()` 和 `clearAllSelectedRange()`；两组方法操作同一个矩形范围。
+实例方法 `getCellRange()` 返回范围快照，`clearCellRange()` 清空当前范围。
 
 ## 复制框选内容
 
