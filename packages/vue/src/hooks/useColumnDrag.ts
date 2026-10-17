@@ -4,7 +4,13 @@ import { resolveColumnId } from '../utils/column';
 import { walkColumnTree } from '../utils/columnTree';
 import type { STableColumn, STableColumnDragConfig } from '../types';
 import { sameValues } from '../utils';
-import { moveArrayItem } from '@zchengfeng/s-table-core';
+import {
+  moveArrayItem,
+  moveColumnOrder,
+  moveColumnOrderByIndex,
+  normalizeColumnOrder,
+  swapColumnOrder,
+} from '@zchengfeng/s-table-core';
 import { useDrag } from './useDrag';
 
 /** 列拖拽事件同时返回兼容的列配置和 TanStack 叶子列顺序。 */
@@ -53,23 +59,8 @@ export const useColumnDrag = <TData extends RowData, TValue = unknown>({
   const sourceLeafIds = () => [...(leafColumnIds?.value ?? collectLeafColumnIds(columns.value))];
   const columnOrder = shallowRef<ColumnOrderState>(sourceLeafIds());
 
-  const applyColumnOrder = (nextOrder: ColumnOrderState) => {
-    const sourceIds = sourceLeafIds();
-    const sourceIdSet = new Set(sourceIds);
-    const next: string[] = [];
-    const nextIdSet = new Set<string>();
-    for (const id of nextOrder) {
-      if (sourceIdSet.has(id) && !nextIdSet.has(id)) {
-        next.push(id);
-        nextIdSet.add(id);
-      }
-    }
-    for (const id of sourceIds) {
-      if (!nextIdSet.has(id)) {
-        next.push(id);
-        nextIdSet.add(id);
-      }
-    }
+  const applyColumnOrder = (nextOrder: readonly string[]) => {
+    const next = normalizeColumnOrder(nextOrder, sourceLeafIds());
     if (sameColumnOrder(next, columnOrder.value)) return;
     columnOrder.value = next;
   };
@@ -98,42 +89,17 @@ export const useColumnDrag = <TData extends RowData, TValue = unknown>({
 
   /** 交换两列；无效 ID 或同一列不触发响应式更新。 */
   const swapColumns = (columnIdA: string, columnIdB: string) => {
-    if (columnIdA === columnIdB) return;
-    const next = [...columnOrder.value];
-    const indexA = next.indexOf(columnIdA);
-    const indexB = next.indexOf(columnIdB);
-    if (indexA < 0 || indexB < 0) return;
-    [next[indexA], next[indexB]] = [next[indexB]!, next[indexA]!];
-    applyColumnOrder(next);
+    applyColumnOrder(swapColumnOrder(columnOrder.value, columnIdA, columnIdB));
   };
 
   /** 将一列移动到目标列之前，保留其他列的相对顺序。 */
   const moveColumn = (columnId: string, targetColumnId: string) => {
-    if (columnId === targetColumnId) return;
-    const next = [...columnOrder.value];
-    const fromIndex = next.indexOf(columnId);
-    if (fromIndex < 0 || !next.includes(targetColumnId)) return;
-    next.splice(fromIndex, 1);
-    const targetIndex = next.indexOf(targetColumnId);
-    if (targetIndex < 0) return;
-    next.splice(targetIndex, 0, columnId);
-    applyColumnOrder(next);
+    applyColumnOrder(moveColumnOrder(columnOrder.value, columnId, targetColumnId));
   };
 
   /** 按当前用户叶子列索引移动列；越界或非整数索引不产生副作用。 */
   const moveColumnByIndex = (fromIndex: number, toIndex: number) => {
-    if (
-      !Number.isInteger(fromIndex) ||
-      !Number.isInteger(toIndex) ||
-      fromIndex < 0 ||
-      toIndex < 0 ||
-      fromIndex >= columnOrder.value.length ||
-      toIndex >= columnOrder.value.length ||
-      fromIndex === toIndex
-    ) {
-      return;
-    }
-    applyColumnOrder(moveArrayItem(columnOrder.value, fromIndex, toIndex));
+    applyColumnOrder(moveColumnOrderByIndex(columnOrder.value, fromIndex, toIndex));
   };
 
   const {

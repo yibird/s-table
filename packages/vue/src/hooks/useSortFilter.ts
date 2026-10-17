@@ -7,6 +7,7 @@ import {
   type TableFeatures,
   type Updater,
 } from '@tanstack/vue-table';
+import { removeInvalidSortEntries } from '@zchengfeng/s-table-core';
 import type {
   STableColumn,
   STableColumnFilterValue,
@@ -112,8 +113,8 @@ export const useSortFilter = <TData extends RowData, TValue = unknown>({
     let nextFilter: Map<string, STableFilterValue[]> | null = null;
     let nextSearch: Map<string, string> | null = null;
 
-    const validSorting = sorting.value.filter((item) => {
-      const column = map.get(item.columnId);
+    const validSorting = removeInvalidSortEntries(sorting.value, (columnId) => {
+      const column = map.get(columnId);
       return column?.sorter === true || typeof column?.sorter === 'function';
     });
     if (validSorting.length !== sorting.value.length) {

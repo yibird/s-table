@@ -1,9 +1,5 @@
 import type { STableCellRange, STableCellRangeCopyEvent, STableCopyOptions } from '../types';
-import { protectFormulaPrefix } from '@zchengfeng/s-table-core';
-
-/** RFC 4180 转义：包含分隔符、引号或换行时整体加引号并转义内部引号。 */
-const quoteCopiedValue = (value: string, delimiter: string): string =>
-  value.includes(delimiter) || /[\r\n"]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+import { serializeDelimitedCell } from '@zchengfeng/s-table-core';
 
 type CellRangeCopySource = STableCellRangeCopyEvent['source'];
 
@@ -20,10 +16,10 @@ const escapeCopiedValue = (
   delimiter: string,
   preventFormulaInjection: boolean
 ): string => {
-  return quoteCopiedValue(
-    protectFormulaPrefix(value == null ? '' : String(value), preventFormulaInjection),
-    delimiter
-  );
+  return serializeDelimitedCell(value, {
+    delimiter,
+    preventFormulaInjection,
+  });
 };
 
 /**

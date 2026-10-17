@@ -1,9 +1,13 @@
 export type * from './types';
+export * from './clipboard';
 export * from './columns';
 export * from './editing';
 export * from './interaction';
 export * from './scroll';
+export * from './state/pagination';
+export * from './state/selection';
 export * from './state/selectionIntent';
+export * from './state/sorting';
 export * from './utils/columnTree';
 export { escapeCssAttributeValue, getOwnerDocument, getOwnerWindow } from './utils/dom';
 export * from './utils/objectPath';

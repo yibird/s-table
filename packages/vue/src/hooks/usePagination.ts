@@ -4,11 +4,17 @@ import {
   type PaginationState as TanStackPaginationState,
   type Updater,
 } from '@tanstack/vue-table';
+import {
+  DEFAULT_PAGE_SIZE,
+  normalizePositiveInteger,
+  normalizeTotal,
+  resolvePageCount,
+  resolvePageSizeChange,
+  resolvePaginationTotal,
+  resolveTanStackPagination,
+} from '@zchengfeng/s-table-core';
 import type { PaginationPlacement, STablePaginationProps } from '../types';
 import { useModelState } from './useModelState';
-
-/** 默认每页条数 */
-const DEFAULT_PAGE_SIZE = 10;
 
 /**
  * `usePagination` 的入参约束。
@@ -51,18 +57,6 @@ function getConfigValue(config: boolean | STablePaginationProps | undefined) {
   if (typeof config === 'object') return config;
   return undefined;
 }
-
-/** 将页码或页大小规范为大于零的整数。 */
-const normalizePositiveInteger = (value: number | undefined, fallback: number): number => {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return fallback;
-  return Math.max(1, Math.trunc(value));
-};
-
-/** 将总条数规范为非负整数，无效值回退为零。 */
-const normalizeTotal = (value: number | undefined): number => {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 0;
-  return Math.trunc(value);
-};
 
 /**
  * 表格分页 hook。
@@ -115,16 +109,14 @@ export const usePagination = ({
 
   // ==================== 数据总条数 ====================
 
-  const paginationTotal = computed(() => {
-    const c = config.value;
-    // 服务端场景：显式 total 优先；否则若给了 pageCount，用 pageCount × pageSize 反推一个总量下界，
-    // 保证页码控件渲染出正确的总页数（后端只知道总页数、不知道精确 total 时）。
-    if (c && typeof c.total === 'number') return normalizeTotal(c.total);
-    if (c && typeof c.pageCount === 'number') {
-      return normalizeTotal(c.pageCount) * currentPageSize.value;
-    }
-    return normalizeTotal(getFilteredTotal());
-  });
+  const paginationTotal = computed(() =>
+    resolvePaginationTotal({
+      configuredTotal: config.value?.total,
+      configuredPageCount: config.value?.pageCount,
+      filteredTotal: getFilteredTotal(),
+      pageSize: currentPageSize.value,
+    })
+  );
 
   // 只把业务显式给出的服务端计数交给 TanStack。客户端模式继续由
   // getPrePaginatedRowModel() 计数，避免 rowCount 反向遮蔽过滤后的真实行数。
@@ -141,17 +133,16 @@ export const usePagination = ({
   // 实际切片由 table 内置分页 row model 完成，这里仅提供 { pageIndex, pageSize }。
   const tanstackPaginationState = computed<TanStackPaginationState | undefined>((previous) => {
     if (!paginationEnabled.value) return undefined;
-    const pageSize = currentPageSize.value;
     // 防御受控 current 越界：pageIndex 超出总页数时 TanStack 分页模型会返回空行集合，
     // 导致表格空态但分页器显示有数据。clamp 保证行模型始终命中有效页。
-    const maxPageIndex = Math.max(0, Math.ceil(paginationTotal.value / pageSize) - 1);
-    const next = {
-      pageIndex: Math.min(Math.max(0, requestedPage.value - 1), maxPageIndex),
-      pageSize,
-    };
+    const next = resolveTanStackPagination({
+      requestedPage: requestedPage.value,
+      pageSize: currentPageSize.value,
+      total: paginationTotal.value,
+    });
     // 过滤会改变 total，但有效页码可能完全不变；保留旧引用可阻止 Vue adapter
     // 把同一分页状态再次同步给 TanStack，避免一次筛选触发两次 setOptions。
-    return previous?.pageIndex === next.pageIndex && previous.pageSize === next.pageSize
+    return previous && previous.pageIndex === next.pageIndex && previous.pageSize === next.pageSize
       ? previous
       : next;
   });
@@ -165,7 +156,7 @@ export const usePagination = ({
 
   watch([currentPageSize, paginationTotal], () => {
     if (!paginationEnabled.value || isCurrentControlled.value) return;
-    const maxPage = Math.max(1, Math.ceil(paginationTotal.value / currentPageSize.value));
+    const maxPage = resolvePageCount(paginationTotal.value, currentPageSize.value);
     if (internalCurrent.value > maxPage) {
       internalCurrent.value = maxPage;
     }
@@ -204,15 +195,14 @@ export const usePagination = ({
 
   /** 更新每页条数、修正越界页码并通知外部。 */
   const handlePageSizeChange = (size: number) => {
-    const nextSize = normalizePositiveInteger(size, currentPageSize.value);
-    const configuredPageCount = config.value?.pageCount;
-    const maxPage =
-      typeof configuredPageCount === 'number'
-        ? normalizePositiveInteger(configuredPageCount, 1)
-        : Math.max(1, Math.ceil(paginationTotal.value / nextSize));
-    const nextPage = Math.min(currentPage.value, maxPage);
-
-    commitPagination(nextPage, nextSize);
+    const next = resolvePageSizeChange({
+      currentPage: currentPage.value,
+      currentPageSize: currentPageSize.value,
+      nextPageSize: size,
+      total: paginationTotal.value,
+      configuredPageCount: config.value?.pageCount,
+    });
+    commitPagination(next.page, next.pageSize);
   };
 
   /**
@@ -232,13 +222,13 @@ export const usePagination = ({
     const current = tanstackPaginationState.value;
     if (!current) return;
     const next = functionalUpdate(updater, current);
-    const nextSize = normalizePositiveInteger(next.pageSize, current.pageSize);
-    const maxPage = Math.max(1, Math.ceil(paginationTotal.value / nextSize));
-    const nextPage = Math.min(
-      normalizePositiveInteger(next.pageIndex + 1, current.pageIndex + 1),
-      maxPage
-    );
-    commitPagination(nextPage, nextSize);
+    const resolved = resolvePageSizeChange({
+      currentPage: normalizePositiveInteger(next.pageIndex + 1, current.pageIndex + 1),
+      currentPageSize: current.pageSize,
+      nextPageSize: next.pageSize,
+      total: paginationTotal.value,
+    });
+    commitPagination(resolved.page, resolved.pageSize);
   };
 
   /** 客户端排序或过滤改变行集合时回到第一页，并保持受控状态只读。 */

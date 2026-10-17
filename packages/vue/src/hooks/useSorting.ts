@@ -7,6 +7,7 @@ import {
   type TableFeatures,
   type Updater,
 } from '@tanstack/vue-table';
+import { sameSortEntries, toggleSortEntry } from '@zchengfeng/s-table-core';
 import { buildColumnIndex } from '../utils/columnIndex';
 import type { STableColumn, STableSortItem, STableSortOrder } from '../types';
 import { useModelState } from './useModelState';
@@ -91,15 +92,7 @@ export const useSorting = <TData extends RowData, TValue = unknown>({
   /** 统一的多列排序写入口，同时维持受控和非受控语义。 */
   const updateSorting = (next: STableSortItem[], reason: SortChangeReason = 'user') => {
     const current = sorting.value;
-    if (
-      next.length === current.length &&
-      next.every(
-        (item, index) =>
-          item.columnId === current[index]?.columnId && item.order === current[index]?.order
-      )
-    ) {
-      return;
-    }
+    if (sameSortEntries(next, current)) return;
     const normalized = next.map((item) => ({ ...item }));
     if (!isSortingControlled.value) internalSorting.value = normalized;
     onUpdateSorting?.(normalized.map((item) => ({ ...item })));
@@ -125,25 +118,7 @@ export const useSorting = <TData extends RowData, TValue = unknown>({
       }
     }
     const directions: STableSortOrder[] = col?.sortDirections ?? ['ascend', 'descend'];
-    const current = sorting.value;
-    const existingIndex = current.findIndex((item) => item.columnId === columnId);
-    const existing = existingIndex >= 0 ? current[existingIndex] : undefined;
-    const currentIndex = existing ? directions.indexOf(existing.order) : -1;
-    const nextOrder =
-      directions.length === 0 || currentIndex === directions.length - 1
-        ? undefined
-        : (directions[currentIndex + 1] ?? directions[0]);
-    const preserveOthers = multiSort?.value === true;
-    const next = preserveOthers ? current.map((item) => ({ ...item })) : [];
-    const nextIndex = next.findIndex((item) => item.columnId === columnId);
-    if (!nextOrder) {
-      if (nextIndex >= 0) next.splice(nextIndex, 1);
-    } else if (nextIndex >= 0) {
-      next[nextIndex] = { columnId, order: nextOrder };
-    } else {
-      next.push({ columnId, order: nextOrder });
-    }
-    updateSorting(next);
+    updateSorting(toggleSortEntry(sorting.value, columnId, directions, multiSort?.value === true));
   };
 
   const setSorting = (next: STableSortItem[]) => updateSorting(next);

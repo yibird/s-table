@@ -1,18 +1,15 @@
 import { computed, watch, type Ref } from 'vue';
 import { useVirtualizer, type VirtualItem } from '@tanstack/vue-virtual';
 import type { Row, RowData, TableFeatures } from '@tanstack/vue-table';
+import {
+  resolveEstimateSize,
+  resolveFixedRowHeight,
+  resolveOverscan,
+  resolveSpacerHeights,
+} from '@zchengfeng/s-table-core';
 import type { STableRowKey, STableVirtualProps } from '../types';
 import { isRowVirtualEnabled } from '../utils';
 import { useExpandedRow } from './useExpandedRow';
-
-/** 默认 overscan（可视区外额外渲染行数）。 */
-const DEFAULT_OVERSCAN = 15;
-/** overscan 上限，防止过大值导致渲染项爆炸。 */
-const MAX_OVERSCAN = 100;
-/** 固定行高下限，防止过小值导致布局异常。 */
-const MIN_ROW_HEIGHT = 20;
-/** 默认虚拟滚动预估行高（middle 尺寸约 47px）。 */
-const DEFAULT_ESTIMATE_SIZE = 47;
 
 /**
  * `useVirtual` 的入参约束。
@@ -81,33 +78,16 @@ export const useVirtual = <TData extends RowData>({
   const virtualConfig = computed(() => resolveVirtualConfig(virtual.value));
   const virtualEnabled = computed(() => virtualConfig.value !== null);
 
-  // overscan 上限 clamp 为 100，防止过大值导致渲染项爆炸
-  const overscan = computed(() => {
-    const value = virtualConfig.value?.overscan;
-    const resolved =
-      typeof value === 'number' && Number.isFinite(value) && value >= 0
-        ? Math.trunc(value)
-        : DEFAULT_OVERSCAN;
-    return Math.min(resolved, MAX_OVERSCAN);
-  });
+  // overscan 上限 clamp 为 100，防止过大值导致渲染项爆炸。
+  const overscan = computed(() => resolveOverscan(virtualConfig.value?.overscan));
 
   // 固定行高（用户显式配置）。设置后进入「固定行高」快路径。
-  // rowHeight 下限 clamp 为 MIN_ROW_HEIGHT，防止过小值导致布局异常
-  const fixedRowHeight = computed(() => {
-    const h = virtualConfig.value?.rowHeight;
-    return typeof h === 'number' && Number.isFinite(h) && h > 0
-      ? Math.max(h, MIN_ROW_HEIGHT)
-      : null;
-  });
+  const fixedRowHeight = computed(() => resolveFixedRowHeight(virtualConfig.value?.rowHeight));
 
   // estimateSize：固定行高模式返回精确值（未测量的行即为该高度）；否则用预估值。
-  const estimateSize = computed(() => {
-    if (fixedRowHeight.value != null) return fixedRowHeight.value;
-    const value = virtualConfig.value?.estimateSize;
-    return typeof value === 'number' && Number.isFinite(value) && value > 0
-      ? value
-      : DEFAULT_ESTIMATE_SIZE;
-  });
+  const estimateSize = computed(() =>
+    resolveEstimateSize(virtualConfig.value?.estimateSize, fixedRowHeight.value)
+  );
 
   /**
    * 测量单个虚拟项（= 一个「逻辑行块」）的高度。
@@ -167,17 +147,9 @@ export const useVirtual = <TData extends RowData>({
     return virtualizer.value.getTotalSize();
   });
 
-  const topSpacerHeight = computed<number>(() => {
-    const items = virtualItems.value;
-    if (items.length === 0) return 0;
-    return items[0].start;
-  });
-
-  const bottomSpacerHeight = computed<number>(() => {
-    const items = virtualItems.value;
-    if (items.length === 0) return 0;
-    return totalSize.value - items[items.length - 1].end;
-  });
+  const spacerHeights = computed(() => resolveSpacerHeights(virtualItems.value, totalSize.value));
+  const topSpacerHeight = computed(() => spacerHeights.value.top);
+  const bottomSpacerHeight = computed(() => spacerHeights.value.bottom);
 
   // ==================== 行块测量（主行 + 展开兄弟行） ====================
 

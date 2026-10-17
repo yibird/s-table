@@ -1,5 +1,11 @@
 export { resolveColumnId } from './columnId';
 export {
+  moveColumnOrder,
+  moveColumnOrderByIndex,
+  normalizeColumnOrder,
+  swapColumnOrder,
+} from './order';
+export {
   collectInternalColumnMetadata,
   createColumnMetadata,
   getCellRenderToken,

@@ -16,6 +16,11 @@ import type {
   STableSelectionIntent,
   STableSelectionChangeInfo,
 } from '../types';
+import {
+  filterExistingRowKeys,
+  selectableRows,
+  selectRowsByParity,
+} from '@zchengfeng/s-table-core';
 import { decodeRowKey, encodeRowKey, resolveRowKey, resolveRowStateEntries } from '../utils';
 import { createSelectionColumn } from '../presets/selectionColumn';
 import { useModelState } from './useModelState';
@@ -129,9 +134,10 @@ export const useRowSelection = <TData extends RowData>({
     if (table?.options.data === records) {
       const rowsById = table.getCoreRowModel().rowsById;
       const existingIds = new Set<string>();
-      for (const key of keys) {
-        const id = encodeRowKey(key);
-        if (rowsById[id]) existingIds.add(id);
+      for (const key of filterExistingRowKeys(keys, (key) =>
+        Boolean(rowsById[encodeRowKey(key)])
+      )) {
+        existingIds.add(encodeRowKey(key));
       }
       return existingIds;
     }
@@ -393,22 +399,18 @@ export const useRowSelection = <TData extends RowData>({
   const selectByParity = (parity: 0 | 1) => {
     if (intentMode.value) {
       const rows = getTable()?.getSortedRowModel().rows ?? [];
-      const keys: STableRowKey[] = [];
-      for (let index = parity; index < rows.length; index += 2) {
-        const row = rows[index];
-        if (row?.getCanSelect()) keys.push(getPublicKey(row));
-      }
-      commitIntent({ mode: 'include', includedRowKeys: keys }, 'multiple');
+      commitIntent(
+        { mode: 'include', includedRowKeys: selectRowsByParity(rows, parity).map(getPublicKey) },
+        'multiple'
+      );
       return;
     }
     runSelectionCommand('multiple', (table) => {
       const next: RowSelectionState = Object.create(null) as RowSelectionState;
       // 用 sortedRowModel：奇偶行按「用户可见的排序 / 过滤后顺序」判定，
       // 而非原始数据顺序，符合“选中第 1、3、5… 行”的直觉。
-      const rows = table.getSortedRowModel().rows;
-      for (let index = parity; index < rows.length; index += 2) {
-        const row = rows[index];
-        if (row?.getCanSelect()) next[row.id] = true;
+      for (const row of selectRowsByParity(table.getSortedRowModel().rows, parity)) {
+        next[row.id] = true;
       }
       table.setRowSelection(next);
     });
@@ -425,11 +427,7 @@ export const useRowSelection = <TData extends RowData>({
       const rows = paginationEnabled.value
         ? (table?.getPaginatedRowModel().rows ?? [])
         : (table?.getRowModel().rows ?? []);
-      updateIntentRows(
-        rows.filter((row) => row.getCanSelect()).map(getPublicKey),
-        true,
-        'multiple'
-      );
+      updateIntentRows(selectableRows(rows).map(getPublicKey), true, 'multiple');
       return;
     }
     runSelectionCommand('multiple', (table) => {
