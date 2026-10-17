@@ -337,8 +337,11 @@ export const useSTable = <TData extends RowData>({
     get manualFiltering() {
       return manualFiltering.value;
     },
-    // STable 公开排序约定始终从升序开始；其余循环和多列行为交给 TanStack。
+    // STable 公开排序约定始终从升序开始；方向循环、修饰键多列与移除排序交给 TanStack。
     sortDescFirst: false,
+    get enableMultiSort() {
+      return props.multiSort === true;
+    },
     // 分页由 usePagination 完全托管（含受控语义与越界修正）。关闭 TanStack 的
     // 自动重置可防止 row model 首次求值后把其内部 atom 改回第 1 页，与外部状态分叉。
     autoResetPageIndex: false,

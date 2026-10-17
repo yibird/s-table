@@ -536,14 +536,20 @@ describe('高级表格能力', () => {
     await nextTick();
 
     const sorters = host.querySelectorAll<HTMLElement>('.s-table-column-sorter');
-    sorters[0]!.click();
-    sorters[1]!.click();
+    // 多列排序由 TanStack 内置 handler 处理：需要按住修饰键（shift/meta/ctrl）。
+    sorters[0]!.dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
+    sorters[1]!.dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
     await nextTick();
 
     expect(changes.at(-1)).toEqual([
       { columnId: 'name', order: 'ascend' },
       { columnId: 'score', order: 'ascend' },
     ]);
+
+    // 无修饰键点击回到单列排序，并按内置方向循环推进到 descend。
+    sorters[0]!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await nextTick();
+    expect(changes.at(-1)).toEqual([{ columnId: 'name', order: 'descend' }]);
   });
 
   it('列 filteredValue 变化会同步筛选 UI 与行模型', async () => {

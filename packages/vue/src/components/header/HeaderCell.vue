@@ -182,9 +182,21 @@ const ariaSort = computed<'ascending' | 'descending' | 'none' | undefined>(() =>
   return 'none';
 });
 
+/** 修饰键多列排序判断与 TanStack 默认 `isMultiSortEvent` 保持一致。 */
+const isMultiSortEvent = (event?: Event): boolean =>
+  event instanceof MouseEvent ? event.shiftKey || event.metaKey || event.ctrlKey : false;
+
 /** 鼠标、键盘和 Sort 子组件共用稳定回调，避免表头更新时产生新函数引用。 */
-const handleToggleSort = () => {
-  if (rawCol.value?.sorter) onToggleSort(props.header.column.id);
+const handleToggleSort = (event?: Event) => {
+  if (!rawCol.value?.sorter) return;
+  const column = props.header.column;
+  // 默认方向、移除排序与修饰键多列完全交给 TanStack 内置 handler；
+  // 只有显式 sortDirections 才走兼容层（内置不支持自定义方向子集）。
+  if (rawCol.value.sortDirections === undefined) {
+    column.getToggleSortingHandler()?.(event);
+    return;
+  }
+  onToggleSort(column.id, isMultiSortEvent(event));
 };
 
 const handleFilterConfirm = (values: FilterValue[]) => onSetFilter(props.header.column.id, values);

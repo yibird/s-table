@@ -18,7 +18,7 @@ export interface TablePresentationContext<TData extends RowData = RowData> {
 export interface TableHeaderContext {
   filterState: Readonly<Ref<Map<string, FilterValue[]>>>;
   searchState: Readonly<Ref<Map<string, string>>>;
-  onToggleSort: (columnId: string) => void;
+  onToggleSort: (columnId: string, multi?: boolean) => void;
   onSetFilter: (columnId: string, values: FilterValue[]) => void;
   onClearFilter: (columnId: string) => void;
   onSetSearch: (columnId: string, value: string) => void;

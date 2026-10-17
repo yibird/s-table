@@ -107,18 +107,18 @@ export const useSorting = <TData extends RowData, TValue = unknown>({
    * 切换排序方向：none -> ascend -> descend -> none。
    * 支持 sortDirections 自定义排序方向子集。
    */
-  const toggleSort = (columnId: string) => {
+  const toggleSort = (columnId: string, multi = multiSort?.value === true) => {
     const col = columnMap.value.get(columnId);
     // 默认方向完全复用 TanStack 状态机；显式 sortDirections 才进入兼容层分支。
     if (col?.sortDirections === undefined) {
       const tanstackColumn = getTable?.()?.getColumn(columnId);
       if (tanstackColumn?.getCanSort()) {
-        tanstackColumn.toggleSorting(undefined, multiSort?.value === true);
+        tanstackColumn.toggleSorting(undefined, multi);
         return;
       }
     }
     const directions: STableSortOrder[] = col?.sortDirections ?? ['ascend', 'descend'];
-    updateSorting(toggleSortEntry(sorting.value, columnId, directions, multiSort?.value === true));
+    updateSorting(toggleSortEntry(sorting.value, columnId, directions, multi));
   };
 
   const setSorting = (next: STableSortItem[]) => updateSorting(next);

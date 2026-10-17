@@ -14,37 +14,28 @@ type DisplayOrderTable<TData extends RowData> = {
 export const getRowsInDisplayOrder = <TData extends RowData>(table: DisplayOrderTable<TData>) =>
   table_getRowsInDisplayOrder(table as Table<TableFeatures, TData>);
 
-type VisibleRowIndexCache = {
-  sourceRows: readonly object[];
-  pinning: object | undefined;
-  indexes: WeakMap<object, number>;
-};
-
-const visibleRowIndexCache = new WeakMap<object, VisibleRowIndexCache>();
-
-/** 返回当前分页窗口及固定行重排后的公开可见索引。 */
+/**
+ * 返回当前分页窗口及固定行重排后的公开可见索引。
+ *
+ * 显示顺序缓存由 TanStack `row.getDisplayIndex()` 维护：
+ * - 固定行启用时，adapter 已把 top/center/bottom 的展示顺序写回显示索引；
+ * - 未启用固定行时显示索引是分页前的全局索引，需减去当前页偏移。
+ */
 export const getRowVisibleIndex = <TData extends RowData>(
   row: Row<TableFeatures, TData>
 ): number => {
-  const table = row.table;
-  const pinning = table.options.state?.rowPinning;
-  const pinned = Boolean(pinning && (pinning.top.length > 0 || pinning.bottom.length > 0));
-  const sourceRows = table.getRowModel().rows;
-  const cached = visibleRowIndexCache.get(table);
-  if (cached && cached.sourceRows === sourceRows && cached.pinning === pinning) {
-    return cached.indexes.get(row) ?? -1;
-  }
+  const displayIndex = row.getDisplayIndex();
+  if (displayIndex < 0) return -1;
+  if (row.getIsPinned()) return displayIndex;
 
-  const visibleRows = pinned
-    ? [...table.getTopRows(), ...table.getCenterRows(), ...table.getBottomRows()]
-    : sourceRows;
-  const indexes = new WeakMap<object, number>();
-  for (let index = 0; index < visibleRows.length; index++) {
-    const visibleRow = visibleRows[index];
-    if (visibleRow) indexes.set(visibleRow, index);
+  const table = row.table;
+  const state = table.options.state;
+  const pinning = state?.rowPinning;
+  if (pinning && (pinning.top.length > 0 || pinning.bottom.length > 0)) {
+    return displayIndex;
   }
-  visibleRowIndexCache.set(table, { sourceRows, pinning, indexes });
-  return indexes.get(row) ?? -1;
+  const pagination = state?.pagination;
+  return pagination ? displayIndex - pagination.pageIndex * pagination.pageSize : displayIndex;
 };
 
 type InstallPinnedRowsDisplayOrderOptions<TData extends RowData> = {

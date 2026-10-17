@@ -1,5 +1,5 @@
 <template>
-  <span v-if="sorter" class="s-table-column-sorter" @click="onToggleSort?.()">
+  <span v-if="sorter" class="s-table-column-sorter" @click="onToggleSort?.($event)">
     <span class="s-table-column-sorter-inner" :class="sorterInnerClass">
       <CaretUpIcon
         class-name="s-table-column-sorter-up"
@@ -24,8 +24,8 @@ const props = withDefaults(
     sorter?: boolean;
     /** 当前排序方向。 */
     sortOrder?: STableSortOrder | null;
-    /** 切换排序的回调。 */
-    onToggleSort?: () => void;
+    /** 切换排序的回调；事件用于识别修饰键多列排序。 */
+    onToggleSort?: (event?: Event) => void;
   }>(),
   {
     sorter: false,
