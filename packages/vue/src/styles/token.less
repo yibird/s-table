@@ -4,6 +4,12 @@
 :root {
   // ==================== 主题色 ====================
   --s-primary-color: #1677ff;
+  // hover / active 不设固定值：由 color-mix 从当前主色派生，保证自定义主色时交互态同步。
+  // 错误 / 危险操作
+  --s-color-error: #ff4d4f;
+  --s-color-error-hover: #ff7875;
+  --s-color-error-active: #d9363e;
+  --s-color-error-bg: rgba(255, 77, 79, 0.1);
 
   // ==================== 背景色 ====================
   /// 表头背景色
@@ -31,9 +37,9 @@
   /// 列拖拽源表头背景色
   --s-color-bg-column-drag-source: #e6f4ff;
   /// 框选高亮背景色
-  --s-color-bg-cell-range: #f0f7ff;
+  --s-color-bg-cell-range: #dcebff;
   /// 当前框选锚点背景色
-  --s-color-bg-cell-range-active: #d6ebff;
+  --s-color-bg-cell-range-active: #bfd7ff;
   /// 禁用控件背景色
   --s-color-bg-disabled: #f5f5f5;
   /// 加载遮罩背景色
@@ -43,6 +49,8 @@
   // ==================== 边框色 ====================
   /// 通用分割线 / 边框色
   --s-color-border: #f0f0f0;
+  /// 强分割线（表头底线、分组行边界）
+  --s-color-border-strong: #e5e5e5;
   /// 控件边框色（checkbox、input 等）
   --s-color-border-control: #d9d9d9;
 
@@ -57,6 +65,15 @@
   --s-color-text-quaternary: rgba(0, 0, 0, 0.45);
   /// 图标色（排序图标、过滤 / 搜索触发器默认态）
   --s-color-text-icon: #bfbfbf;
+  /// 反色文本（主色 / 错误色实心按钮）
+  --s-color-text-inverse: #fff;
+  /// 排序图标默认 / hover 色
+  --s-color-sort-icon: #a6a6a6;
+  --s-color-sort-icon-hover: #595959;
+
+  // ==================== 焦点环 ====================
+  --s-focus-ring-width: 2px;
+  --s-focus-ring-offset: 2px;
 
   // ==================== 交互色 ====================
   /// hover 背景
@@ -66,11 +83,13 @@
 
   // ==================== 阴影 ====================
   /// 固定列阴影色
-  --s-color-shadow-fixed: rgba(5, 5, 5, 0.12);
+  --s-color-shadow-fixed: rgba(5, 5, 5, 0.2);
   /// 下拉面板阴影（单层，轻量浮层）
   --s-shadow-dropdown: 0 6px 16px rgba(0, 0, 0, 0.08);
   /// 右键菜单阴影（两层，需要更强的分离感）
   --s-shadow-menu: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px rgba(0, 0, 0, 0.08);
+  /// 浮层通用抬升阴影
+  --s-shadow-elevated: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06);
 
   // ==================== 圆角 ====================
   /// 小圆角：checkbox、tag
@@ -87,6 +106,13 @@
   --s-duration-normal: 0.2s;
   /// 页面级过渡
   --s-duration-slow: 0.3s;
+  --s-ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --s-ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+
+  // ==================== 控件尺寸 ====================
+  --s-control-height-sm: 24px;
+  --s-control-height-md: 32px;
+  --s-control-height-lg: 40px;
 
   // ==================== 层级 ====================
   /// 固定列单元格
@@ -97,6 +123,8 @@
   --s-z-index-resizer: 15;
   /// 下拉面板（过滤、搜索、选择列菜单等）
   --s-z-index-dropdown: 1050;
+  /// 加载遮罩（低于浮层，浮层打开时仍可交互）
+  --s-z-index-loading: 1000;
 }
 
 // ==================== Dark Mode ====================
@@ -104,6 +132,10 @@
 // mixin 应用于主题标记节点，内部表格通过继承获取暗色值。
 .s-dark-tokens() {
   --s-primary-color: #1668dc;
+  --s-color-error: #ff4d4f;
+  --s-color-error-hover: #ff7875;
+  --s-color-error-active: #d9363e;
+  --s-color-error-bg: rgba(255, 77, 79, 0.16);
   --s-color-bg-header: #1d1d1d;
   --s-color-bg-cell: #141414;
   --s-color-bg-row-hover: #262626;
@@ -116,23 +148,27 @@
   --s-color-bg-summary: #1a1a1a;
   --s-color-bg-drag-source: #111a2c;
   --s-color-bg-column-drag-source: #111a2c;
-  --s-color-bg-cell-range: #11213a;
-  --s-color-bg-cell-range-active: #16365d;
+  --s-color-bg-cell-range: #0d2a4d;
+  --s-color-bg-cell-range-active: #123f6e;
   --s-color-bg-disabled: rgba(255, 255, 255, 0.08);
   --s-color-bg-loading: rgba(20, 20, 20, 0.7);
   --s-loading-track-opacity: 30%;
   --s-color-border: #303030;
+  --s-color-border-strong: #3a3a3a;
   --s-color-border-control: #424242;
   --s-color-text: rgba(255, 255, 255, 0.85);
   --s-color-text-secondary: rgba(255, 255, 255, 0.65);
   --s-color-text-tertiary: rgba(255, 255, 255, 0.45);
   --s-color-text-quaternary: rgba(255, 255, 255, 0.45);
   --s-color-text-icon: #6b6b6b;
+  --s-color-sort-icon: #8c8c8c;
+  --s-color-sort-icon-hover: #d9d9d9;
   --s-color-bg-hover: rgba(255, 255, 255, 0.08);
   --s-color-bg-active: rgba(255, 255, 255, 0.12);
   --s-color-shadow-fixed: rgba(0, 0, 0, 0.5);
   --s-shadow-dropdown: 0 6px 16px rgba(0, 0, 0, 0.32);
   --s-shadow-menu: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px rgba(0, 0, 0, 0.32);
+  --s-shadow-elevated: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.32);
 }
 
 [data-theme='dark'],

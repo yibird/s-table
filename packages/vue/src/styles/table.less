@@ -1,4 +1,6 @@
-﻿@import './variable.less';
+@import './mixins.less';
+
+@import './variable.less';
 
 .@{prefix} {
   position: relative;
@@ -13,6 +15,14 @@
     overflow: auto;
     flex: 1; // 高度受限时自动填充剩余空间
     min-height: 0; // 允许 flex 子元素缩小到 0，触发滚动
+    scrollbar-width: thin;
+    scrollbar-color: var(--s-color-border-control) transparent;
+
+    // 容器可聚焦以支持键盘滚动，需要可见焦点反馈。
+    &:focus-visible {
+      outline: var(--s-focus-ring-width) solid var(--s-primary-color);
+      outline-offset: calc(-1 * var(--s-focus-ring-width));
+    }
   }
 
   // 滚动触底指示器
@@ -112,8 +122,8 @@
     cursor: grab;
     color: var(--s-color-text-quaternary);
     transition:
-      color 0.2s ease,
-      background-color 0.2s ease;
+      color var(--s-duration-normal) var(--s-ease-out),
+      background-color var(--s-duration-normal) var(--s-ease-out);
 
     &:hover {
       color: var(--s-color-text-secondary);
@@ -180,7 +190,7 @@
 
   // 行拖拽排序动画
   &-body .@{prefix}-row {
-    transition: transform 0.2s ease;
+    transition: transform var(--s-duration-normal) var(--s-ease-out);
   }
 
   &-bordered {
@@ -229,13 +239,14 @@
 
   &-striped {
     .@{prefix}-body {
-      tr:nth-child(even) {
+      // 选中行与分组行拥有更高的状态层级，斑马纹不得覆盖它们。
+      tr:nth-child(even):not(.@{prefix}-row-selected):not(.@{prefix}-row-grouped) {
         .@{prefix}-cell {
           --s-table-cell-bg: var(--s-color-bg-row-striped);
           background-color: var(--s-table-cell-bg);
         }
       }
-      .@{prefix}-row:hover {
+      .@{prefix}-row:not(.@{prefix}-row-selected):not(.@{prefix}-row-grouped):hover {
         .@{prefix}-cell {
           --s-table-cell-bg: var(--s-color-bg-row-striped-hover);
           background-color: var(--s-table-cell-bg);
@@ -248,6 +259,7 @@
     width: 100%;
     table-layout: fixed;
     white-space: normal;
+    overflow-wrap: anywhere;
     border-spacing: 0;
   }
 
@@ -299,18 +311,18 @@
     .@{prefix}-cell {
       --s-table-cell-bg: var(--s-color-bg-header);
       position: relative;
-      color: var(--s-color-text);
+      color: var(--s-color-text-secondary);
       font-weight: 600;
       background-color: var(--s-table-cell-bg);
       text-align: start;
       vertical-align: middle;
-      word-break: break-word;
+      overflow-wrap: anywhere;
       transition:
-        padding 0.2s ease,
-        font-size 0.2s ease,
-        line-height 0.2s ease,
-        background-color 0.2s ease,
-        border-color 0.2s ease;
+        padding var(--s-duration-normal) var(--s-ease-out),
+        font-size var(--s-duration-normal) var(--s-ease-out),
+        line-height var(--s-duration-normal) var(--s-ease-out),
+        background-color var(--s-duration-normal) var(--s-ease-out),
+        border-color var(--s-duration-normal) var(--s-ease-out);
 
       .s-table-cell-inner {
         display: flex;
@@ -348,7 +360,7 @@
       inset-inline: 0;
       bottom: 0;
       height: 1px;
-      background-color: var(--s-color-border);
+      background-color: var(--s-color-border-strong);
       pointer-events: none;
     }
 
@@ -371,7 +383,7 @@
       position: absolute;
       top: 0;
       inset-inline-end: 0;
-      width: 12px;
+      width: 16px;
       height: 100%;
       transform: translateX(50%);
       display: flex;
@@ -381,7 +393,12 @@
       touch-action: none;
       user-select: none;
       opacity: 0;
-      transition: opacity 0.2s ease;
+      transition: opacity var(--s-duration-fast) var(--s-ease-out);
+
+      // 触屏没有 hover，手柄常显半透明以提示可拖拽。
+      @media (hover: none) {
+        opacity: 0.5;
+      }
       &::before {
         content: '';
         width: 2px;
@@ -389,9 +406,9 @@
         border-radius: 999px;
         background-color: transparent;
         transition:
-          background-color 0.2s ease,
-          box-shadow 0.2s ease,
-          transform 0.2s ease;
+          background-color var(--s-duration-normal) var(--s-ease-out),
+          box-shadow var(--s-duration-normal) var(--s-ease-out),
+          transform var(--s-duration-normal) var(--s-ease-out);
       }
       &::after {
         content: '';
@@ -406,9 +423,9 @@
         transform: translate(-50%, -50%) scale(0.85);
         opacity: 0;
         transition:
-          opacity 0.2s ease,
-          transform 0.2s ease,
-          box-shadow 0.2s ease;
+          opacity var(--s-duration-normal) var(--s-ease-out),
+          transform var(--s-duration-normal) var(--s-ease-out),
+          box-shadow var(--s-duration-normal) var(--s-ease-out);
       }
       &:hover {
         cursor: col-resize;
@@ -441,29 +458,37 @@
       }
 
       &[tabindex]:focus-visible {
-        outline: 2px solid var(--s-primary-color, #1677ff);
+        .s-focus-ring-inset();
         outline-offset: -2px;
       }
     }
+  }
 
-    .@{prefix}-cell-editor {
-      width: 100%;
-      min-width: 0;
-      height: 28px;
-      box-sizing: border-box;
-      padding: 3px 8px;
-      border: 1px solid var(--s-primary-color, #1677ff);
-      border-radius: var(--s-radius-sm, 4px);
-      outline: none;
-      color: inherit;
-      font: inherit;
-      background-color: var(--s-color-bg-cell);
+  // 单元格编辑器：表头与表体共用同一视觉与焦点反馈。
+  &-cell-editor {
+    width: 100%;
+    min-width: 0;
+    height: 28px;
+    box-sizing: border-box;
+    padding: 3px 8px;
+    border: 1px solid var(--s-primary-color, #1677ff);
+    border-radius: var(--s-radius-sm, 4px);
+    outline: none;
+    color: inherit;
+    font: inherit;
+    background-color: var(--s-color-bg-cell);
+    transition:
+      border-color var(--s-duration-fast) var(--s-ease-out),
+      box-shadow var(--s-duration-fast) var(--s-ease-out);
 
-      &[type='checkbox'] {
-        width: 16px;
-        height: 16px;
-        padding: 0;
-      }
+    &:focus-visible {
+      .s-focus-ring-inset();
+    }
+
+    &[type='checkbox'] {
+      width: 16px;
+      height: 16px;
+      padding: 0;
     }
   }
 
@@ -570,11 +595,11 @@
       color: var(--s-color-text-tertiary);
       cursor: pointer;
       transition:
-        color 0.2s ease,
-        background-color 0.2s ease;
+        color var(--s-duration-normal) var(--s-ease-out),
+        background-color var(--s-duration-normal) var(--s-ease-out);
 
       svg {
-        transition: transform 0.2s ease;
+        transition: transform var(--s-duration-normal) var(--s-ease-out);
       }
 
       &:hover {
@@ -635,6 +660,12 @@
       }
     }
 
+    // 选中行与框选交集使用更深的填充，避免两种状态叠加后难以区分。
+    .@{prefix}-row.@{prefix}-row-selected .@{prefix}-cell.@{prefix}-cell-range-selected {
+      --s-table-cell-bg: var(--s-color-bg-cell-range-active);
+      background-color: var(--s-table-cell-bg);
+    }
+
     // 四条外围边缘由上面的伪元素绘制为 Excel 风格实线。
     .@{prefix}-cell-range-edge-top {
       --s-cell-range-top: 2px;
@@ -657,13 +688,13 @@
       border-bottom: 1px solid var(--s-color-border);
       text-align: start;
       vertical-align: middle;
-      word-break: break-word;
+      overflow-wrap: anywhere;
       transition:
-        padding 0.2s ease,
-        font-size 0.2s ease,
-        line-height 0.2s ease,
-        background-color 0.2s ease,
-        border-color 0.2s ease;
+        padding var(--s-duration-normal) var(--s-ease-out),
+        font-size var(--s-duration-normal) var(--s-ease-out),
+        line-height var(--s-duration-normal) var(--s-ease-out),
+        background-color var(--s-duration-normal) var(--s-ease-out),
+        border-color var(--s-duration-normal) var(--s-ease-out);
 
       &.s-table-cell-fixed-left,
       &.s-table-cell-fixed-right {
@@ -691,7 +722,7 @@
 
   // 页脚（表格下方通用内容区域）
   &-footer {
-    padding: 10px;
+    padding: 12px 16px;
     border-top: 1px solid var(--s-color-border);
     background-color: var(--s-color-bg-footer);
     color: var(--s-color-text);
@@ -702,11 +733,10 @@
   &-summary {
     .@{prefix}-summary-row {
       .@{prefix}-cell {
-        padding: 8px 16px;
+        // 尺寸（padding / font-size / line-height）统一继承 small / middle / large。
         border-top: 1px solid var(--s-color-border);
         color: var(--s-color-text);
         font-weight: 600;
-        font-size: 14px;
         background-color: var(--s-color-bg-summary);
         text-align: left;
 
@@ -732,7 +762,15 @@
       --s-fixed-blur-shadow: 0 0 transparent;
     }
 
-    // 右固定组的边界列 = 其左邻为非右固定单元格。仅此列开启向左模糊投影。
+    // 固定组边界列开启模糊投影；组内其余列保持 0 阴影以控制 paint 成本。
+    &-fixed-left:nth-last-child(1 of .@{prefix}-cell-fixed-left) {
+      --s-fixed-blur-shadow: 6px 0 8px -6px var(--s-color-shadow-fixed);
+    }
+
+    &-fixed-right:nth-child(1 of .@{prefix}-cell-fixed-right) {
+      --s-fixed-blur-shadow: -6px 0 8px -6px var(--s-color-shadow-fixed);
+    }
+
     &-fixed-left {
       box-shadow: var(--s-fixed-inset-shadow), var(--s-fixed-blur-shadow);
 
@@ -753,10 +791,8 @@
     }
   }
 
-  // 选择列
-  // 滚动容器只在固定列遮挡了横向内容时显示边界阴影。
+  // 选择列单元格（表头布局在下方 .s-table-selection-header 中单独定义）。
   &-selection {
-    &-header,
     &-cell {
       display: inline-flex;
       align-items: center;
@@ -850,8 +886,7 @@
 
       // 键盘可达的排序标题：提供清晰的焦点指示（WCAG 2.4.7）
       &:focus-visible {
-        outline: 2px solid var(--s-primary-color, #1677ff);
-        outline-offset: 2px;
+        .s-focus-ring();
         border-radius: var(--s-radius-sm, 4px);
       }
     }
@@ -877,15 +912,21 @@
   .s-table-column-sorter-up,
   .s-table-column-sorter-down {
     display: inline-block;
-    color: var(--s-color-text-icon);
+    color: var(--s-color-sort-icon);
     // 增大命中区域并提高未激活辨识度（WCAG：避免近乎不可见的状态指示）
     font-size: 14px;
-    opacity: 0.45;
+    opacity: 0.75;
     line-height: 0;
     margin: -2px 0;
     transition:
-      color var(--s-duration-fast) ease,
-      opacity var(--s-duration-fast) ease;
+      color var(--s-duration-fast) var(--s-ease-out),
+      opacity var(--s-duration-fast) var(--s-ease-out);
+  }
+
+  // hover 时提高未激活图标的可辨识度；激活态规则在后，优先级更高。
+  .s-table-column-sorter:hover & {
+    color: var(--s-color-sort-icon-hover);
+    opacity: 1;
   }
 
   .s-table-column-sorter-up-active,
@@ -905,8 +946,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     padding: 0;
     margin: 0;
     border: none;
@@ -916,12 +957,16 @@
     font-size: 12px;
     cursor: pointer;
     transition:
-      color 0.2s ease,
-      background-color 0.2s ease;
+      color var(--s-duration-fast) var(--s-ease-out),
+      background-color var(--s-duration-fast) var(--s-ease-out);
 
     &:hover {
       color: var(--s-color-text);
       background-color: var(--s-color-bg-hover);
+    }
+
+    &:focus-visible {
+      .s-focus-ring();
     }
 
     &-active {
@@ -940,8 +985,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     padding: 0;
     margin: 0;
     border: none;
@@ -951,12 +996,16 @@
     font-size: 12px;
     cursor: pointer;
     transition:
-      color 0.2s ease,
-      background-color 0.2s ease;
+      color var(--s-duration-fast) var(--s-ease-out),
+      background-color var(--s-duration-fast) var(--s-ease-out);
 
     &:hover {
       color: var(--s-color-text);
       background-color: var(--s-color-bg-hover);
+    }
+
+    &:focus-visible {
+      .s-focus-ring();
     }
 
     &-active {

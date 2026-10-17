@@ -1,3 +1,5 @@
+@import '../../styles/mixins.less';
+
 // Checkbox 样式
 .s-checkbox-wrapper {
   display: inline-flex;
@@ -29,8 +31,7 @@
     margin: 0;
 
     &:focus-visible + .s-checkbox-inner {
-      outline: 2px solid var(--s-primary-color, #1677ff);
-      outline-offset: 2px;
+      .s-focus-ring();
     }
   }
 
@@ -43,8 +44,8 @@
     background-color: var(--s-color-bg-cell, #fff);
     position: relative;
     transition:
-      border-color 0.2s ease,
-      background-color 0.2s ease;
+      border-color var(--s-duration-fast) var(--s-ease-out),
+      background-color var(--s-duration-fast) var(--s-ease-out);
 
     &::after {
       content: '';
@@ -53,14 +54,14 @@
       left: 50%;
       width: 5px;
       height: 9px;
-      border: 2px solid #fff;
+      border: 2px solid var(--s-color-text-inverse, #fff);
       border-top: 0;
       border-left: 0;
       opacity: 0;
       transform: rotate(45deg) scale(0.5);
       transition:
-        opacity 0.15s ease,
-        transform 0.15s ease;
+        opacity var(--s-duration-fast) var(--s-ease-out),
+        transform var(--s-duration-fast) var(--s-ease-out);
       margin-left: -2.5px;
       margin-top: -5px;
     }

@@ -1,3 +1,5 @@
+@import './mixins.less';
+
 // 右键菜单（Teleport 到 body，全局作用域）
 .s-table-context-menu {
   z-index: var(--s-z-index-dropdown, 1050);
@@ -8,6 +10,7 @@
     box-sizing: border-box;
     min-width: 120px;
     padding: 4px;
+    border: 1px solid var(--s-color-border);
     background-color: var(--s-color-bg-cell, #fff);
     color: var(--s-color-text, rgba(0, 0, 0, 0.88));
     border-radius: var(--s-radius-lg, 8px);
@@ -17,7 +20,7 @@
       0 3px 6px -4px rgba(0, 0, 0, 0.12),
       0 6px 16px rgba(0, 0, 0, 0.08)
     );
-    animation: s-table-context-menu-fade 0.15s ease;
+    animation: s-table-context-menu-fade var(--s-duration-normal) var(--s-ease-out);
   }
 
   // 菜单项
@@ -37,7 +40,7 @@
     color: var(--s-color-text, rgba(0, 0, 0, 0.88));
     text-align: left;
     white-space: nowrap;
-    transition: background-color 0.15s ease;
+    transition: background-color var(--s-duration-fast) var(--s-ease-out);
 
     &:hover {
       background-color: var(--s-color-bg-hover, rgba(0, 0, 0, 0.04));
@@ -47,15 +50,19 @@
       background-color: var(--s-color-bg-active, rgba(0, 0, 0, 0.08));
     }
 
+    &:focus-visible {
+      .s-focus-ring();
+    }
+
     &-danger {
-      color: #ff4d4f;
+      color: var(--s-color-error, #ff4d4f);
 
       &:hover {
-        background-color: color-mix(in srgb, #ff4d4f 12%, transparent);
+        background-color: var(--s-color-error-bg, rgba(255, 77, 79, 0.1));
       }
 
       &:active {
-        background-color: color-mix(in srgb, #ff4d4f 20%, transparent);
+        background-color: color-mix(in srgb, var(--s-color-error, #ff4d4f) 20%, transparent);
       }
     }
 
@@ -91,6 +98,11 @@
     font-size: 12px;
     line-height: 20px;
     color: var(--s-color-text-tertiary, rgba(0, 0, 0, 0.45));
+  }
+
+  // 键盘导航聚焦的菜单项与 hover 态保持一致的可见反馈。
+  &-item:focus-visible {
+    background-color: var(--s-color-bg-hover);
   }
 }
 

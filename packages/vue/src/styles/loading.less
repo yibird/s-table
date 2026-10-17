@@ -3,13 +3,13 @@
 .@{prefix}-loading {
   position: absolute;
   inset: 0;
-  z-index: 1000;
+  z-index: var(--s-z-index-loading, 1000);
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--s-color-bg-loading, rgba(255, 255, 255, 0.65));
+  background-color: var(--s-color-bg-loading, rgba(255, 255, 255, 0.72));
   pointer-events: auto;
-  animation: s-table-loading-overlay-in var(--s-duration-normal, 0.2s) ease-out;
+  animation: s-table-loading-overlay-in var(--s-duration-normal, 0.2s) var(--s-ease-out, ease-out);
 
   &-indicator {
     display: flex;

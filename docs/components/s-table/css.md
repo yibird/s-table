@@ -6,7 +6,7 @@
 
 主题变量会作用于表格实例内部的控件；筛选、搜索、表头选择、Select 和右键菜单等 Teleport 浮层打开时，也会同步触发节点上的 `--s-*` 变量，因此实例级主题不会退回到根级默认值。未列出的 `--s-*` 自定义变量同样会被同步。
 
-主色 hover / active、框选边框和 loading 颜色在未显式配置时会从当前实例的 `--s-primary-color` 派生；只覆盖主色即可保持交互状态一致，显式配置对应变量时仍以配置值优先。
+主色 hover / active、框选边框和 loading 颜色在未显式配置时会从当前实例的 `--s-primary-color` 派生；只覆盖主色即可保持交互状态一致，显式配置对应变量时仍以配置值优先。组件同时尊重 `prefers-reduced-motion: reduce`。
 
 变量在 `:root` 提供默认值，并由 `.s-table` 实例作用域继承和消费。放在某个表格外层或直接放在表格 class 上即可局部覆盖。
 
@@ -29,8 +29,12 @@
 | `--s-color-bg-summary`            | `#fafafa`                | Summary 背景       |
 | `--s-color-bg-drag-source`        | `#e6f4ff`                | 行拖拽源背景       |
 | `--s-color-bg-column-drag-source` | `#e6f4ff`                | 列拖拽源表头背景   |
-| `--s-color-bg-cell-range`         | `#f0f7ff`                | 框选范围背景       |
-| `--s-color-bg-cell-range-active`  | `#d6ebff`                | 框选锚点背景       |
+| `--s-color-bg-cell-range`         | `#dcebff`                | 框选范围背景       |
+| `--s-color-bg-cell-range-active`  | `#bfd7ff`                | 框选锚点背景       |
+| `--s-color-error`                 | `#ff4d4f`                | 错误 / 危险色      |
+| `--s-color-error-hover`           | `#ff7875`                | 危险态 hover       |
+| `--s-color-error-active`          | `#d9363e`                | 危险态 active      |
+| `--s-color-error-bg`              | `rgba(255,77,79,.1)`     | 危险态浅背景       |
 | `--s-color-bg-disabled`           | `#f5f5f5`                | 禁用控件背景       |
 | `--s-color-bg-loading`            | `rgba(255,255,255,.72)`  | 加载遮罩背景       |
 | `--s-color-loading-track`         | `color-mix(...)`         | 加载环轨道色       |
@@ -38,35 +42,48 @@
 
 ### 边框、文本与交互
 
-| CSS Variable                  | 默认值                   | 描述             |
-| ----------------------------- | ------------------------ | ---------------- |
-| `--s-color-border-cell-range` | `var(--s-primary-color)` | 框选边框         |
-| `--s-color-border`            | `#f0f0f0`                | 通用分割线       |
-| `--s-color-border-control`    | `#d9d9d9`                | 控件边框         |
-| `--s-color-text`              | `rgba(0,0,0,.88)`        | 主文本           |
-| `--s-color-text-secondary`    | `rgba(0,0,0,.65)`        | 次文本           |
-| `--s-color-text-tertiary`     | `rgba(0,0,0,.45)`        | 辅助文本         |
-| `--s-color-text-quaternary`   | `rgba(0,0,0,.45)`        | 占位/禁用文本    |
-| `--s-color-text-icon`         | `#bfbfbf`                | 默认图标色       |
-| `--s-color-bg-hover`          | `rgba(0,0,0,.04)`        | 控件 hover 背景  |
-| `--s-color-bg-active`         | `rgba(0,0,0,.08)`        | 控件 active 背景 |
+| CSS Variable                  | 默认值                   | 描述              |
+| ----------------------------- | ------------------------ | ----------------- |
+| `--s-color-border-cell-range` | `var(--s-primary-color)` | 框选边框          |
+| `--s-color-border`            | `#f0f0f0`                | 通用分割线        |
+| `--s-color-border-strong`     | `#e5e5e5`                | 表头底线/分组边界 |
+| `--s-color-border-control`    | `#d9d9d9`                | 控件边框          |
+| `--s-color-text`              | `rgba(0,0,0,.88)`        | 主文本            |
+| `--s-color-text-secondary`    | `rgba(0,0,0,.65)`        | 次文本（表头）    |
+| `--s-color-text-tertiary`     | `rgba(0,0,0,.45)`        | 辅助文本          |
+| `--s-color-text-quaternary`   | `rgba(0,0,0,.45)`        | 占位/禁用文本     |
+| `--s-color-text-icon`         | `#bfbfbf`                | 默认图标色        |
+| `--s-color-text-inverse`      | `#fff`                   | 实心按钮反色文本  |
+| `--s-color-sort-icon`         | `#a6a6a6`                | 排序图标默认色    |
+| `--s-color-sort-icon-hover`   | `#595959`                | 排序图标 hover    |
+| `--s-color-bg-hover`          | `rgba(0,0,0,.04)`        | 控件 hover 背景   |
+| `--s-color-bg-active`         | `rgba(0,0,0,.08)`        | 控件 active 背景  |
 
 ### 阴影、圆角、动效与层级
 
 | CSS Variable             | 默认值                       | 描述                   |
 | ------------------------ | ---------------------------- | ---------------------- |
-| `--s-color-shadow-fixed` | `rgba(5,5,5,.12)`            | 固定列阴影色           |
+| `--s-color-shadow-fixed` | `rgba(5,5,5,.2)`             | 固定列阴影色           |
 | `--s-shadow-dropdown`    | `0 6px 16px rgba(0,0,0,.08)` | 下拉面板阴影           |
 | `--s-shadow-menu`        | 两层阴影                     | 右键菜单阴影           |
+| `--s-shadow-elevated`    | 两层轻阴影                   | 浮层通用抬升阴影       |
 | `--s-radius-sm`          | `4px`                        | 小圆角                 |
 | `--s-radius-md`          | `6px`                        | 中圆角                 |
 | `--s-radius-lg`          | `8px`                        | 大圆角                 |
+| `--s-focus-ring-width`   | `2px`                        | 焦点环宽度             |
+| `--s-focus-ring-offset`  | `2px`                        | 焦点环偏移             |
+| `--s-control-height-sm`  | `24px`                       | 小尺寸控件高度         |
+| `--s-control-height-md`  | `32px`                       | 中尺寸控件高度         |
+| `--s-control-height-lg`  | `40px`                       | 大尺寸控件高度         |
 | `--s-duration-fast`      | `0.1s`                       | 微交互动效             |
 | `--s-duration-normal`    | `0.2s`                       | 面板动效               |
 | `--s-duration-slow`      | `0.3s`                       | 长动效                 |
+| `--s-ease-out`           | 标准缓出曲线                 | 交互过渡               |
+| `--s-ease-in-out`        | 标准缓入缓出曲线             | 面板/状态过渡          |
 | `--s-z-index-cell-fixed` | `2`                          | 固定列单元格           |
 | `--s-z-index-header`     | `10`                         | 固定表头               |
 | `--s-z-index-resizer`    | `15`                         | 列宽拖拽手柄           |
+| `--s-z-index-loading`    | `1000`                       | 加载遮罩               |
 | `--s-z-index-dropdown`   | `1050`                       | 过滤、搜索、选择下拉层 |
 
 ## 局部主题

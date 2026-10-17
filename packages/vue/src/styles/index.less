@@ -13,6 +13,7 @@
  */
 @import './token.less';
 @import './variable.less';
+@import './mixins.less';
 @import './table.less';
 @import './dropdown.less';
 @import './menu.less';
@@ -25,3 +26,24 @@
 @import '../ui/radio/styles.less';
 @import '../ui/select/styles.less';
 @import '../ui/wave.less';
+
+// ==================== 无障碍：尊重减少动效偏好 ====================
+// :where() 保持零特异性，仅覆盖时长；!important 确保系统偏好优先于组件内联过渡。
+@media (prefers-reduced-motion: reduce) {
+  :where(
+    .s-table,
+    .s-table *,
+    .s-table-filter-dropdown,
+    .s-table-search-dropdown,
+    .s-table-selection-dropdown,
+    .s-table-context-menu,
+    .s-select-dropdown,
+    .s-pagination,
+    .s-pagination *
+  ) {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

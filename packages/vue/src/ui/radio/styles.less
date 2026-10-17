@@ -1,3 +1,5 @@
+@import '../../styles/mixins.less';
+
 // Radio 样式
 .s-radio-wrapper {
   display: inline-flex;
@@ -70,8 +72,7 @@
     margin: 0;
 
     &:focus-visible + .s-radio-inner {
-      outline: 2px solid var(--s-primary-color, #1677ff);
-      outline-offset: 2px;
+      .s-focus-ring();
     }
   }
 
@@ -84,9 +85,9 @@
     background-color: var(--s-color-bg-cell, #fff);
     position: relative;
     transition:
-      border-color 0.2s ease,
-      background-color 0.2s ease,
-      box-shadow 0.2s ease;
+      border-color var(--s-duration-fast) var(--s-ease-out),
+      background-color var(--s-duration-fast) var(--s-ease-out),
+      box-shadow var(--s-duration-fast) var(--s-ease-out);
 
     &::after {
       content: '';
@@ -98,7 +99,7 @@
       border-radius: 50%;
       background-color: var(--s-primary-color, #1677ff);
       transform: translate(-50%, -50%) scale(0);
-      transition: transform 0.2s cubic-bezier(0.78, 0.14, 0.15, 0.86);
+      transition: transform var(--s-duration-normal) var(--s-ease-in-out);
     }
   }
 

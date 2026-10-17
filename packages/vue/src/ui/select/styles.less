@@ -1,3 +1,5 @@
+@import '../../styles/mixins.less';
+
 // Select 样式
 .s-select {
   position: relative;
@@ -39,8 +41,8 @@
     background-color: var(--s-color-bg-cell, #fff);
     cursor: pointer;
     transition:
-      border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
-      box-shadow 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+      border-color var(--s-duration-fast) var(--s-ease-out),
+      box-shadow var(--s-duration-fast) var(--s-ease-out);
 
     &:hover {
       border-color: var(--s-primary-color, #1677ff);
@@ -48,13 +50,13 @@
 
     // 键盘焦点指示（WCAG 2.4.7）
     &:focus-visible {
-      outline: 2px solid var(--s-primary-color, #1677ff);
-      outline-offset: 2px;
+      .s-focus-ring();
     }
 
     .s-select-open & {
       border-color: var(--s-primary-color, #1677ff);
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--s-primary-color, #1677ff) 12%, transparent);
+      box-shadow: 0 0 0 var(--s-focus-ring-width)
+        color-mix(in srgb, var(--s-primary-color, #1677ff) 12%, transparent);
     }
 
     .s-select-disabled & {
@@ -72,7 +74,7 @@
     color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
     font-size: 12px;
     pointer-events: none;
-    transition: transform 0.2s;
+    transition: transform var(--s-duration-fast) var(--s-ease-out);
 
     .s-select-open & {
       transform: translateY(-50%) rotate(180deg);
@@ -152,14 +154,15 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  border: 1px solid var(--s-color-border);
   background-color: var(--s-color-bg-cell, #fff);
   border-radius: var(--s-radius-lg, 8px);
-  // 单层轻量阴影：下拉面板与页面分离感弱，无需多层叠加
-  box-shadow: var(--s-shadow-dropdown, 0 6px 16px rgba(0, 0, 0, 0.08));
+  box-shadow: var(--s-shadow-elevated, var(--s-shadow-dropdown, 0 6px 16px rgba(0, 0, 0, 0.08)));
   padding: 4px;
   box-sizing: border-box;
   overflow-y: auto;
   z-index: var(--s-z-index-dropdown, 1050);
+  animation: s-table-popover-in var(--s-duration-normal) var(--s-ease-out);
 
   .s-select-item-option {
     display: flex;
@@ -168,13 +171,17 @@
     padding: 5px 12px;
     border-radius: var(--s-radius-sm, 4px);
     cursor: pointer;
-    transition: background-color 0.15s;
+    transition: background-color var(--s-duration-fast) var(--s-ease-out);
     font-size: 14px;
     line-height: 22px;
     color: var(--s-color-text, rgba(0, 0, 0, 0.88));
 
     &:hover {
       background-color: var(--s-color-bg-hover, rgba(0, 0, 0, 0.04));
+    }
+
+    &:focus-visible {
+      .s-focus-ring();
     }
 
     &-active {

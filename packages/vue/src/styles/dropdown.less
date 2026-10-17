@@ -1,12 +1,17 @@
-﻿// 过滤/搜索/选择下拉面板（Teleport 到 body，全局作用域）
+@import './mixins.less';
+
+// 过滤/搜索/选择下拉面板（Teleport 到 body，全局作用域）
 // 过滤下拉面板（Teleport 到 body，全局作用域）
 .s-table-filter-dropdown {
   z-index: var(--s-z-index-dropdown);
   min-width: 160px;
+  box-sizing: border-box;
+  border: 1px solid var(--s-color-border);
   background-color: var(--s-color-bg-cell);
   color: var(--s-color-text);
   border-radius: var(--s-radius-lg, 8px);
-  box-shadow: var(--s-shadow-dropdown, 0 6px 16px rgba(0, 0, 0, 0.08));
+  box-shadow: var(--s-shadow-elevated, var(--s-shadow-dropdown));
+  animation: s-table-popover-in var(--s-duration-normal) var(--s-ease-out);
 
   &-content {
     padding: 8px 0;
@@ -30,10 +35,14 @@
     cursor: pointer;
     font-size: 14px;
     line-height: 22px;
-    transition: background-color 0.15s ease;
+    transition: background-color var(--s-duration-fast) var(--s-ease-out);
 
     &:hover {
       background-color: var(--s-color-bg-hover);
+    }
+
+    &:focus-visible {
+      .s-focus-ring();
     }
   }
 
@@ -48,14 +57,14 @@
     background-color: var(--s-color-bg-cell);
     flex-shrink: 0;
     transition:
-      color 0.2s ease,
-      border-color 0.2s ease,
-      background-color 0.2s ease;
+      color var(--s-duration-fast) var(--s-ease-out),
+      border-color var(--s-duration-fast) var(--s-ease-out),
+      background-color var(--s-duration-fast) var(--s-ease-out);
 
     &.checked {
       background-color: var(--s-primary-color, #1677ff);
       border-color: var(--s-primary-color, #1677ff);
-      color: #fff;
+      color: var(--s-color-text-inverse, #fff);
     }
   }
 
@@ -78,10 +87,14 @@
     font-size: 14px;
     line-height: 22px;
     color: var(--s-color-text);
-    transition: background-color 0.15s ease;
+    transition: background-color var(--s-duration-fast) var(--s-ease-out);
 
     &:hover {
       background-color: var(--s-color-bg-hover);
+    }
+
+    &:focus-visible {
+      .s-focus-ring();
     }
 
     &-selected {
@@ -101,16 +114,20 @@
 
   &-btn {
     flex: 1;
-    padding: 4px 12px;
+    padding: 4px 15px;
     border-radius: var(--s-radius-md, 6px);
     font-size: 14px;
     line-height: 22px;
     cursor: pointer;
     transition:
-      color 0.2s ease,
-      border-color 0.2s ease,
-      background-color 0.2s ease;
+      color var(--s-duration-fast) var(--s-ease-out),
+      border-color var(--s-duration-fast) var(--s-ease-out),
+      background-color var(--s-duration-fast) var(--s-ease-out);
     text-align: center;
+
+    &:focus-visible {
+      .s-focus-ring();
+    }
 
     &-reset {
       background-color: var(--s-color-bg-cell);
@@ -126,10 +143,28 @@
     &-confirm {
       background-color: var(--s-primary-color, #1677ff);
       border: 1px solid var(--s-primary-color, #1677ff);
-      color: #fff;
+      color: var(--s-color-text-inverse, #fff);
 
       &:hover {
-        opacity: 0.85;
+        background-color: var(
+          --s-primary-color-hover,
+          color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
+        );
+        border-color: var(
+          --s-primary-color-hover,
+          color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
+        );
+      }
+
+      &:active {
+        background-color: var(
+          --s-primary-color-active,
+          color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
+        );
+        border-color: var(
+          --s-primary-color-active,
+          color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
+        );
       }
     }
   }
@@ -139,10 +174,13 @@
 .s-table-search-dropdown {
   z-index: var(--s-z-index-dropdown);
   width: 220px;
+  box-sizing: border-box;
+  border: 1px solid var(--s-color-border);
   background-color: var(--s-color-bg-cell);
   color: var(--s-color-text);
   border-radius: var(--s-radius-lg, 8px);
-  box-shadow: var(--s-shadow-dropdown, 0 6px 16px rgba(0, 0, 0, 0.08));
+  box-shadow: var(--s-shadow-elevated, var(--s-shadow-dropdown));
+  animation: s-table-popover-in var(--s-duration-normal) var(--s-ease-out);
 
   &-content {
     padding: 12px;
@@ -158,16 +196,20 @@
 
   &-btn {
     flex: 1;
-    padding: 4px 12px;
+    padding: 4px 15px;
     border-radius: var(--s-radius-md, 6px);
     font-size: 14px;
     line-height: 22px;
     cursor: pointer;
     transition:
-      color 0.2s ease,
-      border-color 0.2s ease,
-      background-color 0.2s ease;
+      color var(--s-duration-fast) var(--s-ease-out),
+      border-color var(--s-duration-fast) var(--s-ease-out),
+      background-color var(--s-duration-fast) var(--s-ease-out);
     text-align: center;
+
+    &:focus-visible {
+      .s-focus-ring();
+    }
 
     &-reset {
       background-color: var(--s-color-bg-cell);
@@ -183,10 +225,28 @@
     &-confirm {
       background-color: var(--s-primary-color, #1677ff);
       border: 1px solid var(--s-primary-color, #1677ff);
-      color: #fff;
+      color: var(--s-color-text-inverse, #fff);
 
       &:hover {
-        opacity: 0.85;
+        background-color: var(
+          --s-primary-color-hover,
+          color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
+        );
+        border-color: var(
+          --s-primary-color-hover,
+          color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
+        );
+      }
+
+      &:active {
+        background-color: var(
+          --s-primary-color-active,
+          color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
+        );
+        border-color: var(
+          --s-primary-color-active,
+          color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
+        );
       }
     }
   }
@@ -203,8 +263,8 @@
   background-color: var(--s-color-bg-cell);
   outline: none;
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color var(--s-duration-fast) var(--s-ease-out),
+    box-shadow var(--s-duration-fast) var(--s-ease-out);
   box-sizing: border-box;
 
   &::placeholder {
@@ -217,7 +277,8 @@
 
   &:focus {
     border-color: var(--s-primary-color, #1677ff);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--s-primary-color, #1677ff) 12%, transparent);
+    box-shadow: 0 0 0 var(--s-focus-ring-width)
+      color-mix(in srgb, var(--s-primary-color, #1677ff) 12%, transparent);
   }
 }
 
@@ -231,19 +292,23 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
     padding: 0;
     margin: 0;
     border: none;
-    border-radius: var(--s-radius-sm, 3px);
+    border-radius: var(--s-radius-sm, 4px);
     background: transparent;
     color: var(--s-color-text-tertiary);
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: color var(--s-duration-fast) var(--s-ease-out);
 
     &:hover {
       color: var(--s-color-text);
+    }
+
+    &:focus-visible {
+      .s-focus-ring();
     }
 
     &-open {
@@ -251,7 +316,7 @@
     }
 
     svg {
-      transition: transform 0.2s ease;
+      transition: transform var(--s-duration-fast) var(--s-ease-out);
     }
 
     &-open svg {
@@ -263,11 +328,14 @@
 .s-table-selection-dropdown-menu {
   z-index: var(--s-z-index-dropdown);
   min-width: 140px;
+  box-sizing: border-box;
   padding: 4px;
+  border: 1px solid var(--s-color-border);
   background-color: var(--s-color-bg-cell);
   color: var(--s-color-text);
   border-radius: var(--s-radius-lg, 8px);
-  box-shadow: var(--s-shadow-menu);
+  box-shadow: var(--s-shadow-elevated, var(--s-shadow-menu));
+  animation: s-table-popover-in var(--s-duration-normal) var(--s-ease-out);
 }
 
 .s-table-selection-dropdown-item {
@@ -282,7 +350,7 @@
   line-height: 22px;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--s-duration-fast) var(--s-ease-out);
   white-space: nowrap;
 
   &:hover {
@@ -292,10 +360,26 @@
   &:active {
     background-color: var(--s-color-bg-active);
   }
+
+  &:focus-visible {
+    .s-focus-ring();
+  }
 }
 
 .s-table-selection-dropdown-divider {
   height: 1px;
   margin: 4px 0;
   background-color: var(--s-color-border);
+}
+
+// 仅使用独立 scale 属性：floating-ui 通过 transform 定位，动画不能覆盖它。
+@keyframes s-table-popover-in {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
 }

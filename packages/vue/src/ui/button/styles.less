@@ -1,3 +1,5 @@
+@import '../../styles/mixins.less';
+
 // Button 样式
 .s-btn {
   position: relative;
@@ -14,10 +16,10 @@
   border-radius: var(--s-radius-md, 6px);
   outline: none;
   transition:
-    color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
-    border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
-    background-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
-    box-shadow 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+    color var(--s-duration-normal) var(--s-ease-in-out),
+    border-color var(--s-duration-normal) var(--s-ease-in-out),
+    background-color var(--s-duration-normal) var(--s-ease-in-out),
+    box-shadow var(--s-duration-normal) var(--s-ease-in-out);
   user-select: none;
   touch-action: manipulation;
   line-height: 1.5715;
@@ -41,28 +43,27 @@
     );
   }
 
-  // 键盘焦点指示（WCAG 2.4.7）：outline: none 仅移除默认环，此处补回可见焦点
+  // 键盘焦点指示（WCAG 2.4.7）：统一焦点环 token。
   &:focus-visible {
-    outline: 2px solid var(--s-primary-color, #1677ff);
-    outline-offset: 2px;
+    .s-focus-ring();
   }
 
   // ── 尺寸 ──
   &-small {
-    height: 24px;
+    height: var(--s-control-height-sm, 24px);
     padding: 0 7px;
     font-size: 12px;
     border-radius: var(--s-radius-sm, 4px);
   }
 
   &-middle {
-    height: 32px;
+    height: var(--s-control-height-md, 32px);
     padding: 4px 15px;
     font-size: 14px;
   }
 
   &-large {
-    height: 40px;
+    height: var(--s-control-height-lg, 40px);
     padding: 6px 19px;
     font-size: 16px;
     border-radius: var(--s-radius-lg, 8px);
@@ -70,7 +71,7 @@
 
   // ── Primary ──
   &-primary {
-    color: #fff;
+    color: var(--s-color-text-inverse, #fff);
     background-color: var(--s-primary-color, #1677ff);
     border-color: var(--s-primary-color, #1677ff);
 
@@ -83,7 +84,7 @@
         --s-primary-color-hover,
         color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
       );
-      color: #fff;
+      color: var(--s-color-text-inverse, #fff);
     }
 
     &:active {
@@ -95,20 +96,20 @@
         --s-primary-color-active,
         color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
       );
-      color: #fff;
+      color: var(--s-color-text-inverse, #fff);
     }
 
     &.s-btn-danger {
-      background-color: #ff4d4f;
-      border-color: #ff4d4f;
+      background-color: var(--s-color-error, #ff4d4f);
+      border-color: var(--s-color-error, #ff4d4f);
 
       &:hover {
-        background-color: #ff7875;
-        border-color: #ff7875;
+        background-color: var(--s-color-error-hover, #ff7875);
+        border-color: var(--s-color-error-hover, #ff7875);
       }
       &:active {
-        background-color: #d9363e;
-        border-color: #d9363e;
+        background-color: var(--s-color-error-active, #d9363e);
+        border-color: var(--s-color-error-active, #d9363e);
       }
     }
 
@@ -164,14 +165,14 @@
     }
 
     &.s-btn-danger {
-      color: #ff4d4f;
+      color: var(--s-color-error, #ff4d4f);
 
       &:hover {
-        background-color: color-mix(in srgb, #ff4d4f 12%, transparent);
-        color: #ff4d4f;
+        background-color: var(--s-color-error-bg, rgba(255, 77, 79, 0.1));
+        color: var(--s-color-error, #ff4d4f);
       }
       &:active {
-        background-color: color-mix(in srgb, #ff4d4f 20%, transparent);
+        background-color: color-mix(in srgb, var(--s-color-error, #ff4d4f) 20%, transparent);
       }
     }
   }
@@ -196,29 +197,29 @@
     }
 
     &.s-btn-danger {
-      color: #ff4d4f;
+      color: var(--s-color-error, #ff4d4f);
 
       &:hover {
-        color: #ff7875;
+        color: var(--s-color-error-hover, #ff7875);
       }
       &:active {
-        color: #d9363e;
+        color: var(--s-color-error-active, #d9363e);
       }
     }
   }
 
   // ── Default + danger ──
   &-default.s-btn-danger {
-    color: #ff4d4f;
-    border-color: #ff4d4f;
+    color: var(--s-color-error, #ff4d4f);
+    border-color: var(--s-color-error, #ff4d4f);
 
     &:hover {
-      color: #ff7875;
-      border-color: #ff7875;
+      color: var(--s-color-error-hover, #ff7875);
+      border-color: var(--s-color-error-hover, #ff7875);
     }
     &:active {
-      color: #d9363e;
-      border-color: #d9363e;
+      color: var(--s-color-error-active, #d9363e);
+      border-color: var(--s-color-error-active, #d9363e);
     }
   }
 

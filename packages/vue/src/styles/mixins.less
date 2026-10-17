@@ -1,0 +1,31 @@
+// ==================== 共享视觉 mixin ====================
+
+/// 标准焦点环：用于控件、菜单项与可交互触发器。
+.s-focus-ring() {
+  outline: var(--s-focus-ring-width) solid var(--s-primary-color);
+  outline-offset: var(--s-focus-ring-offset);
+}
+
+/// 单元格内焦点环：使用 inset 阴影，避免与固定列/框选阴影冲突。
+.s-focus-ring-inset() {
+  outline: none;
+  box-shadow: inset 0 0 0 var(--s-focus-ring-width) var(--s-primary-color);
+}
+
+/// 浮层表面：统一背景、边框、圆角与抬升阴影。
+.s-popover-surface() {
+  border: 1px solid var(--s-color-border);
+  border-radius: var(--s-radius-lg);
+  background: var(--s-color-bg-cell);
+  box-shadow: var(--s-shadow-elevated);
+}
+
+/// 菜单项：统一内边距、圆角与 hover 过渡。
+.s-menu-item() {
+  padding: 5px 12px;
+  border-radius: var(--s-radius-sm);
+  cursor: pointer;
+  transition:
+    background-color var(--s-duration-fast) var(--s-ease-out),
+    color var(--s-duration-fast) var(--s-ease-out);
+}
