@@ -317,12 +317,13 @@
       text-align: start;
       vertical-align: middle;
       overflow-wrap: anywhere;
+      // 不参与 border-color 过渡：bordered 模式下列显示/隐藏会改变 :last-child
+      // 的 border-inline-end，过渡会从 currentColor（深色）闪到灰色。
       transition:
         padding var(--s-duration-normal) var(--s-ease-out),
         font-size var(--s-duration-normal) var(--s-ease-out),
         line-height var(--s-duration-normal) var(--s-ease-out),
-        background-color var(--s-duration-normal) var(--s-ease-out),
-        border-color var(--s-duration-normal) var(--s-ease-out);
+        background-color var(--s-duration-normal) var(--s-ease-out);
 
       .s-table-cell-inner {
         display: flex;
@@ -689,12 +690,12 @@
       text-align: start;
       vertical-align: middle;
       overflow-wrap: anywhere;
+      // 同上：避免列显隐时右边框出现深色 → 灰色的过渡。
       transition:
         padding var(--s-duration-normal) var(--s-ease-out),
         font-size var(--s-duration-normal) var(--s-ease-out),
         line-height var(--s-duration-normal) var(--s-ease-out),
-        background-color var(--s-duration-normal) var(--s-ease-out),
-        border-color var(--s-duration-normal) var(--s-ease-out);
+        background-color var(--s-duration-normal) var(--s-ease-out);
 
       &.s-table-cell-fixed-left,
       &.s-table-cell-fixed-right {
