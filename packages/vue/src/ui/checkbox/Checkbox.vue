@@ -19,7 +19,7 @@
         :disabled="disabled"
         :indeterminate="indeterminate"
       />
-      <span class="s-checkbox-inner" />
+      <span ref="innerRef" class="s-checkbox-inner" />
     </span>
     <span v-if="$slots.default" class="s-checkbox-label">
       <slot />
@@ -52,6 +52,8 @@ defineSlots<{
 const size = useComponentSize(() => props.size);
 
 const boxRef = ref<HTMLElement | null>(null);
+// 波纹作用于可见的方形控件本身，才能拿到 4px 圆角与准确的 18px 尺寸。
+const innerRef = ref<HTMLElement | null>(null);
 
 /** 切换复选状态并触发变更事件，同时播放 antd 风格波纹。 */
 const handleClick = (event: MouseEvent) => {
@@ -59,7 +61,7 @@ const handleClick = (event: MouseEvent) => {
   if (boxRef.value) {
     // Checkbox 容器没有可用边框色，显式读取实例继承的主题色，避免默认 border-color 解析为灰色。
     const themeColor = getComputedStyle(boxRef.value).getPropertyValue('--s-primary-color').trim();
-    showWave(boxRef.value, themeColor || '#1677ff');
+    showWave(innerRef.value ?? boxRef.value, themeColor || '#1677ff');
   }
   const next = !props.modelValue;
   emit('update:modelValue', next);

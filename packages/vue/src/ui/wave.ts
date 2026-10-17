@@ -60,9 +60,10 @@ export const showWave = (node: HTMLElement, explicitColor?: string): void => {
     return;
   }
 
+  // 与 antd WaveEffect 一致：从控件边缘扩散 6px，透明度 0.2 → 0。
   const animation = wave.animate(
     [
-      { boxShadow: `0 0 0 0 ${color}`, opacity: 0.4 },
+      { boxShadow: `0 0 0 0 ${color}`, opacity: 0.2 },
       { boxShadow: `0 0 0 6px ${color}`, opacity: 0 },
     ],
     { duration: 400, easing: 'cubic-bezier(0.08, 0.82, 0.17, 1)' }

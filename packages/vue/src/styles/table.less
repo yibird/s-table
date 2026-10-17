@@ -837,7 +837,8 @@
     > .s-table-selection-dropdown {
       position: absolute;
       top: 50%;
-      left: calc(50% + 8px);
+      // 18px 复选框 + 20px 触发器在默认 62px 选择列内不溢出。
+      left: calc(50% + 10px);
       transform: translateY(-50%);
     }
   }
