@@ -1,0 +1,85 @@
+import STable from './STable.vue';
+
+export { STable };
+export { SummaryRow, SummaryCell } from './components';
+export { DragHandleIcon } from './components/icon';
+export { en_US, zh_CN, type STableLocale, type STableLocaleOverrides } from './locales';
+export { createSTableColumnHelper } from './utils/column';
+export default STable;
+
+// 公开类型导出（显式列出，便于 Tree Shake 与 API 审查）
+export type {
+  // 核心组件类型
+  STableProps,
+  STableEmits,
+  STableSlots,
+  STableContextMenuSlotContext,
+  STableInstance,
+  STableSortItem,
+  // 列类型
+  STableColumn,
+  STableColumns,
+  STableAccessorColumn,
+  STableAccessorKeyColumn,
+  STableDataIndexColumn,
+  STableAccessorFnColumn,
+  STableDisplayColumn,
+  STableGroupColumn,
+  STableColumnMeta,
+  STableCellRender,
+  STableHeaderRender,
+  STableCellRenderContext,
+  STableHeaderRenderContext,
+  STableAccessorKey,
+  STableRowRenderModel,
+  STableColumnRenderModel,
+  STableCellRenderModel,
+  STableHeaderRenderModel,
+  STableRenderModel,
+  // 配置类型
+  STablePaginationProps,
+  STableVirtualProps,
+  STableTree,
+  STableEditConfig,
+  STableEditingState,
+  STableEditPatch,
+  STableCellEditorSlotContext,
+  STableFilterPanelSlotContext,
+  STableRowEvent,
+  STableCellEvent,
+  STableRowDragConfig,
+  STableColumnDragConfig,
+  STableRowOrderChangeEvent,
+  STableColumnOrderChangeEvent,
+  STableCopyOptions,
+  STableCellRangeCopyEvent,
+  STableExpandable,
+  STableSeq,
+  STableCellRange,
+  STableCellRangeSelection,
+  STableCellProps,
+  STableGroupRowSlotContext,
+  STablePinnedRowKeys,
+  STableRowSelection,
+  STableSelectionOption,
+  STableSelectionChangeInfo,
+  STableSelectionIntent,
+  STableCheckboxProps,
+  STableStyles,
+  STableClasses,
+  // 值类型
+  STableSize,
+  STableColumnAlign,
+  STableColumnFixed,
+  STableSelectionType,
+  STableSortOrder,
+  STableEditMode,
+  STableDropPosition,
+  STableFilterMode,
+  STableRowKey,
+  STableColumnResizeMode,
+  STableColumnResizeEvent,
+  STableFilterOption,
+  STableSelectionColumnAlign,
+  PaginationPlacement,
+} from './types';

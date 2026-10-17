@@ -1,0 +1,57 @@
+:root {
+  color: rgba(0, 0, 0, 0.88);
+  background: #fff;
+  font-family: Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+}
+
+.e2e-app {
+  width: 100%;
+  padding: 16px;
+}
+
+.fixture-section {
+  margin-bottom: 32px;
+}
+
+.fixture-section h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.fixture-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.fixture-controls button,
+.context-action {
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid #bfbfbf;
+  border-radius: 4px;
+  color: rgba(0, 0, 0, 0.88);
+  background: #fff;
+  cursor: pointer;
+}
+
+.fixture-status {
+  display: block;
+  min-height: 20px;
+  margin: 8px 0;
+  color: #0050b3;
+  font-family: Consolas, monospace;
+}

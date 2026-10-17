@@ -1,0 +1,4 @@
+packages:
+  - 'packages/*'
+  - 'docs'
+  - 'e2e/package-consumer'

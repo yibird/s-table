@@ -1,0 +1,141 @@
+// ==================== 全局默认值（:root） ====================
+// 定义在 :root 确保 Teleport 到 body 的下拉面板也能访问。
+// .s-table 内的同名变量可覆盖这些默认值，实现按实例定制主题。
+:root {
+  // ==================== 主题色 ====================
+  --s-primary-color: #1677ff;
+
+  // ==================== 背景色 ====================
+  /// 表头背景色
+  --s-color-bg-header: #fafafa;
+  /// 表体单元格背景色
+  --s-color-bg-cell: #fff;
+  /// 行 hover 背景色
+  --s-color-bg-row-hover: #f7f7f7;
+  /// 行选中背景色
+  --s-color-bg-row-selected: #e6f4ff;
+  /// 行选中 hover 背景色
+  --s-color-bg-row-selected-hover: #bae0ff;
+  /// 斑马纹偶数行背景色
+  --s-color-bg-row-striped: #fafafa;
+  /// 斑马纹偶数行 hover 背景色（与行 hover 拉开层级，避免两者视觉混淆）
+  --s-color-bg-row-striped-hover: #f0f0f0;
+  /// 展开行背景色
+  --s-color-bg-row-expanded: #fafafa;
+  /// 页脚背景色
+  --s-color-bg-footer: #f2f2f2;
+  /// 汇总行背景色
+  --s-color-bg-summary: #fafafa;
+  /// 拖拽源行背景色
+  --s-color-bg-drag-source: #e6f4ff;
+  /// 列拖拽源表头背景色
+  --s-color-bg-column-drag-source: #e6f4ff;
+  /// 框选高亮背景色
+  --s-color-bg-cell-range: #f0f7ff;
+  /// 当前框选锚点背景色
+  --s-color-bg-cell-range-active: #d6ebff;
+  /// 禁用控件背景色
+  --s-color-bg-disabled: #f5f5f5;
+  /// 加载遮罩背景色
+  --s-color-bg-loading: rgba(255, 255, 255, 0.72);
+  --s-loading-track-opacity: 16%;
+
+  // ==================== 边框色 ====================
+  /// 通用分割线 / 边框色
+  --s-color-border: #f0f0f0;
+  /// 控件边框色（checkbox、input 等）
+  --s-color-border-control: #d9d9d9;
+
+  // ==================== 文本色 ====================
+  /// 主文本色（单元格、表头、页脚、汇总）
+  --s-color-text: rgba(0, 0, 0, 0.88);
+  /// 次文本色（表头标题等）
+  --s-color-text-secondary: rgba(0, 0, 0, 0.65);
+  /// 辅助文本色（空状态、展开触发器、拖拽句柄等）
+  --s-color-text-tertiary: rgba(0, 0, 0, 0.45);
+  /// 占位 / 禁用文本色（0.45 满足 WCAG AA 最低对比度要求）
+  --s-color-text-quaternary: rgba(0, 0, 0, 0.45);
+  /// 图标色（排序图标、过滤 / 搜索触发器默认态）
+  --s-color-text-icon: #bfbfbf;
+
+  // ==================== 交互色 ====================
+  /// hover 背景
+  --s-color-bg-hover: rgba(0, 0, 0, 0.04);
+  /// active 背景
+  --s-color-bg-active: rgba(0, 0, 0, 0.08);
+
+  // ==================== 阴影 ====================
+  /// 固定列阴影色
+  --s-color-shadow-fixed: rgba(5, 5, 5, 0.12);
+  /// 下拉面板阴影（单层，轻量浮层）
+  --s-shadow-dropdown: 0 6px 16px rgba(0, 0, 0, 0.08);
+  /// 右键菜单阴影（两层，需要更强的分离感）
+  --s-shadow-menu: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px rgba(0, 0, 0, 0.08);
+
+  // ==================== 圆角 ====================
+  /// 小圆角：checkbox、tag
+  --s-radius-sm: 4px;
+  /// 中圆角：button、input、select
+  --s-radius-md: 6px;
+  /// 大圆角：container、panel、menu
+  --s-radius-lg: 8px;
+
+  // ==================== 动效 ====================
+  /// hover 等微交互
+  --s-duration-fast: 0.1s;
+  /// 面板开合
+  --s-duration-normal: 0.2s;
+  /// 页面级过渡
+  --s-duration-slow: 0.3s;
+
+  // ==================== 层级 ====================
+  /// 固定列单元格
+  --s-z-index-cell-fixed: 2;
+  /// 固定表头
+  --s-z-index-header: 10;
+  /// 列宽拖拽手柄
+  --s-z-index-resizer: 15;
+  /// 下拉面板（过滤、搜索、选择列菜单等）
+  --s-z-index-dropdown: 1050;
+}
+
+// ==================== Dark Mode ====================
+// 通过根节点（html/body）上的 data-theme="dark" 切换。
+// mixin 应用于主题标记节点，内部表格通过继承获取暗色值。
+.s-dark-tokens() {
+  --s-primary-color: #1668dc;
+  --s-color-bg-header: #1d1d1d;
+  --s-color-bg-cell: #141414;
+  --s-color-bg-row-hover: #262626;
+  --s-color-bg-row-selected: #111a2c;
+  --s-color-bg-row-selected-hover: #112a45;
+  --s-color-bg-row-striped: #1a1a1a;
+  --s-color-bg-row-striped-hover: #262626;
+  --s-color-bg-row-expanded: #1a1a1a;
+  --s-color-bg-footer: #1d1d1d;
+  --s-color-bg-summary: #1a1a1a;
+  --s-color-bg-drag-source: #111a2c;
+  --s-color-bg-column-drag-source: #111a2c;
+  --s-color-bg-cell-range: #11213a;
+  --s-color-bg-cell-range-active: #16365d;
+  --s-color-bg-disabled: rgba(255, 255, 255, 0.08);
+  --s-color-bg-loading: rgba(20, 20, 20, 0.7);
+  --s-loading-track-opacity: 30%;
+  --s-color-border: #303030;
+  --s-color-border-control: #424242;
+  --s-color-text: rgba(255, 255, 255, 0.85);
+  --s-color-text-secondary: rgba(255, 255, 255, 0.65);
+  --s-color-text-tertiary: rgba(255, 255, 255, 0.45);
+  --s-color-text-quaternary: rgba(255, 255, 255, 0.45);
+  --s-color-text-icon: #6b6b6b;
+  --s-color-bg-hover: rgba(255, 255, 255, 0.08);
+  --s-color-bg-active: rgba(255, 255, 255, 0.12);
+  --s-color-shadow-fixed: rgba(0, 0, 0, 0.5);
+  --s-shadow-dropdown: 0 6px 16px rgba(0, 0, 0, 0.32);
+  --s-shadow-menu: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px rgba(0, 0, 0, 0.32);
+}
+
+[data-theme='dark'],
+.dark {
+  .s-dark-tokens();
+}

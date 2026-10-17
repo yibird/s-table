@@ -1,0 +1,27 @@
+/**
+ * 全量样式入口。
+ *
+ * 包含核心样式（容器、表头、表体、单元格、CSS 变量、Dark Mode）
+ * + 可选功能样式（下拉面板、右键菜单、空状态、加载遮罩）
+ * + 全部 UI 组件样式（checkbox、button、input、select、radio、pagination、wave）。
+ *
+ * 消费方需在应用入口显式导入：
+ *
+ * ```ts
+ * import '@zchengfeng/s-table-vue/style.css';
+ * ```
+ */
+@import './token.less';
+@import './variable.less';
+@import './table.less';
+@import './dropdown.less';
+@import './menu.less';
+@import './empty.less';
+@import './loading.less';
+@import '../ui/button/styles.less';
+@import '../ui/checkbox/styles.less';
+@import '../ui/input/styles.less';
+@import '../ui/pagination/styles.less';
+@import '../ui/radio/styles.less';
+@import '../ui/select/styles.less';
+@import '../ui/wave.less';

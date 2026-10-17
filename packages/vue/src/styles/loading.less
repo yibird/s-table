@@ -1,0 +1,141 @@
+@import './variable.less';
+
+.@{prefix}-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--s-color-bg-loading, rgba(255, 255, 255, 0.65));
+  pointer-events: auto;
+  animation: s-table-loading-overlay-in var(--s-duration-normal, 0.2s) ease-out;
+
+  &-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  // 数据网格核心 + 双层环形扫描：视觉紧凑，同时与表格场景建立语义联系。
+  &-spin {
+    --s-loading-spin-size: 36px;
+    --s-loading-cell-size: 4px;
+    --s-loading-cell-gap: 3px;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: var(--s-loading-spin-size);
+    height: var(--s-loading-spin-size);
+
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2px solid transparent;
+      border-radius: 50%;
+      box-sizing: border-box;
+    }
+
+    // 静态轨道稳定整体轮廓；半透明主题色兼容明暗主题及自定义主题色。
+    &::before {
+      border-color: var(
+        --s-color-loading-track,
+        color-mix(
+          in srgb,
+          var(--s-primary-color, #1677ff) var(--s-loading-track-opacity, 16%),
+          transparent
+        )
+      );
+    }
+
+    // 两段不同强度的圆弧形成明确方向，避免普通单色圆环显得笨重。
+    &::after {
+      border-top-color: var(--s-color-loading-active, var(--s-primary-color, #1677ff));
+      border-right-color: color-mix(
+        in srgb,
+        var(--s-color-loading-active, var(--s-primary-color, #1677ff)) 48%,
+        transparent
+      );
+      animation: s-table-loading-scan 0.8s linear infinite;
+    }
+  }
+
+  &-grid {
+    display: grid;
+    grid-template-columns: repeat(2, var(--s-loading-cell-size));
+    gap: var(--s-loading-cell-gap);
+  }
+
+  &-grid-cell {
+    width: var(--s-loading-cell-size);
+    height: var(--s-loading-cell-size);
+    border-radius: 1px;
+    background-color: var(--s-color-loading-active, var(--s-primary-color, #1677ff));
+    opacity: 0.28;
+    animation: s-table-loading-cell-pulse 1.2s ease-in-out infinite;
+
+    &:nth-child(2) {
+      animation-delay: 0.12s;
+    }
+
+    &:nth-child(4) {
+      animation-delay: 0.24s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.36s;
+    }
+  }
+}
+
+// 加载图标跟随 Table 尺寸，避免 small 表格里显得笨重、large 表格里又过小。
+.@{prefix}-small .@{prefix}-loading-spin {
+  --s-loading-spin-size: 30px;
+  --s-loading-cell-size: 3px;
+  --s-loading-cell-gap: 2px;
+}
+
+.@{prefix}-large .@{prefix}-loading-spin {
+  --s-loading-spin-size: 42px;
+  --s-loading-cell-size: 5px;
+  --s-loading-cell-gap: 3px;
+}
+
+@keyframes s-table-loading-overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes s-table-loading-scan {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes s-table-loading-cell-pulse {
+  0%,
+  100% {
+    opacity: 0.24;
+  }
+  50% {
+    opacity: 0.88;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .@{prefix}-loading {
+    animation: none;
+
+    &-spin::after,
+    &-grid-cell {
+      animation: none;
+    }
+
+    &-grid-cell {
+      opacity: 0.62;
+    }
+  }
+}

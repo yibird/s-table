@@ -1,0 +1,172 @@
+// Checkbox 样式
+.s-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+  position: relative;
+  user-select: none;
+  border-radius: var(--s-radius-md, 6px);
+
+  // ── 内部元素（必须在状态修饰符之前，确保 cascade 优先级正确）──
+  .s-checkbox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .s-checkbox-input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: inherit;
+    z-index: 1;
+    margin: 0;
+
+    &:focus-visible + .s-checkbox-inner {
+      outline: 2px solid var(--s-primary-color, #1677ff);
+      outline-offset: 2px;
+    }
+  }
+
+  .s-checkbox-inner {
+    display: block;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--s-color-border-control, #d9d9d9);
+    border-radius: var(--s-radius-sm, 4px);
+    background-color: var(--s-color-bg-cell, #fff);
+    position: relative;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      width: 5px;
+      height: 9px;
+      border: 2px solid #fff;
+      border-top: 0;
+      border-left: 0;
+      opacity: 0;
+      transform: rotate(45deg) scale(0.5);
+      transition:
+        opacity 0.15s ease,
+        transform 0.15s ease;
+      margin-left: -2.5px;
+      margin-top: -5px;
+    }
+
+    &::before {
+      content: '';
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 8px;
+      height: 2px;
+      background-color: var(--s-primary-color, #1677ff);
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  .s-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  // ── 尺寸 ──
+  &-small {
+    font-size: 12px;
+
+    .s-checkbox-inner {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  &-middle {
+    font-size: 14px;
+  }
+
+  &-large {
+    font-size: 16px;
+
+    .s-checkbox-inner {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  // ── 禁用 ──
+  &-disabled {
+    cursor: not-allowed;
+    color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+
+    .s-checkbox-inner {
+      background-color: var(--s-color-bg-disabled, #f5f5f5);
+      border-color: var(--s-color-border-control, #d9d9d9);
+    }
+
+    &.s-checkbox-wrapper-checked .s-checkbox-inner {
+      background-color: var(--s-color-text-icon, #bfbfbf);
+      border-color: var(--s-color-border-control, #d9d9d9);
+    }
+  }
+
+  // ── 选中状态 ──
+  &-checked {
+    .s-checkbox-inner {
+      background-color: var(--s-primary-color, #1677ff);
+      border-color: var(--s-primary-color, #1677ff);
+
+      &::after {
+        opacity: 1;
+        transform: rotate(45deg) scale(1);
+      }
+    }
+
+    &:hover .s-checkbox-inner {
+      background-color: var(
+        --s-primary-color-hover,
+        color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
+      );
+      border-color: var(
+        --s-primary-color-hover,
+        color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
+      );
+    }
+  }
+
+  // ── 半选状态 ──
+  &-indeterminate {
+    .s-checkbox-inner {
+      border-color: var(--s-primary-color, #1677ff);
+
+      &::before {
+        display: block;
+      }
+    }
+  }
+
+  // ── Hover（未选中时）──
+  &:not(&-checked):not(&-disabled):hover {
+    .s-checkbox-inner {
+      border-color: var(--s-primary-color, #1677ff);
+    }
+  }
+}
+
+.s-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}

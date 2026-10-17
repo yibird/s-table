@@ -1,0 +1,57 @@
+@import './variable.less';
+
+.@{prefix}-empty {
+  width: 100%;
+  min-height: 128px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--s-color-text-tertiary);
+  font-size: 14px;
+
+  &-default {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+
+  &-default-icon {
+    width: 64px;
+    height: 41px;
+  }
+
+  &-default-icon-shadow {
+    fill: var(--s-color-bg-disabled);
+  }
+
+  &-default-icon-outline {
+    stroke: var(--s-color-border-control);
+  }
+
+  &-default-icon-surface {
+    fill: var(--s-color-bg-header);
+  }
+
+  &-default-title {
+    color: var(--s-color-text-secondary);
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  &-default-description {
+    color: var(--s-color-text-tertiary);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  // 可选操作区（如"新增数据"按钮），与描述拉开层级间距
+  &-default-action {
+    margin-top: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+}

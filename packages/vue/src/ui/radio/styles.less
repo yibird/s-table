@@ -1,0 +1,141 @@
+// Radio 样式
+.s-radio-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+  position: relative;
+  user-select: none;
+  border-radius: var(--s-radius-md, 6px);
+
+  // ── 尺寸 ──
+  &-small {
+    font-size: 12px;
+
+    .s-radio-inner {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  &-middle {
+    font-size: 14px;
+  }
+
+  &-large {
+    font-size: 16px;
+
+    .s-radio-inner {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  // ── 禁用 ──
+  &-disabled {
+    cursor: not-allowed;
+    color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+
+    .s-radio-inner {
+      background-color: var(--s-color-bg-disabled, #f5f5f5);
+      border-color: var(--s-color-border-control, #d9d9d9);
+    }
+  }
+
+  // ── Hover（未选中时）──
+  &:not(&-checked):not(&-disabled):hover {
+    .s-radio-inner {
+      border-color: var(--s-primary-color, #1677ff);
+    }
+  }
+
+  // ── 内部元素 ──
+  .s-radio {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .s-radio-input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: inherit;
+    z-index: 1;
+    margin: 0;
+
+    &:focus-visible + .s-radio-inner {
+      outline: 2px solid var(--s-primary-color, #1677ff);
+      outline-offset: 2px;
+    }
+  }
+
+  .s-radio-inner {
+    display: block;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--s-color-border-control, #d9d9d9);
+    border-radius: 50%;
+    background-color: var(--s-color-bg-cell, #fff);
+    position: relative;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--s-primary-color, #1677ff);
+      transform: translate(-50%, -50%) scale(0);
+      transition: transform 0.2s cubic-bezier(0.78, 0.14, 0.15, 0.86);
+    }
+  }
+
+  .s-radio-label {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+// ── 选中状态（必须在基础样式之后，确保覆盖 ::after 的 scale(0)）──
+.s-radio-wrapper-checked {
+  .s-radio-inner {
+    border-color: var(--s-primary-color, #1677ff);
+
+    &::after {
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+
+  &:hover .s-radio-inner {
+    border-color: var(
+      --s-primary-color-hover,
+      color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
+    );
+  }
+
+  &.s-radio-wrapper-disabled .s-radio-inner {
+    background-color: var(--s-color-bg-disabled, #f5f5f5);
+
+    &::after {
+      background-color: var(--s-color-text-icon, #bfbfbf);
+    }
+  }
+}
+
+.s-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}

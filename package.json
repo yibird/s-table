@@ -1,0 +1,65 @@
+{
+  "name": "s-table",
+  "version": "0.1.0",
+  "private": true,
+  "description": "STable monorepo for the @zchengfeng/s-table-vue data grid and documentation",
+  "keywords": [
+    "data-grid",
+    "table",
+    "tanstack-table",
+    "vue",
+    "vue3"
+  ],
+  "license": "ISC",
+  "author": "zchengfeng <2684837849@qq.com>",
+  "scripts": {
+    "build": "pnpm --filter @zchengfeng/s-table-core build && pnpm --filter @zchengfeng/s-table-vue build",
+    "bench:performance": "pnpm --filter @zchengfeng/s-table-vue exec node --expose-gc benchmarks/run.mjs",
+    "bench:performance:quick": "pnpm --filter @zchengfeng/s-table-vue exec node --expose-gc benchmarks/run.mjs --quick",
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck:all && pnpm test && pnpm build && pnpm check:bundle-size && pnpm test:package && pnpm docs:build",
+    "check:bundle-size": "pnpm --filter @zchengfeng/s-table-vue exec node benchmarks/check-dist-size.mjs",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint . --fix",
+    "format:check": "oxfmt --check packages/core/src packages/core/vite.config.ts packages/vue/src packages/vue/vite.config.ts packages/vue/benchmarks docs e2e playwright.config.ts",
+    "test": "pnpm --filter @zchengfeng/s-table-core test && pnpm --filter @zchengfeng/s-table-core build && pnpm --filter @zchengfeng/s-table-vue test",
+    "test:e2e": "playwright test",
+    "test:e2e:perf": "playwright test e2e/specs/performance-baseline.spec.ts --project=chromium",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:package": "pnpm exec attw --pack packages/vue --profile esm-only --entrypoints . && pnpm exec publint packages/vue && pnpm --filter @s-table/package-consumer typecheck && pnpm --filter @s-table/package-consumer build",
+    "typecheck": "pnpm --filter @zchengfeng/s-table-vue typecheck",
+    "typecheck:all": "pnpm --filter @zchengfeng/s-table-core typecheck && pnpm --filter @zchengfeng/s-table-core build && pnpm --filter @zchengfeng/s-table-vue exec vue-tsc --noEmit --ignoreDeprecations 6.0 && pnpm typecheck:e2e",
+    "typecheck:e2e": "vue-tsc --noEmit --ignoreDeprecations 6.0 -p e2e/app/tsconfig.json && tsc --noEmit -p e2e/tsconfig.json",
+    "docs:dev": "pnpm --filter @s-table/docs dev",
+    "docs:build": "pnpm --filter @s-table/docs build",
+    "docs:preview": "pnpm --filter @s-table/docs preview"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^20.19.43",
+    "@vitejs/plugin-vue": "^6.0.9",
+    "happy-dom": "^20.14.5",
+    "husky": "^9.1.7",
+    "less": "^4.9.1",
+    "lint-staged": "^16.4.0",
+    "oxfmt": "^0.56.0",
+    "oxlint": "^1.83.0",
+    "publint": "^0.3.24",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.0",
+    "vite-plugin-dts": "^5.1.0",
+    "vitest": "^4.1.11",
+    "vue": "^3.5.42",
+    "vue-tsc": "^3.3.11"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue}": [
+      "oxlint",
+      "oxfmt --write"
+    ]
+  },
+  "packageManager": "pnpm@10.32.1"
+}

@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+
+# Build output
+dist/
+*.local
+
+# Logs
+*.log*
+pnpm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# System
+.DS_Store
+Thumbs.db
+
+# Vitepress cache
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+docs/.vitepress/node_modules/
+**/*.timestamp-*.mjs
+
+# Playwright
+playwright-report/
+test-results/

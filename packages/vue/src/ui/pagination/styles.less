@@ -1,0 +1,255 @@
+// Pagination 样式
+.s-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+  list-style: none;
+
+  // ── 禁用 ──
+  &-disabled {
+    .s-pagination-item {
+      cursor: not-allowed;
+      color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+
+      &:hover {
+        color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+        border-color: var(--s-color-border-control, #d9d9d9);
+      }
+    }
+  }
+
+  // ── 尺寸 ──
+  &-small {
+    font-size: 12px;
+
+    .s-pagination-item {
+      min-width: 24px;
+      height: 24px;
+      line-height: 22px;
+      font-size: 12px;
+    }
+
+    .s-pagination-prev,
+    .s-pagination-next {
+      svg {
+        font-size: 14px;
+      }
+    }
+  }
+
+  &-middle {
+    .s-pagination-item {
+      min-width: 32px;
+      height: 32px;
+      line-height: 30px;
+    }
+
+    .s-pagination-prev,
+    .s-pagination-next {
+      svg {
+        font-size: 14px;
+      }
+    }
+  }
+
+  &-large {
+    font-size: 16px;
+
+    .s-pagination-item {
+      min-width: 40px;
+      height: 40px;
+      line-height: 38px;
+      font-size: 16px;
+    }
+
+    .s-pagination-prev,
+    .s-pagination-next {
+      svg {
+        font-size: 18px;
+      }
+    }
+  }
+
+  // ── 页码项 ──
+  .s-pagination-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 6px;
+    border: 1px solid var(--s-color-border-control, #d9d9d9);
+    border-radius: var(--s-radius-md, 6px);
+    background-color: var(--s-color-bg-cell, #fff);
+    cursor: pointer;
+    transition:
+      color 0.2s,
+      border-color 0.2s,
+      background-color 0.2s;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+
+    &:hover {
+      color: var(--s-primary-color, #1677ff);
+      border-color: var(--s-primary-color, #1677ff);
+    }
+
+    // 键盘焦点指示（WCAG 2.4.7）：outline: none 仅移除默认环，此处补回可见焦点
+    &:focus-visible {
+      outline: 2px solid var(--s-primary-color, #1677ff);
+      outline-offset: 2px;
+    }
+
+    &-active {
+      color: var(--s-primary-color, #1677ff);
+      border-color: var(--s-primary-color, #1677ff);
+      font-weight: 600;
+
+      &:hover {
+        color: var(--s-primary-color, #1677ff);
+        border-color: var(--s-primary-color, #1677ff);
+      }
+    }
+
+    &-disabled {
+      cursor: not-allowed;
+      color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+      border-color: var(--s-color-border-control, #d9d9d9);
+      background-color: var(--s-color-bg-disabled, transparent);
+
+      &:hover {
+        color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+        border-color: var(--s-color-border-control, #d9d9d9);
+      }
+    }
+  }
+
+  // ── 前后翻页 ──
+  .s-pagination-prev,
+  .s-pagination-next {
+    svg {
+      font-size: 14px;
+    }
+  }
+
+  // ── 快速跳转（省略号）──
+  .s-pagination-jump-prev,
+  .s-pagination-jump-next {
+    position: relative;
+    border: none;
+    cursor: pointer;
+
+    &:hover {
+      .s-pagination-jump-icon {
+        visibility: hidden; // 隐藏但保留占位，防止布局抖动
+      }
+
+      &::after {
+        content: '\00AB'; // « 左双箭头
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 24px;
+        letter-spacing: 0;
+        line-height: 1;
+      }
+    }
+  }
+
+  .s-pagination-jump-next:hover::after {
+    content: '\00BB'; // » 右双箭头
+  }
+
+  .s-pagination-jump-icon {
+    color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+    letter-spacing: 1px;
+    font-size: 12px;
+  }
+
+  // ── 辅助区域 ──
+  .s-pagination-total-text {
+    color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+    margin-right: 8px;
+    white-space: nowrap;
+  }
+
+  .s-pagination-size-changer {
+    display: inline-flex;
+    min-width: 104px;
+    margin-left: 8px;
+  }
+
+  .s-pagination-quick-jumper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 8px;
+    color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+    white-space: nowrap;
+
+    .s-pagination-quick-jumper-input {
+      width: 50px;
+      height: 32px;
+      padding: 4px 11px;
+      border: 1px solid var(--s-color-border-control, #d9d9d9);
+      border-radius: var(--s-radius-md, 6px);
+      background-color: var(--s-color-bg-cell, #fff);
+      color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+      outline: none;
+      font-size: inherit;
+      font-family: inherit;
+      text-align: center;
+      transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+      box-sizing: border-box;
+
+      &:disabled {
+        cursor: not-allowed;
+        background-color: var(--s-color-bg-disabled, #f5f5f5);
+        color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+      }
+
+      &:hover {
+        border-color: var(--s-primary-color, #1677ff);
+      }
+
+      &:focus {
+        border-color: var(--s-primary-color, #1677ff);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--s-primary-color, #1677ff) 12%, transparent);
+      }
+    }
+  }
+
+  // ── 紧凑模式 ──
+  &-compact {
+    .s-pagination-item {
+      min-width: 24px;
+      height: 24px;
+      line-height: 22px;
+      font-size: 12px;
+      margin-right: 4px;
+    }
+
+    .s-pagination-total-text {
+      margin-right: 4px;
+    }
+  }
+}
+
+// ── 响应式适配：窄屏隐藏每页条数与快速跳转，保留核心翻页操作 ──
+@media (max-width: 576px) {
+  .s-pagination {
+    .s-pagination-size-changer,
+    .s-pagination-quick-jumper,
+    .s-pagination-total-text {
+      display: none;
+    }
+  }
+}

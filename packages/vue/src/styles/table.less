@@ -1,0 +1,966 @@
+﻿@import './variable.less';
+
+.@{prefix} {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden; // 高度受限时阻止根元素滚动，由 container 处理滚动
+
+  // 容器
+  &-container {
+    position: relative;
+    overflow: auto;
+    flex: 1; // 高度受限时自动填充剩余空间
+    min-height: 0; // 允许 flex 子元素缩小到 0，触发滚动
+  }
+
+  // 滚动触底指示器
+  // 阴影脱离表头和表体单元格，只保留每侧一个绘制层，避免随行数增加伪元素数量。
+  &-scroll-shell {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  &-fixed-column-shadow {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    pointer-events: none;
+    // overlay 需要覆盖固定表头的背景，但保留给列调整手柄更高的交互层级。
+    z-index: calc(var(--s-z-index-header, 10) + 1);
+
+    &-left {
+      background: linear-gradient(to right, var(--s-color-shadow-fixed), transparent);
+    }
+
+    &-right {
+      background: linear-gradient(to left, var(--s-color-shadow-fixed), transparent);
+    }
+  }
+
+  // 触底检测哨兵：贴在表格内容末尾的 1px 透明块，由 useSTableScroll 的
+  // IntersectionObserver 观察；本身不产生可见内容，也不响应指针。
+  &-scroll-bottom-sentinel {
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &-scroll-to-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 0;
+    color: var(--s-color-text-tertiary);
+    font-size: 12px;
+  }
+
+  &-resizing {
+    .@{prefix}-container,
+    .@{prefix}-header,
+    .@{prefix}-body,
+    .@{prefix}-header-resizer {
+      cursor: col-resize;
+      user-select: none;
+    }
+  }
+
+  // 列拖拽中
+  &-column-dragging {
+    user-select: none;
+
+    .@{prefix}-header {
+      .@{prefix}-cell {
+        cursor: grab;
+      }
+    }
+  }
+
+  &-header-cell-drag-source {
+    position: relative;
+    // 使用不透明高亮标识被拖拽列，避免与浏览器原生 drag image 的半透明效果叠加。
+    opacity: 1 !important;
+    --s-table-cell-bg: var(--s-color-bg-column-drag-source);
+    background-color: var(--s-color-bg-column-drag-source);
+    outline: 2px solid var(--s-primary-color, #1677ff);
+    outline-offset: -2px;
+    box-shadow: var(--s-shadow-menu);
+    z-index: calc(var(--s-z-index-header) + 1);
+  }
+
+  &-header-cell-drag-over {
+    box-shadow: inset 2px 0 0 0 var(--s-primary-color, #1677ff);
+  }
+
+  // 行拖拽中
+  &-row-dragging {
+    user-select: none;
+  }
+
+  &-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--s-radius-sm, 4px);
+    cursor: grab;
+    color: var(--s-color-text-quaternary);
+    transition:
+      color 0.2s ease,
+      background-color 0.2s ease;
+
+    &:hover {
+      color: var(--s-color-text-secondary);
+      background-color: var(--s-color-bg-hover);
+    }
+
+    &:active {
+      cursor: grabbing;
+      background-color: var(--s-color-bg-active);
+    }
+  }
+
+  &-drag-handle-disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+
+    &:hover {
+      color: var(--s-color-text-quaternary);
+      background-color: transparent;
+    }
+  }
+
+  // 拖拽列（句柄列）表头背景色与普通表头一致
+  &-header .@{prefix}-cell:has(> .s-table-cell-inner > .s-table-drag-handle),
+  &-header .@{prefix}-cell-drag-column {
+    --s-table-cell-bg: var(--s-color-bg-header);
+    background-color: var(--s-color-bg-header);
+  }
+
+  // 拖拽列单元格居中对齐
+  &-header .@{prefix}-cell:has(> .s-table-cell-inner > .s-table-drag-handle) > .s-table-cell-inner,
+  &-body .@{prefix}-cell:has(> .s-table-drag-handle) {
+    justify-content: center;
+    text-align: center;
+  }
+
+  &-row-drag-source {
+    .@{prefix}-cell {
+      // 不降低整行 opacity：浏览器已会为原生 drag image 降低透明度，再叠加会让表内行几乎不可见。
+      --s-table-cell-bg: var(--s-color-bg-drag-source);
+      background-color: var(--s-table-cell-bg);
+    }
+  }
+
+  &-row-drag-over {
+    .@{prefix}-cell {
+      box-shadow: inset 0 2px 0 0 var(--s-primary-color, #1677ff);
+    }
+  }
+
+  &-row-drag-over-after {
+    .@{prefix}-cell {
+      box-shadow: inset 0 -2px 0 0 var(--s-primary-color, #1677ff);
+    }
+  }
+
+  &-row-drag-over-inside {
+    .@{prefix}-cell {
+      --s-table-cell-bg: var(--s-color-bg-row-selected);
+      background-color: var(--s-table-cell-bg);
+      box-shadow: inset 0 0 0 2px var(--s-primary-color, #1677ff);
+    }
+  }
+
+  // 行拖拽排序动画
+  &-body .@{prefix}-row {
+    transition: transform 0.2s ease;
+  }
+
+  &-bordered {
+    .@{prefix}-container {
+      border: 1px solid var(--s-color-border);
+      background-color: var(--s-color-bg-cell);
+    }
+    .@{prefix}-header {
+      tr th::before {
+        display: none;
+      }
+    }
+    .@{prefix}-header,
+    .@{prefix}-body,
+    .@{prefix}-summary {
+      .@{prefix}-cell {
+        border-inline-end: 1px solid var(--s-color-border);
+      }
+      .@{prefix}-cell-fixed-left,
+      .@{prefix}-cell-fixed-right {
+        border-inline-end: none;
+      }
+      // 紧邻 fixed-right 列的前一个单元格去掉右边框，避免与 inset shadow 重叠
+      .@{prefix}-cell:not(.@{prefix}-cell-fixed-right):has(+ .@{prefix}-cell-fixed-right) {
+        border-inline-end: none;
+      }
+      tr > :last-child {
+        border-inline-end: none;
+      }
+    }
+    .@{prefix}-body {
+      tr:last-child {
+        .@{prefix}-cell {
+          border-bottom: none;
+        }
+      }
+    }
+    // bordered 模式下固定列使用 inset shadow 模拟边框
+    .@{prefix}-cell-fixed-left {
+      --s-fixed-inset-shadow: inset -1px 0 0 var(--s-color-border);
+    }
+    .@{prefix}-cell-fixed-right {
+      --s-fixed-inset-shadow: inset 1px 0 0 var(--s-color-border);
+    }
+  }
+
+  &-striped {
+    .@{prefix}-body {
+      tr:nth-child(even) {
+        .@{prefix}-cell {
+          --s-table-cell-bg: var(--s-color-bg-row-striped);
+          background-color: var(--s-table-cell-bg);
+        }
+      }
+      .@{prefix}-row:hover {
+        .@{prefix}-cell {
+          --s-table-cell-bg: var(--s-color-bg-row-striped-hover);
+          background-color: var(--s-table-cell-bg);
+        }
+      }
+    }
+  }
+
+  & table {
+    width: 100%;
+    table-layout: fixed;
+    white-space: normal;
+    border-spacing: 0;
+  }
+
+  &-small {
+    .@{prefix}-header,
+    .@{prefix}-body,
+    .@{prefix}-summary {
+      .@{prefix}-cell {
+        padding: 8px 12px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+    }
+  }
+
+  &-middle {
+    .@{prefix}-header,
+    .@{prefix}-body,
+    .@{prefix}-summary {
+      .@{prefix}-cell {
+        padding: 10px 16px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+    }
+  }
+
+  &-large {
+    .@{prefix}-header,
+    .@{prefix}-body,
+    .@{prefix}-summary {
+      .@{prefix}-cell {
+        padding: 14px 20px;
+        font-size: 16px;
+        line-height: 1.6;
+      }
+    }
+  }
+
+  // 表头
+  &-header {
+    &-fixed {
+      position: sticky;
+      top: 0;
+      z-index: var(--s-z-index-header);
+      background-color: var(--s-color-bg-header);
+    }
+
+    .@{prefix}-cell {
+      --s-table-cell-bg: var(--s-color-bg-header);
+      position: relative;
+      color: var(--s-color-text);
+      font-weight: 600;
+      background-color: var(--s-table-cell-bg);
+      text-align: start;
+      vertical-align: middle;
+      word-break: break-word;
+      transition:
+        padding 0.2s ease,
+        font-size 0.2s ease,
+        line-height 0.2s ease,
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+
+      .s-table-cell-inner {
+        display: flex;
+        align-items: center;
+      }
+
+      &.s-table-cell-fixed-left,
+      &.s-table-cell-fixed-right {
+        z-index: calc(var(--s-z-index-cell-fixed) + 1);
+      }
+    }
+    tr th::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      inset-inline-end: 0;
+      width: 1px;
+      height: 1.6em;
+      background-color: var(--s-color-border);
+      transform: translateY(-50%);
+    }
+
+    // 最后一列不显示分割线
+    tr th:last-child::before {
+      display: none;
+    }
+
+    // 表头底边框：用绝对定位伪元素代替 th 的 border-bottom。
+    // sticky 表头 + border-spacing:0 下，th 的 border-bottom 在垂直滚动时会被 body
+    // 滚动内容在绘制层面覆盖导致消失；且固定列 th 自带 box-shadow 无法再叠加底线。
+    // 伪元素绘制在单元格最上层、不占布局、不与固定列阴影冲突，滚动时始终可见。
+    tr th::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      bottom: 0;
+      height: 1px;
+      background-color: var(--s-color-border);
+      pointer-events: none;
+    }
+
+    .@{prefix}-cell:hover > .@{prefix}-header-resizer,
+    .@{prefix}-header-resizer-active {
+      opacity: 1;
+    }
+
+    // hover 时提升 th 的层叠上下文，使 resizer 不被相邻固定列遮盖。
+    .@{prefix}-cell:hover:has(> .@{prefix}-header-resizer) {
+      z-index: calc(var(--s-z-index-header) - 6) !important;
+    }
+
+    // active 状态的 resizer 需要更高优先级（!important）以覆盖 inline style。
+    .@{prefix}-cell:has(> .@{prefix}-header-resizer-active) {
+      z-index: calc(var(--s-z-index-header) - 5) !important;
+    }
+
+    &-resizer {
+      position: absolute;
+      top: 0;
+      inset-inline-end: 0;
+      width: 12px;
+      height: 100%;
+      transform: translateX(50%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: var(--s-z-index-resizer);
+      touch-action: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      &::before {
+        content: '';
+        width: 2px;
+        height: 100%;
+        border-radius: 999px;
+        background-color: transparent;
+        transition:
+          background-color 0.2s ease,
+          box-shadow 0.2s ease,
+          transform 0.2s ease;
+      }
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        inset-inline-start: 50%;
+        width: 8px;
+        height: 24px;
+        border-radius: 999px;
+        background-color: var(--s-color-bg-cell);
+        box-shadow: 0 0 0 1px var(--s-color-shadow-fixed);
+        transform: translate(-50%, -50%) scale(0.85);
+        opacity: 0;
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+      &:hover {
+        cursor: col-resize;
+        &::before {
+          background-color: var(--s-primary-color);
+          transform: scaleX(1.2);
+        }
+        &::after {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+      &-active {
+        opacity: 1;
+        &::before {
+          background-color: var(--s-primary-color);
+          box-shadow: 0 0 0 2px color-mix(in srgb, var(--s-primary-color, #1677ff) 12%, transparent);
+          transform: scaleX(1.4);
+        }
+        &::after {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+          box-shadow:
+            0 0 0 1px color-mix(in srgb, var(--s-primary-color, #1677ff) 32%, transparent),
+            0 4px 12px color-mix(in srgb, var(--s-primary-color, #1677ff) 18%, transparent);
+        }
+      }
+      &-disabled {
+        cursor: default;
+      }
+
+      &[tabindex]:focus-visible {
+        outline: 2px solid var(--s-primary-color, #1677ff);
+        outline-offset: -2px;
+      }
+    }
+
+    .@{prefix}-cell-editor {
+      width: 100%;
+      min-width: 0;
+      height: 28px;
+      box-sizing: border-box;
+      padding: 3px 8px;
+      border: 1px solid var(--s-primary-color, #1677ff);
+      border-radius: var(--s-radius-sm, 4px);
+      outline: none;
+      color: inherit;
+      font: inherit;
+      background-color: var(--s-color-bg-cell);
+
+      &[type='checkbox'] {
+        width: 16px;
+        height: 16px;
+        padding: 0;
+      }
+    }
+  }
+
+  // 框选拖拽中禁用文本选择
+  &-cell-range-dragging {
+    user-select: none;
+
+    .@{prefix}-cell {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+  }
+
+  // 表体
+  &-body {
+    .@{prefix}-empty-cell {
+      text-align: center;
+      vertical-align: middle;
+      background-color: var(--s-color-bg-cell);
+      padding: 32px 0;
+    }
+
+    .@{prefix}-row:hover {
+      .@{prefix}-cell {
+        --s-table-cell-bg: var(--s-color-bg-row-hover);
+        background-color: var(--s-table-cell-bg);
+      }
+    }
+
+    .@{prefix}-row-pinned {
+      .@{prefix}-cell {
+        --s-table-cell-bg: var(--s-color-bg-cell);
+        background-color: var(--s-table-cell-bg);
+      }
+    }
+
+    .@{prefix}-row-pinned-top .@{prefix}-cell {
+      box-shadow: inset 0 -1px 0 var(--s-color-border);
+    }
+
+    .@{prefix}-row-pinned-bottom .@{prefix}-cell {
+      box-shadow: inset 0 1px 0 var(--s-color-border);
+    }
+
+    .@{prefix}-row-grouped .@{prefix}-cell {
+      --s-table-cell-bg: var(--s-color-bg-header);
+      background-color: var(--s-table-cell-bg);
+      font-weight: 600;
+    }
+
+    .@{prefix}-group-cell,
+    .@{prefix}-group-row-cell {
+      color: var(--s-color-text);
+    }
+
+    .@{prefix}-group-cell-value {
+      vertical-align: middle;
+    }
+
+    .@{prefix}-group-cell-count {
+      margin-inline-start: 6px;
+      color: var(--s-color-text-tertiary);
+      font-weight: 400;
+      vertical-align: middle;
+    }
+
+    // 框选拖动期间：关闭单元格背景 / 边框过渡。拖动时范围每帧变化，逐格 transition 会
+    // 造成持续重绘且视觉拖影，直接关掉让选区即时跟手。
+    &.@{prefix}-cell-range-dragging .@{prefix}-cell {
+      transition: none;
+    }
+
+    .@{prefix}-row-expanded {
+      .@{prefix}-cell {
+        --s-table-cell-bg: var(--s-color-bg-row-expanded);
+        background-color: var(--s-table-cell-bg);
+      }
+    }
+
+    .@{prefix}-expanded-row {
+      .@{prefix}-expanded-cell {
+        padding: 16px;
+        background-color: var(--s-color-bg-row-expanded);
+        border-bottom: 1px solid var(--s-color-border);
+      }
+    }
+
+    // 展开列单元格容器：撑满单元格，触发器水平垂直居中
+    .@{prefix}-expand-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    // 展开触发器按钮
+    .@{prefix}-expand-trigger {
+      padding: 2px 5px;
+      width: 24px;
+      height: 24px;
+      border: none;
+      border-radius: var(--s-radius-sm, 4px);
+      background: transparent;
+      color: var(--s-color-text-tertiary);
+      cursor: pointer;
+      transition:
+        color 0.2s ease,
+        background-color 0.2s ease;
+
+      svg {
+        transition: transform 0.2s ease;
+      }
+
+      &:hover {
+        color: var(--s-color-text);
+        background-color: var(--s-color-bg-hover);
+      }
+
+      &-expanded {
+        color: var(--s-primary-color, #1677ff);
+
+        svg {
+          transform: rotate(90deg);
+        }
+      }
+
+      &-disabled {
+        color: var(--s-color-text-quaternary);
+        cursor: not-allowed;
+
+        &:hover {
+          color: var(--s-color-text-quaternary);
+          background-color: transparent;
+        }
+      }
+    }
+
+    // 虚拟滚动占位单元格
+    .@{prefix}-virtual-spacer-cell {
+      padding: 0 !important;
+      border-bottom: none !important;
+      line-height: 0;
+      font-size: 0;
+    }
+
+    // 单元格框选高亮：使用稳定的半透明填充，和行选择保持清晰层级。
+    // 同时匹配行和单元格以提高选区层级，避免通用单元格及行选择背景覆盖框选填充。
+    .@{prefix}-row .@{prefix}-cell.@{prefix}-cell-range-selected {
+      --s-table-cell-bg: var(--s-color-bg-cell-range);
+      background-color: var(--s-table-cell-bg);
+      position: relative;
+      z-index: 1;
+
+      // border-collapse 下用 inset shadow 绘制边缘，不改变表格布局，避免选中时行高抖动。
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        box-shadow:
+          inset 0 var(--s-cell-range-top, 0) 0
+            var(--s-color-border-cell-range, var(--s-primary-color)),
+          inset 0 var(--s-cell-range-bottom, 0) 0
+            var(--s-color-border-cell-range, var(--s-primary-color)),
+          inset var(--s-cell-range-left, 0) 0 0
+            var(--s-color-border-cell-range, var(--s-primary-color)),
+          inset var(--s-cell-range-right, 0) 0 0
+            var(--s-color-border-cell-range, var(--s-primary-color));
+      }
+    }
+
+    // 四条外围边缘由上面的伪元素绘制为 Excel 风格实线。
+    .@{prefix}-cell-range-edge-top {
+      --s-cell-range-top: 2px;
+    }
+    .@{prefix}-cell-range-edge-bottom {
+      --s-cell-range-bottom: -2px;
+    }
+    .@{prefix}-cell-range-edge-left {
+      --s-cell-range-left: 2px;
+    }
+    .@{prefix}-cell-range-edge-right {
+      --s-cell-range-right: -2px;
+    }
+
+    .@{prefix}-cell {
+      --s-table-cell-bg: var(--s-color-bg-cell);
+      color: var(--s-color-text);
+      font-weight: 400;
+      background-color: var(--s-table-cell-bg);
+      border-bottom: 1px solid var(--s-color-border);
+      text-align: start;
+      vertical-align: middle;
+      word-break: break-word;
+      transition:
+        padding 0.2s ease,
+        font-size 0.2s ease,
+        line-height 0.2s ease,
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+
+      &.s-table-cell-fixed-left,
+      &.s-table-cell-fixed-right {
+        z-index: var(--s-z-index-cell-fixed);
+      }
+
+      &[tabindex] {
+        outline: none;
+
+        &:focus-visible {
+          position: relative;
+        }
+
+        &:focus-visible::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: 2;
+          pointer-events: none;
+          box-shadow: inset 0 0 0 2px var(--s-primary-color, #1677ff);
+        }
+      }
+    }
+  }
+
+  // 页脚（表格下方通用内容区域）
+  &-footer {
+    padding: 10px;
+    border-top: 1px solid var(--s-color-border);
+    background-color: var(--s-color-bg-footer);
+    color: var(--s-color-text);
+    font-size: 14px;
+  }
+
+  // 汇总行（tfoot）
+  &-summary {
+    .@{prefix}-summary-row {
+      .@{prefix}-cell {
+        padding: 8px 16px;
+        border-top: 1px solid var(--s-color-border);
+        color: var(--s-color-text);
+        font-weight: 600;
+        font-size: 14px;
+        background-color: var(--s-color-bg-summary);
+        text-align: left;
+
+        &.s-table-cell-fixed-left,
+        &.s-table-cell-fixed-right {
+          z-index: var(--s-z-index-cell-fixed);
+        }
+      }
+    }
+  }
+
+  // 单元格
+  &-cell {
+    box-sizing: border-box;
+
+    &-fixed-left,
+    &-fixed-right {
+      background-color: var(--s-table-cell-bg, var(--s-color-bg-cell));
+      background-clip: border-box;
+      --s-fixed-inset-shadow: 0 0 transparent;
+      // 模糊投影默认关闭：仅固定组「边界列」开启，避免每个固定格都画 8px 模糊阴影
+      // 在滚动/框选拖动时叠加 paint 成本。
+      --s-fixed-blur-shadow: 0 0 transparent;
+    }
+
+    // 右固定组的边界列 = 其左邻为非右固定单元格。仅此列开启向左模糊投影。
+    &-fixed-left {
+      box-shadow: var(--s-fixed-inset-shadow), var(--s-fixed-blur-shadow);
+
+      // 左固定组的边界列 = 其右邻为非左固定单元格。仅此列开启向右模糊投影。
+      // 仅当框选蓝色边框在右侧时才清除固定列灰色右边框，避免叠加
+      &.@{prefix}-cell-range-selected.@{prefix}-cell-range-edge-right {
+        --s-fixed-inset-shadow: 0 0 transparent;
+      }
+    }
+
+    &-fixed-right {
+      box-shadow: var(--s-fixed-inset-shadow), var(--s-fixed-blur-shadow);
+
+      // 仅当框选蓝色边框在左侧时才清除固定列灰色左边框，避免叠加
+      &.@{prefix}-cell-range-selected.@{prefix}-cell-range-edge-left {
+        --s-fixed-inset-shadow: 0 0 transparent;
+      }
+    }
+  }
+
+  // 选择列
+  // 滚动容器只在固定列遮挡了横向内容时显示边界阴影。
+  &-selection {
+    &-header,
+    &-cell {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+    }
+  }
+
+  // 分页包装器
+  &-pagination-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+
+    &-topStart,
+    &-bottomStart {
+      justify-content: flex-start;
+    }
+
+    &-topCenter,
+    &-bottomCenter {
+      justify-content: center;
+    }
+
+    &-topEnd,
+    &-bottomEnd {
+      justify-content: flex-end;
+    }
+  }
+
+  // 选择列表头：checkbox 与表体单元格保持同一居中基线；
+  // 下拉触发器绝对定位在 checkbox 右侧，不参与居中计算（antd 同款对齐策略）。
+  .s-table-selection-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+
+    > .s-table-selection-dropdown {
+      position: absolute;
+      top: 50%;
+      left: calc(50% + 8px);
+      transform: translateY(-50%);
+    }
+  }
+
+  // 选择列单元格容器：确保控件完美居中
+  .s-table-selection-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // 选择列单元格：减少 padding 使控件居中
+  // 注意：表头内容嵌套在 .s-table-cell-title 中，:has() 需匹配完整链路
+  &-header
+    .@{prefix}-cell:has(> .s-table-cell-inner > .s-table-cell-title > .s-table-selection-header),
+  &-body .@{prefix}-cell:has(> .s-table-selection-cell) {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  // 序号列容器：撑满单元格，对齐由内联 text-align 控制（默认居中）
+  .s-table-seq-cell {
+    width: 100%;
+  }
+
+  // 选中行高亮
+  &-body .@{prefix}-row-selected {
+    .@{prefix}-cell {
+      --s-table-cell-bg: var(--s-color-bg-row-selected);
+      background-color: var(--s-table-cell-bg);
+    }
+
+    &:hover .@{prefix}-cell {
+      --s-table-cell-bg: var(--s-color-bg-row-selected-hover);
+      background-color: var(--s-table-cell-bg);
+    }
+  }
+
+  // 表头单元格标题区域
+  .s-table-cell-title {
+    flex: 1;
+    min-width: 0;
+
+    &-sortable {
+      cursor: pointer;
+      user-select: none;
+
+      // 键盘可达的排序标题：提供清晰的焦点指示（WCAG 2.4.7）
+      &:focus-visible {
+        outline: 2px solid var(--s-primary-color, #1677ff);
+        outline-offset: 2px;
+        border-radius: var(--s-radius-sm, 4px);
+      }
+    }
+  }
+
+  // 排序图标
+  .s-table-column-sorter {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+    line-height: 0;
+    cursor: pointer;
+  }
+
+  .s-table-column-sorter-inner {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    line-height: 1;
+  }
+
+  .s-table-column-sorter-up,
+  .s-table-column-sorter-down {
+    display: inline-block;
+    color: var(--s-color-text-icon);
+    // 增大命中区域并提高未激活辨识度（WCAG：避免近乎不可见的状态指示）
+    font-size: 14px;
+    opacity: 0.45;
+    line-height: 0;
+    margin: -2px 0;
+    transition:
+      color var(--s-duration-fast) ease,
+      opacity var(--s-duration-fast) ease;
+  }
+
+  .s-table-column-sorter-up-active,
+  .s-table-column-sorter-down-active {
+    color: var(--s-primary-color, #1677ff);
+    opacity: 1;
+  }
+
+  // 过滤触发器
+  .s-table-filter-trigger-wrapper {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+  }
+
+  .s-table-filter-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: var(--s-radius-sm, 4px);
+    background: transparent;
+    color: var(--s-color-text-icon);
+    font-size: 12px;
+    cursor: pointer;
+    transition:
+      color 0.2s ease,
+      background-color 0.2s ease;
+
+    &:hover {
+      color: var(--s-color-text);
+      background-color: var(--s-color-bg-hover);
+    }
+
+    &-active {
+      color: var(--s-primary-color, #1677ff);
+    }
+  }
+
+  // 搜索触发器
+  .s-table-search-trigger-wrapper {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+  }
+
+  .s-table-search-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: var(--s-radius-sm, 4px);
+    background: transparent;
+    color: var(--s-color-text-icon);
+    font-size: 12px;
+    cursor: pointer;
+    transition:
+      color 0.2s ease,
+      background-color 0.2s ease;
+
+    &:hover {
+      color: var(--s-color-text);
+      background-color: var(--s-color-bg-hover);
+    }
+
+    &-active {
+      color: var(--s-primary-color, #1677ff);
+    }
+  }
+}

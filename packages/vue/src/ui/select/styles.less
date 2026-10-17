@@ -1,0 +1,216 @@
+// Select 样式
+.s-select {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  box-sizing: border-box;
+
+  // ── 尺寸 ──
+  &-small .s-select-selector {
+    min-height: 24px;
+    padding: 0 26px 0 7px;
+    font-size: 12px;
+    border-radius: var(--s-radius-sm, 4px);
+  }
+
+  &-middle .s-select-selector {
+    min-height: 32px;
+    padding: 0 30px 0 11px;
+    font-size: 14px;
+  }
+
+  &-large .s-select-selector {
+    min-height: 40px;
+    padding: 0 34px 0 15px;
+    font-size: 16px;
+    border-radius: var(--s-radius-lg, 8px);
+  }
+
+  // ── 触发区 ──
+  .s-select-selector {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-height: 32px;
+    padding: 0 30px 0 11px;
+    border: 1px solid var(--s-color-border-control, #d9d9d9);
+    border-radius: var(--s-radius-md, 6px);
+    background-color: var(--s-color-bg-cell, #fff);
+    cursor: pointer;
+    transition:
+      border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
+      box-shadow 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+
+    &:hover {
+      border-color: var(--s-primary-color, #1677ff);
+    }
+
+    // 键盘焦点指示（WCAG 2.4.7）
+    &:focus-visible {
+      outline: 2px solid var(--s-primary-color, #1677ff);
+      outline-offset: 2px;
+    }
+
+    .s-select-open & {
+      border-color: var(--s-primary-color, #1677ff);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--s-primary-color, #1677ff) 12%, transparent);
+    }
+
+    .s-select-disabled & {
+      cursor: not-allowed;
+      background-color: var(--s-color-bg-disabled, #f5f5f5);
+      border-color: var(--s-color-border-control, #d9d9d9);
+    }
+  }
+
+  .s-select-arrow {
+    position: absolute;
+    right: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+    font-size: 12px;
+    pointer-events: none;
+    transition: transform 0.2s;
+
+    .s-select-open & {
+      transform: translateY(-50%) rotate(180deg);
+    }
+  }
+
+  .s-select-clear {
+    position: absolute;
+    right: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 1;
+    background-color: var(--s-color-bg-cell, #fff);
+
+    &:hover {
+      color: var(--s-color-text-tertiary, rgba(0, 0, 0, 0.45));
+    }
+  }
+
+  // ── 选择项展示 ──
+  .s-select-selection-item {
+    color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .s-select-placeholder {
+    color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // ── 多选 ──
+  .s-select-selection-overflow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 2px 0;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .s-select-selection-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px 0 8px;
+    background-color: var(--s-color-bg-disabled, #f5f5f5);
+    border: 1px solid var(--s-color-border-control, #d9d9d9);
+    color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+    border-radius: var(--s-radius-sm, 4px);
+    font-size: 12px;
+    line-height: 20px;
+    max-width: 100%;
+
+    .s-select-tag-close {
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      color: var(--s-color-text-tertiary, rgba(0, 0, 0, 0.45));
+      font-size: 10px;
+
+      &:hover {
+        color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+      }
+    }
+  }
+}
+
+// ── 下拉面板（Teleport 到 body，由 floating-ui 定位）──
+.s-select-dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background-color: var(--s-color-bg-cell, #fff);
+  border-radius: var(--s-radius-lg, 8px);
+  // 单层轻量阴影：下拉面板与页面分离感弱，无需多层叠加
+  box-shadow: var(--s-shadow-dropdown, 0 6px 16px rgba(0, 0, 0, 0.08));
+  padding: 4px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  z-index: var(--s-z-index-dropdown, 1050);
+
+  .s-select-item-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 12px;
+    border-radius: var(--s-radius-sm, 4px);
+    cursor: pointer;
+    transition: background-color 0.15s;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+
+    &:hover {
+      background-color: var(--s-color-bg-hover, rgba(0, 0, 0, 0.04));
+    }
+
+    &-active {
+      background-color: var(--s-color-bg-hover, rgba(0, 0, 0, 0.04));
+    }
+
+    &-selected {
+      font-weight: 600;
+      background-color: var(--s-color-bg-row-selected, rgba(22, 119, 255, 0.04));
+      color: var(--s-primary-color, #1677ff);
+
+      &:hover {
+        background-color: var(--s-color-bg-row-selected-hover, rgba(22, 119, 255, 0.08));
+      }
+    }
+
+    &-disabled {
+      cursor: not-allowed;
+      color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+
+      &:hover {
+        background-color: transparent;
+      }
+    }
+  }
+
+  .s-select-item-option-check {
+    color: var(--s-primary-color, #1677ff);
+    font-size: 12px;
+    margin-left: 8px;
+  }
+
+  .s-select-empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+    font-size: 14px;
+  }
+}

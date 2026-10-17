@@ -1,0 +1,44 @@
+{
+  "name": "@zchengfeng/s-table-core",
+  "version": "0.1.0",
+  "description": "Framework-agnostic core types, state machines and utilities for STable",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zchengfeng/s-table.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/zchengfeng/s-table#readme",
+  "license": "ISC",
+  "author": "zchengfeng <2684837849@qq.com>",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build": "vite build",
+    "prepack": "pnpm build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@tanstack/table-core": "9.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.32.1"
+}

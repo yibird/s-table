@@ -1,0 +1,156 @@
+// Input 样式
+.s-input-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  width: 100%;
+  border-radius: var(--s-radius-md, 6px);
+  border: 1px solid var(--s-color-border-control, #d9d9d9);
+  background-color: var(--s-color-bg-cell, #fff);
+  transition:
+    border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
+    box-shadow 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+  cursor: text;
+
+  &:hover {
+    border-color: var(--s-primary-color, #1677ff);
+  }
+
+  // ── Focus ──
+  &-focused {
+    border-color: var(--s-primary-color, #1677ff);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--s-primary-color, #1677ff) 12%, transparent);
+  }
+
+  // ── 禁用 ──
+  &-disabled {
+    cursor: not-allowed;
+    background-color: var(--s-color-bg-disabled, #f5f5f5);
+    border-color: var(--s-color-border-control, #d9d9d9);
+
+    .s-input {
+      cursor: not-allowed;
+      color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+    }
+  }
+
+  // ── 尺寸 ──
+  &-small {
+    border-radius: var(--s-radius-sm, 4px);
+
+    .s-input {
+      padding: 0 7px;
+      font-size: 12px;
+      height: 22px;
+    }
+  }
+
+  &-middle {
+    .s-input {
+      padding: 4px 11px;
+      font-size: 14px;
+      height: 30px;
+    }
+  }
+
+  &-large {
+    border-radius: var(--s-radius-lg, 8px);
+
+    .s-input {
+      padding: 7px 15px;
+      font-size: 16px;
+      height: 38px;
+    }
+  }
+
+  // ── Addon 内嵌时 ──
+  &-addon {
+    border-radius: 0;
+  }
+
+  // ── 内部元素 ──
+  .s-input-affix {
+    display: inline-flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .s-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background-color: transparent;
+    color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+    font-family: inherit;
+    line-height: 1.5715;
+    box-sizing: border-box;
+    width: 100%;
+    resize: vertical;
+
+    &::placeholder {
+      color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+    }
+
+    textarea& {
+      min-height: 80px;
+      padding: 4px 11px;
+    }
+  }
+
+  .s-input-prefix,
+  .s-input-suffix {
+    display: inline-flex;
+    align-items: center;
+    color: var(--s-color-text-tertiary, rgba(0, 0, 0, 0.45));
+    flex-shrink: 0;
+  }
+
+  .s-input-prefix {
+    padding-left: 4px;
+  }
+  .s-input-suffix {
+    padding-right: 4px;
+  }
+
+  .s-input-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+    cursor: pointer;
+    font-size: 12px;
+    transition: color 0.2s;
+    flex-shrink: 0;
+    padding: 0 4px;
+
+    &:hover {
+      color: var(--s-color-text-tertiary, rgba(0, 0, 0, 0.45));
+    }
+  }
+}
+
+// ── Addon（独立于 wrapper 之外）──
+.s-input-addon {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 11px;
+  background-color: var(--s-color-bg-header, #fafafa);
+  border: 1px solid var(--s-color-border-control, #d9d9d9);
+  color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+  font-size: 14px;
+  white-space: nowrap;
+
+  &-before {
+    border-right: 0;
+    border-radius: var(--s-radius-md, 6px) 0 0 var(--s-radius-md, 6px);
+    margin-left: -1px;
+  }
+
+  &-after {
+    border-left: 0;
+    border-radius: 0 var(--s-radius-md, 6px) var(--s-radius-md, 6px) 0;
+    margin-right: -1px;
+  }
+}

@@ -1,0 +1,292 @@
+// Button 样式
+.s-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  font-weight: 400;
+  white-space: nowrap;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid var(--s-color-border-control, #d9d9d9);
+  border-radius: var(--s-radius-md, 6px);
+  outline: none;
+  transition:
+    color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
+    border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
+    background-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
+    box-shadow 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+  user-select: none;
+  touch-action: manipulation;
+  line-height: 1.5715;
+  box-sizing: border-box;
+  background-color: var(--s-color-bg-cell, #fff);
+  color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+
+  &:hover {
+    color: var(--s-primary-color, #1677ff);
+    border-color: var(--s-primary-color, #1677ff);
+  }
+
+  &:active {
+    color: var(
+      --s-primary-color-active,
+      color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
+    );
+    border-color: var(
+      --s-primary-color-active,
+      color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
+    );
+  }
+
+  // 键盘焦点指示（WCAG 2.4.7）：outline: none 仅移除默认环，此处补回可见焦点
+  &:focus-visible {
+    outline: 2px solid var(--s-primary-color, #1677ff);
+    outline-offset: 2px;
+  }
+
+  // ── 尺寸 ──
+  &-small {
+    height: 24px;
+    padding: 0 7px;
+    font-size: 12px;
+    border-radius: var(--s-radius-sm, 4px);
+  }
+
+  &-middle {
+    height: 32px;
+    padding: 4px 15px;
+    font-size: 14px;
+  }
+
+  &-large {
+    height: 40px;
+    padding: 6px 19px;
+    font-size: 16px;
+    border-radius: var(--s-radius-lg, 8px);
+  }
+
+  // ── Primary ──
+  &-primary {
+    color: #fff;
+    background-color: var(--s-primary-color, #1677ff);
+    border-color: var(--s-primary-color, #1677ff);
+
+    &:hover {
+      background-color: var(
+        --s-primary-color-hover,
+        color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
+      );
+      border-color: var(
+        --s-primary-color-hover,
+        color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
+      );
+      color: #fff;
+    }
+
+    &:active {
+      background-color: var(
+        --s-primary-color-active,
+        color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
+      );
+      border-color: var(
+        --s-primary-color-active,
+        color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
+      );
+      color: #fff;
+    }
+
+    &.s-btn-danger {
+      background-color: #ff4d4f;
+      border-color: #ff4d4f;
+
+      &:hover {
+        background-color: #ff7875;
+        border-color: #ff7875;
+      }
+      &:active {
+        background-color: #d9363e;
+        border-color: #d9363e;
+      }
+    }
+
+    &.s-btn-ghost {
+      color: var(--s-primary-color, #1677ff);
+      background-color: transparent;
+      border-color: var(--s-primary-color, #1677ff);
+
+      &:hover {
+        color: var(
+          --s-primary-color-hover,
+          color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
+        );
+        border-color: var(
+          --s-primary-color-hover,
+          color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
+        );
+      }
+      &:active {
+        color: var(
+          --s-primary-color-active,
+          color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
+        );
+        border-color: var(
+          --s-primary-color-active,
+          color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
+        );
+      }
+    }
+  }
+
+  // ── Dashed ──
+  &-dashed {
+    border-style: dashed;
+
+    &:hover {
+      color: var(--s-primary-color, #1677ff);
+      border-color: var(--s-primary-color, #1677ff);
+    }
+  }
+
+  // ── Text ──
+  &-text {
+    border-color: transparent;
+    background-color: transparent;
+
+    &:hover {
+      background-color: var(--s-color-bg-hover, rgba(0, 0, 0, 0.04));
+      color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+    }
+    &:active {
+      background-color: var(--s-color-bg-active, rgba(0, 0, 0, 0.08));
+    }
+
+    &.s-btn-danger {
+      color: #ff4d4f;
+
+      &:hover {
+        background-color: color-mix(in srgb, #ff4d4f 12%, transparent);
+        color: #ff4d4f;
+      }
+      &:active {
+        background-color: color-mix(in srgb, #ff4d4f 20%, transparent);
+      }
+    }
+  }
+
+  // ── Link ──
+  &-link {
+    border-color: transparent;
+    background-color: transparent;
+    color: var(--s-primary-color, #1677ff);
+
+    &:hover {
+      color: var(
+        --s-primary-color-hover,
+        color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
+      );
+    }
+    &:active {
+      color: var(
+        --s-primary-color-active,
+        color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
+      );
+    }
+
+    &.s-btn-danger {
+      color: #ff4d4f;
+
+      &:hover {
+        color: #ff7875;
+      }
+      &:active {
+        color: #d9363e;
+      }
+    }
+  }
+
+  // ── Default + danger ──
+  &-default.s-btn-danger {
+    color: #ff4d4f;
+    border-color: #ff4d4f;
+
+    &:hover {
+      color: #ff7875;
+      border-color: #ff7875;
+    }
+    &:active {
+      color: #d9363e;
+      border-color: #d9363e;
+    }
+  }
+
+  // ── Block ──
+  &-block {
+    width: 100%;
+  }
+
+  // ── Disabled ──
+  &-disabled,
+  &[disabled] {
+    cursor: not-allowed;
+    color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+    background-color: var(--s-color-bg-disabled, #f5f5f5);
+    border-color: var(--s-color-border-control, #d9d9d9);
+    pointer-events: none;
+
+    &:hover,
+    &:active {
+      color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+      background-color: var(--s-color-bg-disabled, #f5f5f5);
+      border-color: var(--s-color-border-control, #d9d9d9);
+    }
+  }
+
+  // ── Loading ──
+  &-loading {
+    opacity: 0.65;
+    pointer-events: none;
+  }
+
+  &-loading-icon {
+    display: inline-flex;
+    animation: s-btn-spin 1s linear infinite;
+  }
+
+  // ── 内部元素 ──
+  &-icon {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  &-content {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  &-icon-only {
+    padding-left: 0;
+    padding-right: 0;
+
+    &.s-btn-small {
+      width: 24px;
+    }
+    &.s-btn-middle {
+      width: 32px;
+    }
+    &.s-btn-large {
+      width: 40px;
+    }
+  }
+}
+
+@keyframes s-btn-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

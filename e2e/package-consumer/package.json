@@ -1,0 +1,20 @@
+{
+  "name": "@s-table/package-consumer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "vue-tsc --noEmit --ignoreDeprecations 6.0 && tsc --noEmit -p tsconfig.node-next.json"
+  },
+  "dependencies": {
+    "@zchengfeng/s-table-vue": "workspace:*",
+    "vue": "^3.5.42"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.8",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.2",
+    "vue-tsc": "^3.3.11"
+  }
+}

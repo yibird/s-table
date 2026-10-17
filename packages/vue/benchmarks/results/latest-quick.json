@@ -1,0 +1,446 @@
+{
+  "generatedAt": "2026-08-28T07:16:07.317Z",
+  "runtime": {
+    "node": "v24.14.0",
+    "platform": "win32 x64",
+    "cpu": "13th Gen Intel(R) Core(TM) i5-13400",
+    "logicalCpus": 16,
+    "totalMemoryBytes": 68448337920
+  },
+  "mode": "quick",
+  "methodology": {
+    "isolation": "One child process per scenario",
+    "gc": "Forced before memory checkpoints and hot-operation samples",
+    "percentiles": "Nearest-rank over measured samples",
+    "denseGuard": "The 1M x 500 case uses 8 materialized values per row. Dense payload memory is estimated separately and rejected before allocation.",
+    "budgets": "Regression guards use generous absolute ceilings so shared CI runner variance does not masquerade as a product regression."
+  },
+  "results": [
+    {
+      "scenario": {
+        "id": "1k-x-20",
+        "rows": 1000,
+        "columns": 20,
+        "denseColumns": 20,
+        "samples": 15,
+        "heapMb": 1024
+      },
+      "status": "ok",
+      "caveats": [],
+      "counts": {
+        "rootRows": 1000,
+        "flatRows": 1000,
+        "rowsById": 1000,
+        "columns": 20,
+        "virtualWindowRows": 40,
+        "materializedCellsForVirtualWindow": 800,
+        "theoreticalDenseValues": 20000
+      },
+      "preflight": {
+        "estimatedDensePayloadBytes": 160000,
+        "estimatedDensePayloadGiB": 0,
+        "denseAllocationExecuted": true
+      },
+      "memory": {
+        "heapStartMb": 5.29,
+        "heapAfterDataMb": 5.6,
+        "heapAfterCoreMb": 6.76,
+        "heapFinalMb": 8.42,
+        "dataHeapDeltaMb": 0.31,
+        "coreHeapDeltaMb": 1.16
+      },
+      "instrumentation": {
+        "performanceObserverMeasures": 208
+      },
+      "metrics": {
+        "dataAllocation": {
+          "samples": 1,
+          "p50": 1.39,
+          "p95": 1.39,
+          "p99": 1.39,
+          "max": 1.39
+        },
+        "columnDefinition": {
+          "samples": 1,
+          "p50": 0.18,
+          "p95": 0.18,
+          "p99": 0.18,
+          "max": 0.18
+        },
+        "tableConstruction": {
+          "samples": 1,
+          "p50": 1.5,
+          "p95": 1.5,
+          "p99": 1.5,
+          "max": 1.5
+        },
+        "coreRowModel": {
+          "samples": 1,
+          "p50": 1.65,
+          "p95": 1.65,
+          "p99": 1.65,
+          "max": 1.65
+        },
+        "coreRowModelCacheHit": {
+          "samples": 1,
+          "p50": 0.07,
+          "p95": 0.07,
+          "p99": 0.07,
+          "max": 0.07
+        },
+        "headerModel": {
+          "samples": 1,
+          "p50": 1.79,
+          "p95": 1.79,
+          "p99": 1.79,
+          "max": 1.79
+        },
+        "visibleCellIndexCold": {
+          "samples": 1,
+          "p50": 1.03,
+          "p95": 1.03,
+          "p99": 1.03,
+          "max": 1.03
+        },
+        "visibleCellIndexCacheHit": {
+          "samples": 1,
+          "p50": 0.11,
+          "p95": 0.11,
+          "p99": 0.11,
+          "max": 0.11
+        },
+        "sort": {
+          "samples": 15,
+          "p50": 0.36,
+          "p95": 2.58,
+          "p99": 2.58,
+          "max": 2.58
+        },
+        "filter": {
+          "samples": 15,
+          "p50": 0.45,
+          "p95": 1.88,
+          "p99": 1.88,
+          "max": 1.88
+        },
+        "selectAll": {
+          "samples": 15,
+          "p50": 0.25,
+          "p95": 0.57,
+          "p99": 0.57,
+          "max": 0.57
+        },
+        "immutableCellCommit": {
+          "samples": 5,
+          "p50": 0.43,
+          "p95": 0.59,
+          "p99": 0.59,
+          "max": 0.59
+        },
+        "columnResizeState": {
+          "samples": 150,
+          "p50": 0,
+          "p95": 0.01,
+          "p99": 0.08,
+          "max": 0.18
+        }
+      },
+      "budget": {
+        "status": "ok",
+        "limits": {
+          "metrics.coreRowModel.p50": 25,
+          "metrics.sort.p95": 50,
+          "metrics.filter.p95": 50,
+          "metrics.selectAll.p95": 30,
+          "metrics.immutableCellCommit.p95": 30,
+          "memory.heapAfterCoreMb": 40
+        },
+        "violations": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "10k-x-50",
+        "rows": 10000,
+        "columns": 50,
+        "denseColumns": 50,
+        "samples": 11,
+        "heapMb": 2048
+      },
+      "status": "ok",
+      "caveats": [],
+      "counts": {
+        "rootRows": 10000,
+        "flatRows": 10000,
+        "rowsById": 10000,
+        "columns": 50,
+        "virtualWindowRows": 40,
+        "materializedCellsForVirtualWindow": 2000,
+        "theoreticalDenseValues": 500000
+      },
+      "preflight": {
+        "estimatedDensePayloadBytes": 4000000,
+        "estimatedDensePayloadGiB": 0,
+        "denseAllocationExecuted": true
+      },
+      "memory": {
+        "heapStartMb": 5.28,
+        "heapAfterDataMb": 10.56,
+        "heapAfterCoreMb": 20.01,
+        "heapFinalMb": 30.74,
+        "dataHeapDeltaMb": 5.27,
+        "coreHeapDeltaMb": 9.45
+      },
+      "instrumentation": {
+        "performanceObserverMeasures": 156
+      },
+      "metrics": {
+        "dataAllocation": {
+          "samples": 1,
+          "p50": 22.22,
+          "p95": 22.22,
+          "p99": 22.22,
+          "max": 22.22
+        },
+        "columnDefinition": {
+          "samples": 1,
+          "p50": 0.13,
+          "p95": 0.13,
+          "p99": 0.13,
+          "max": 0.13
+        },
+        "tableConstruction": {
+          "samples": 1,
+          "p50": 1.39,
+          "p95": 1.39,
+          "p99": 1.39,
+          "max": 1.39
+        },
+        "coreRowModel": {
+          "samples": 1,
+          "p50": 10.18,
+          "p95": 10.18,
+          "p99": 10.18,
+          "max": 10.18
+        },
+        "coreRowModelCacheHit": {
+          "samples": 1,
+          "p50": 0.08,
+          "p95": 0.08,
+          "p99": 0.08,
+          "max": 0.08
+        },
+        "headerModel": {
+          "samples": 1,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "max": 2
+        },
+        "visibleCellIndexCold": {
+          "samples": 1,
+          "p50": 1.57,
+          "p95": 1.57,
+          "p99": 1.57,
+          "max": 1.57
+        },
+        "visibleCellIndexCacheHit": {
+          "samples": 1,
+          "p50": 0.13,
+          "p95": 0.13,
+          "p99": 0.13,
+          "max": 0.13
+        },
+        "sort": {
+          "samples": 11,
+          "p50": 2.37,
+          "p95": 8.42,
+          "p99": 8.42,
+          "max": 8.42
+        },
+        "filter": {
+          "samples": 11,
+          "p50": 2.91,
+          "p95": 8.43,
+          "p99": 8.43,
+          "max": 8.43
+        },
+        "selectAll": {
+          "samples": 11,
+          "p50": 2.05,
+          "p95": 2.68,
+          "p99": 2.68,
+          "max": 2.68
+        },
+        "immutableCellCommit": {
+          "samples": 5,
+          "p50": 3.42,
+          "p95": 4.23,
+          "p99": 4.23,
+          "max": 4.23
+        },
+        "columnResizeState": {
+          "samples": 110,
+          "p50": 0,
+          "p95": 0.01,
+          "p99": 0.09,
+          "max": 0.22
+        }
+      },
+      "budget": {
+        "status": "ok",
+        "limits": {
+          "metrics.coreRowModel.p50": 100,
+          "metrics.sort.p95": 150,
+          "metrics.filter.p95": 150,
+          "metrics.selectAll.p95": 100,
+          "metrics.immutableCellCommit.p95": 100,
+          "memory.heapAfterCoreMb": 100
+        },
+        "violations": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "100k-x-100",
+        "rows": 100000,
+        "columns": 100,
+        "denseColumns": 100,
+        "samples": 7,
+        "heapMb": 4096
+      },
+      "status": "ok",
+      "caveats": [],
+      "counts": {
+        "rootRows": 100000,
+        "flatRows": 100000,
+        "rowsById": 100000,
+        "columns": 100,
+        "virtualWindowRows": 40,
+        "materializedCellsForVirtualWindow": 4000,
+        "theoreticalDenseValues": 10000000
+      },
+      "preflight": {
+        "estimatedDensePayloadBytes": 80000000,
+        "estimatedDensePayloadGiB": 0.07,
+        "denseAllocationExecuted": true
+      },
+      "memory": {
+        "heapStartMb": 5.28,
+        "heapAfterDataMb": 96.01,
+        "heapAfterCoreMb": 190.98,
+        "heapFinalMb": 294.65,
+        "dataHeapDeltaMb": 90.73,
+        "coreHeapDeltaMb": 94.96
+      },
+      "instrumentation": {
+        "performanceObserverMeasures": 104
+      },
+      "metrics": {
+        "dataAllocation": {
+          "samples": 1,
+          "p50": 348.39,
+          "p95": 348.39,
+          "p99": 348.39,
+          "max": 348.39
+        },
+        "columnDefinition": {
+          "samples": 1,
+          "p50": 0.21,
+          "p95": 0.21,
+          "p99": 0.21,
+          "max": 0.21
+        },
+        "tableConstruction": {
+          "samples": 1,
+          "p50": 2.63,
+          "p95": 2.63,
+          "p99": 2.63,
+          "max": 2.63
+        },
+        "coreRowModel": {
+          "samples": 1,
+          "p50": 86.76,
+          "p95": 86.76,
+          "p99": 86.76,
+          "max": 86.76
+        },
+        "coreRowModelCacheHit": {
+          "samples": 1,
+          "p50": 0.15,
+          "p95": 0.15,
+          "p99": 0.15,
+          "max": 0.15
+        },
+        "headerModel": {
+          "samples": 1,
+          "p50": 2.6,
+          "p95": 2.6,
+          "p99": 2.6,
+          "max": 2.6
+        },
+        "visibleCellIndexCold": {
+          "samples": 1,
+          "p50": 3.54,
+          "p95": 3.54,
+          "p99": 3.54,
+          "max": 3.54
+        },
+        "visibleCellIndexCacheHit": {
+          "samples": 1,
+          "p50": 0.29,
+          "p95": 0.29,
+          "p99": 0.29,
+          "max": 0.29
+        },
+        "sort": {
+          "samples": 7,
+          "p50": 45.43,
+          "p95": 87.46,
+          "p99": 87.46,
+          "max": 87.46
+        },
+        "filter": {
+          "samples": 7,
+          "p50": 30.63,
+          "p95": 65.71,
+          "p99": 65.71,
+          "max": 65.71
+        },
+        "selectAll": {
+          "samples": 7,
+          "p50": 32.34,
+          "p95": 33.52,
+          "p99": 33.52,
+          "max": 33.52
+        },
+        "immutableCellCommit": {
+          "samples": 5,
+          "p50": 64.7,
+          "p95": 73.91,
+          "p99": 73.91,
+          "max": 73.91
+        },
+        "columnResizeState": {
+          "samples": 70,
+          "p50": 0,
+          "p95": 0.02,
+          "p99": 0.24,
+          "max": 0.24
+        }
+      },
+      "budget": {
+        "status": "ok",
+        "limits": {
+          "metrics.coreRowModel.p50": 500,
+          "metrics.sort.p95": 600,
+          "metrics.filter.p95": 500,
+          "metrics.selectAll.p95": 300,
+          "metrics.immutableCellCommit.p95": 1200,
+          "memory.heapAfterCoreMb": 400
+        },
+        "violations": []
+      }
+    }
+  ]
+}

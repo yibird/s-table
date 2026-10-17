@@ -1,0 +1,106 @@
+// 右键菜单（Teleport 到 body，全局作用域）
+.s-table-context-menu {
+  z-index: var(--s-z-index-dropdown, 1050);
+  position: fixed;
+
+  // 菜单容器
+  &-inner {
+    box-sizing: border-box;
+    min-width: 120px;
+    padding: 4px;
+    background-color: var(--s-color-bg-cell, #fff);
+    color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+    border-radius: var(--s-radius-lg, 8px);
+    // 右键菜单悬浮于任意内容之上，需要更强的分离感，保留两层阴影
+    box-shadow: var(
+      --s-shadow-menu,
+      0 3px 6px -4px rgba(0, 0, 0, 0.12),
+      0 6px 16px rgba(0, 0, 0, 0.08)
+    );
+    animation: s-table-context-menu-fade 0.15s ease;
+  }
+
+  // 菜单项
+  &-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 5px 12px;
+    margin: 0;
+    border: none;
+    background: none;
+    border-radius: var(--s-radius-sm, 4px);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+    text-align: left;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--s-color-bg-hover, rgba(0, 0, 0, 0.04));
+    }
+
+    &:active {
+      background-color: var(--s-color-bg-active, rgba(0, 0, 0, 0.08));
+    }
+
+    &-danger {
+      color: #ff4d4f;
+
+      &:hover {
+        background-color: color-mix(in srgb, #ff4d4f 12%, transparent);
+      }
+
+      &:active {
+        background-color: color-mix(in srgb, #ff4d4f 20%, transparent);
+      }
+    }
+
+    &-disabled {
+      color: var(--s-color-text-quaternary, rgba(0, 0, 0, 0.25));
+      cursor: not-allowed;
+
+      &:hover {
+        background-color: transparent;
+      }
+    }
+  }
+
+  // 图标槽位
+  &-item-icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--s-color-text-tertiary, rgba(0, 0, 0, 0.45));
+  }
+
+  // 分隔线
+  &-divider {
+    height: 1px;
+    margin: 4px 0;
+    background-color: var(--s-color-border, #f0f0f0);
+  }
+
+  // 分组标题
+  &-group-title {
+    padding: 5px 12px;
+    font-size: 12px;
+    line-height: 20px;
+    color: var(--s-color-text-tertiary, rgba(0, 0, 0, 0.45));
+  }
+}
+
+@keyframes s-table-context-menu-fade {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
