@@ -1,9 +1,9 @@
 # S-Table
 
 <p align="center">
-  <strong>高性能 Vue 3 数据表格组件</strong>
+  <strong>A high-performance data grid for Vue 3</strong>
   <br>
-  基于 TanStack Table 构建，支持虚拟滚动、编辑、选择等完整功能
+  Built on TanStack Table with virtualization, editing, selection and more
 </p>
 
 <p align="center">
@@ -12,22 +12,26 @@
   <a href="https://github.com/zchengfeng/s-table/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@zchengfeng/s-table-vue.svg" alt="license"></a>
 </p>
 
-## 特性
+<p align="center">
+  English | <a href="./README.zh-CN.md">简体中文</a>
+</p>
 
-- **高性能虚拟滚动** - 纵向 + 横向虚拟化、动态行高测量，10 万行级数据可用
-- **功能完整** - 排序、过滤、分页、编辑、展开、分组、固定列、拖拽、框选、汇总
-- **类型安全** - 公开类型不泄漏 TanStack 内部类型，列定义按 `TData` 推导取值类型
-- **可复用核心** - 列管线、编辑、选择等核心逻辑位于框架无关的 core 包
-- **国际化** - 内置中英文，支持自定义语言包
+## Features
 
-## 安装
+- **High-performance virtualization** — vertical and horizontal virtualization with dynamic row measurement; handles 100K+ rows
+- **Feature complete** — sorting, filtering, pagination, editing, expandable rows, grouping, pinned/fixed columns, drag-and-drop, cell range selection and summaries
+- **Type safe** — public types do not leak TanStack internals; column accessors infer value types from `TData`
+- **Reusable core** — column pipeline, editing, selection and other core logic live in a framework-agnostic core package
+- **Internationalization** — built-in English and Chinese dictionaries, with custom locale overrides
+
+## Installation
 
 ```bash
 npm install @zchengfeng/s-table-vue
-# 或 pnpm add @zchengfeng/s-table-vue
+# or pnpm add @zchengfeng/s-table-vue
 ```
 
-## 快速开始
+## Quick start
 
 ```vue
 <script setup lang="ts">
@@ -44,9 +48,9 @@ interface User {
 
 const columns = [
   { accessorKey: 'id', header: 'ID', width: 80 },
-  { accessorKey: 'name', header: '姓名', width: 120 },
-  { accessorKey: 'age', header: '年龄', width: 100 },
-  { accessorKey: 'email', header: '邮箱' },
+  { accessorKey: 'name', header: 'Name', width: 120 },
+  { accessorKey: 'age', header: 'Age', width: 100 },
+  { accessorKey: 'email', header: 'Email' },
 ];
 
 const dataSource = ref<User[]>([
@@ -60,82 +64,78 @@ const dataSource = ref<User[]>([
 </template>
 ```
 
-虚拟滚动、编辑、选择等示例见 `docs/demos/`。
+More examples covering virtualization, editing, selection and other features live in `docs/demos/`.
 
-## 文档
+## Documentation
 
-文档站点位于 `docs/`（VitePress）：
+The documentation site is built with VitePress from `docs/`:
 
 ```bash
-pnpm docs:dev      # 本地开发
-pnpm docs:build    # 构建静态站点
+pnpm docs:dev      # local development
+pnpm docs:build    # production build
 ```
 
-包含 20+ 篇指南与 50+ 个可运行示例（基础、虚拟滚动、编辑、树形、分组、框选、主题等）。
+It includes 20+ guides and 70+ runnable demos covering basics, virtualization, editing, tree data, grouping, cell range selection, theming and more.
 
-## 架构
+## Architecture
 
 ```
-packages/core   @zchengfeng/s-table-core   框架无关：列管线、编辑、选择等核心逻辑
-packages/vue    @zchengfeng/s-table-vue    Vue 3 适配层：响应式绑定、组件渲染、DOM 交互
-packages/react                             规划中；接入前请先参考 core 的模块边界与 vue 适配层的组合方式
+packages/core   @zchengfeng/s-table-core   Framework-agnostic core: column pipeline, editing, selection
+packages/vue    @zchengfeng/s-table-vue    Vue 3 adapter: reactivity, component rendering, DOM interaction
+packages/react                              Planned; follow core module boundaries and the Vue adapter's composition patterns
 ```
 
-依赖方向严格单向：`vue → core`。core 不引入任何框架依赖。
+Dependencies are strictly one-directional: `vue → core`. The core package has no framework dependencies.
 
-core 按领域组织：`columns/`（列归一化与列序）、`state/`（分页 / 排序 / 选择状态机）、
-`clipboard/`（RFC 4180 与公式注入防护）、`interaction/`、`scroll/`、`editing/`、`utils/`。
+The core is organized by domain: `columns/` (column normalization and ordering), `state/` (pagination, sorting and selection state machines), `clipboard/` (RFC 4180 escaping and formula-injection protection), `interaction/`, `scroll/`, `editing/` and `utils/`.
 
-Vue 适配层：`setup/` 是唯一组合根；`adapter/` 负责 TanStack 响应式桥；`presets/` 持有内置注入列；
-`hooks/` 只放状态与交互 hook（不得依赖组件）；`components/` 不得依赖 hooks/setup；
-`locales/`、`theme/`、`types/` 为共享领域模块。依赖边界由 `pnpm check:boundaries` 静态校验。
+Vue adapter layers: `setup/` is the single composition root; `adapter/` bridges TanStack reactivity; `presets/` holds injected internal columns; `hooks/` contains state and interaction hooks only (no component dependencies); `components/` must not depend on hooks/setup; `locales/`, `theme/` and `types/` are shared domain modules. Dependency boundaries are statically enforced by `pnpm check:boundaries`.
 
-## 性能基准
+## Benchmarks
 
-以下为 Node 环境 row model 基准（`pnpm bench:performance`），不代表浏览器渲染帧率：
+The numbers below are Node.js row-model benchmarks (`pnpm bench:performance`), not browser frame rates:
 
-| 数据规模 | Row Model | 排序  | 过滤  | 推荐场景                               |
-| -------- | --------- | ----- | ----- | -------------------------------------- |
-| 1K 行    | 1.6 ms    | 3 ms  | 2 ms  | 所有功能流畅                           |
-| 10K 行   | 14 ms     | 9 ms  | 9 ms  | 推荐场景                               |
-| 100K 行  | 99 ms     | 86 ms | 67 ms | 需虚拟滚动 + 固定行高 + 关闭客户端排序 |
-| 1M 行    | 2.2 s     | 1.7 s | 1.1 s | 需服务端分页/排序/过滤                 |
+| Rows | Row model | Sort  | Filter | Recommended usage                                            |
+| ---- | --------- | ----- | ------ | ------------------------------------------------------------ |
+| 1K   | 1.6 ms    | 3 ms  | 2 ms   | All features run smoothly                                    |
+| 10K  | 14 ms     | 9 ms  | 9 ms   | Recommended baseline                                         |
+| 100K | 99 ms     | 86 ms | 67 ms  | Requires virtualization, fixed row height and server sorting |
+| 1M   | 2.2 s     | 1.7 s | 1.1 s  | Requires server-side pagination/sorting/filtering            |
 
-Bundle 预算（`pnpm check:bundle-size`）：主包 ≤ 64 KB gzip、样式 ≤ 10 KB gzip。
+Bundle budgets (`pnpm check:bundle-size`): main bundle ≤ 64 KB gzip, styles ≤ 10 KB gzip.
 
-## API 稳定性
+## API stability
 
-| 分层 | 说明                                                                               |
-| ---- | ---------------------------------------------------------------------------------- |
-| 稳定 | 组件 props / events / slots / 实例方法中未标注 `experimental` 的部分               |
-| 实验 | JSDoc 标注 `@experimental` 的能力：编辑、框选、行/列拖拽、分组、固定行、选择意图等 |
-| 内部 | `setup/`、`hooks/` 等非公开导出，不保证兼容                                        |
+| Layer      | Description                                                                                                                     |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Stable     | Component props / events / slots / instance methods not marked `experimental`                                                   |
+| Experiment | Features annotated with `@experimental` in JSDoc: editing, cell range, row/column drag, grouping, pinned rows, selection intent |
+| Internal   | Non-public exports such as `setup/` and `hooks/`; compatibility is not guaranteed                                               |
 
-0.x 阶段的破坏性变更会记录在 `CHANGELOG.md`。
+Breaking changes in the 0.x series are documented in `CHANGELOG.md`.
 
-## 开发
+## Development
 
 ```bash
 pnpm install
-pnpm docs:dev            # 文档开发
-pnpm test                # 单元测试（core + vue）
+pnpm docs:dev            # docs development
+pnpm test                # unit tests (core + vue)
 pnpm test:e2e            # Playwright E2E
-pnpm typecheck:all       # 全仓类型检查（含 e2e）
-pnpm build               # 构建 core + vue
-pnpm check               # CI 全量检查
+pnpm typecheck:all       # typecheck the whole repo (including e2e)
+pnpm build               # build core + vue
+pnpm check               # full CI check
 ```
 
-测试规模：312 个单元测试（core 35 + vue 277）、40 个 E2E 场景、性能基准与 bundle 预算检查。
+Test suite: 376 unit tests (48 core + 328 vue) and 151 E2E scenarios, plus performance benchmarks and bundle-size budgets.
 
-## 浏览器支持
+## Browser support
 
-现代浏览器（Chrome / Firefox / Safari / Edge 最新两个大版本），Node.js ≥ 20。
-Vue 3 不再支持 IE11。
+Modern browsers (latest two major versions of Chrome, Firefox, Safari and Edge), Node.js ≥ 20. Vue 3 no longer supports IE11.
 
-## 贡献
+## Contributing
 
-请阅读 [CONTRIBUTING.md](./CONTRIBUTING.md)。提交信息遵循 Conventional Commits。
+Please read [CONTRIBUTING.md](./CONTRIBUTING.md). Commit messages follow Conventional Commits.
 
-## 许可证
+## License
 
 [ISC](./LICENSE)

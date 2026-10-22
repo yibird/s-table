@@ -12,6 +12,10 @@
   <a href="https://github.com/zchengfeng/s-table/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@zchengfeng/s-table-vue.svg" alt="license"></a>
 </p>
 
+<p align="center">
+  <a href="./README.md">English</a> | 简体中文
+</p>
+
 ## 特性
 
 - **高性能虚拟滚动** - 纵向 + 横向虚拟化、动态行高测量，10 万行级数据可用
@@ -71,7 +75,7 @@ pnpm docs:dev      # 本地开发
 pnpm docs:build    # 构建静态站点
 ```
 
-包含 20+ 篇指南与 50+ 个可运行示例（基础、虚拟滚动、编辑、树形、分组、框选、主题等）。
+包含 20+ 篇指南与 70+ 个可运行示例（基础、虚拟滚动、编辑、树形、分组、框选、主题等）。
 
 ## 架构
 
@@ -125,7 +129,7 @@ pnpm build               # 构建 core + vue
 pnpm check               # CI 全量检查
 ```
 
-测试规模：312 个单元测试（core 35 + vue 277）、40 个 E2E 场景、性能基准与 bundle 预算检查。
+测试规模：376 个单元测试（core 48 + vue 328）、151 个 E2E 场景、性能基准与 bundle 预算检查。
 
 ## 浏览器支持
 
