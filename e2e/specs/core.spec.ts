@@ -54,7 +54,9 @@ test.describe('核心数据管道', () => {
     await expect(filter).toHaveAttribute('aria-expanded', 'false');
     await filter.press('Enter');
     await expect(filter).toHaveAttribute('aria-expanded', 'true');
-    const firstFilterOption = page.locator('.s-table-filter-dropdown [role="checkbox"]').first();
+    const firstFilterOption = page
+      .locator('.s-table-filter-dropdown-menu-item input[type="checkbox"]')
+      .first();
     await firstFilterOption.focus();
     await firstFilterOption.press('Space');
     await page.locator('.s-table-filter-dropdown').press('Escape');
@@ -101,7 +103,7 @@ test.describe('核心数据管道', () => {
       /s-btn-primary/
     );
     await filterDropdown
-      .locator('.s-table-filter-dropdown-checkbox', { hasText: 'Engineering' })
+      .locator('.s-table-filter-dropdown-menu-item', { hasText: 'Engineering' })
       .click();
     await filterDropdown.locator('.s-table-filter-dropdown-btn-confirm').click();
 
@@ -136,7 +138,7 @@ test.describe('核心数据管道', () => {
     const filterStyles = await filterDropdown.evaluate((element) => {
       const reset = element.querySelector('.s-table-filter-dropdown-btn-reset');
       const confirm = element.querySelector('.s-table-filter-dropdown-btn-confirm');
-      const checkbox = element.querySelector('.s-table-filter-checkbox-box');
+      const checkbox = element.querySelector('.s-checkbox-inner');
       const footer = element.querySelector('.s-table-filter-dropdown-footer');
       if (!reset || !confirm || !checkbox || !footer) throw new Error('过滤面板结构不完整');
 
@@ -159,7 +161,7 @@ test.describe('核心数据管道', () => {
       confirmBackground: 'rgb(22, 104, 220)',
       checkboxBackground: 'rgb(20, 20, 20)',
       checkboxBorder: 'rgb(66, 66, 66)',
-      footerBorder: 'rgb(48, 48, 48)',
+      footerBorder: 'rgb(66, 66, 66)',
     });
 
     await filterDropdown.locator('.s-table-filter-dropdown-btn-reset').click();
@@ -186,7 +188,7 @@ test.describe('核心数据管道', () => {
       inputColor: 'rgba(255, 255, 255, 0.85)',
       resetBackground: 'rgb(20, 20, 20)',
       resetBorder: 'rgb(66, 66, 66)',
-      footerBorder: 'rgb(48, 48, 48)',
+      footerBorder: 'rgb(66, 66, 66)',
     });
   });
 });
@@ -210,7 +212,8 @@ test.describe('分页和动态状态', () => {
       .toEqual({
         backgroundColor: 'rgb(20, 20, 20)',
         borderColor: 'rgb(22, 104, 220)',
-        color: 'rgb(22, 104, 220)',
+        // 激活页码文字使用暗色主色文本 token，保证对比度 ≥ 4.5:1。
+        color: 'rgb(60, 137, 232)',
       });
 
     const inputStyles = await pagination
@@ -285,6 +288,36 @@ test.describe('分页和动态状态', () => {
     await page.getByTestId('toggle-renderer').click();
     await expect(renderedRows(state).first()).toContainText('UPDATED ROW');
   });
+});
+
+test('过滤与搜索面板使用统一的 scale-down 入场过渡', async ({ page }) => {
+  const scope = page.getByTestId('pipeline-table');
+  // 过渡只有 0.2s，监听 transitionrun 可在过渡实际开始时稳定捕获属性名。
+  await page.evaluate(() => {
+    const names: string[] = [];
+    (window as unknown as { __dropdownTransitions: string[] }).__dropdownTransitions = names;
+    document.addEventListener(
+      'transitionrun',
+      (event) => names.push((event as TransitionEvent).propertyName),
+      true
+    );
+  });
+  const transitions = () =>
+    page.evaluate(
+      () => (window as unknown as { __dropdownTransitions: string[] }).__dropdownTransitions
+    );
+
+  await scope.locator('.s-table-filter-trigger').click();
+  const filterPanel = page.locator('.s-table-filter-dropdown');
+  await expect(filterPanel).toBeVisible();
+  await expect.poll(transitions).toContain('transform');
+
+  await scope.locator('.s-table-search-trigger').click();
+  const searchPanel = page.locator('.s-table-search-dropdown');
+  await expect(searchPanel).toBeVisible();
+  await expect
+    .poll(async () => (await transitions()).filter((name) => name === 'transform').length)
+    .toBeGreaterThanOrEqual(2);
 });
 
 test('窄视口下表格保留内部滚动且页面不产生横向溢出', async ({ page }) => {

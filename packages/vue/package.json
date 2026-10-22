@@ -14,17 +14,17 @@
     "vue",
     "vue3"
   ],
+  "homepage": "https://github.com/zchengfeng/s-table#readme",
   "bugs": {
     "email": "2684837849@qq.com"
   },
+  "license": "ISC",
+  "author": "zchengfeng <2684837849@qq.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zchengfeng/s-table.git",
     "directory": "packages/vue"
   },
-  "homepage": "https://github.com/zchengfeng/s-table#readme",
-  "license": "ISC",
-  "author": "zchengfeng <2684837849@qq.com>",
   "files": [
     "dist"
   ],
@@ -41,6 +41,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./export": {
+      "types": "./dist/export/index.d.ts",
+      "import": "./dist/export.js"
+    },
     "./style.css": "./dist/style.css"
   },
   "publishConfig": {
@@ -51,8 +55,8 @@
   "scripts": {
     "build": "vite build",
     "prepack": "pnpm build",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vp test run",
+    "test:watch": "vp test watch",
     "typecheck": "vue-tsc --noEmit --ignoreDeprecations 6.0 -p tsconfig.build.json"
   },
   "dependencies": {

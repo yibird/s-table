@@ -114,9 +114,8 @@ export const useDataState = <TData extends RowData>(context: STableSetupContext<
   const {
     tanstackPaginationState,
     onTanStackPaginationChange,
-    showPaginationTop,
-    showPaginationBottom,
-    resolvedPaginationPlacement,
+    topPaginationPlacements,
+    bottomPaginationPlacements,
     paginationState,
     paginationEnabled,
     currentPage,
@@ -151,6 +150,7 @@ export const useDataState = <TData extends RowData>(context: STableSetupContext<
     selectAll,
     clearSelection,
     toggleRow,
+    toggleRows,
     setSelectionIntent,
     isRowSelected,
   } = useRowSelection<TData>({
@@ -257,9 +257,8 @@ export const useDataState = <TData extends RowData>(context: STableSetupContext<
     // 分页
     tanstackPaginationState,
     onTanStackPaginationChange,
-    showPaginationTop,
-    showPaginationBottom,
-    resolvedPaginationPlacement,
+    topPaginationPlacements,
+    bottomPaginationPlacements,
     paginationState,
     paginationEnabled,
     currentPage,
@@ -281,6 +280,7 @@ export const useDataState = <TData extends RowData>(context: STableSetupContext<
     selectAll,
     clearSelection,
     toggleRow,
+    toggleRows,
     setSelectionIntent,
     isRowSelected,
     // 展开

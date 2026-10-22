@@ -40,6 +40,8 @@ export interface STableColumnLike<TData extends RowData = RowData, TValue = unkn
   draggable?: boolean;
   resizable?: boolean;
   hidden?: boolean;
+  /** 响应式断点集合；由 Vue 适配层消费。 */
+  responsive?: readonly string[];
   sorter?: boolean | ((a: TData, b: TData) => number);
   sortDirections?: readonly string[];
   defaultSortOrder?: string | null;
@@ -50,6 +52,20 @@ export interface STableColumnLike<TData extends RowData = RowData, TValue = unkn
   filterMultiple?: boolean;
   defaultFilteredValues?: readonly (string | number | boolean)[];
   filteredValue?: readonly (string | number | boolean)[];
+  /** 自定义筛选图标；对 core 不透明。 */
+  filterIcon?: unknown;
+  /** 受控筛选面板打开状态。 */
+  filterDropdownOpen?: boolean;
+  /** 超长省略配置。 */
+  ellipsis?: unknown;
+  /** 单元格 Tooltip 配置；对 core 不透明。 */
+  tooltip?: unknown;
+  /** 是否显示表头通用菜单。 */
+  showMenu?: boolean;
+  /** 菜单图标；对 core 不透明。 */
+  menuIcon?: unknown;
+  /** 菜单内容；对 core 不透明。 */
+  menuPopup?: unknown;
   search?: boolean | ((value: string, record: TData) => boolean);
   editable?: boolean | ((record: TData, rowIndex: number) => boolean);
   editableTrigger?: string;
@@ -64,6 +80,8 @@ export interface STableColumnLike<TData extends RowData = RowData, TValue = unkn
   spanColumns?: unknown;
   /** 单元格属性；对 core 不透明。 */
   onCell?: unknown;
+  /** 允许内容撑高单元格。 */
+  autoHeight?: boolean;
   groupable?: boolean;
   getGroupingValue?: (record: TData) => unknown;
   aggregation?: unknown;

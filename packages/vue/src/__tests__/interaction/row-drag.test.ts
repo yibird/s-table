@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { nextTick, reactive, type App } from 'vue';
 import { mountSTable } from '../helpers';
 import type { STableColumn, STableRowOrderChangeEvent } from '../../types';
@@ -97,6 +97,55 @@ describe('行拖拽排', () => {
     expect(events[0]!.dataSource.map((row) => row.id)).toEqual([1, 4, 2, 3]);
   });
 
+  it('多选拖拽高亮整个选中块，块内行不作为投放目标', async () => {
+    const dataSource: Row[] = Array.from({ length: 4 }, (_, index) => ({
+      id: index + 1,
+      name: `row-${index + 1}`,
+    }));
+    const mounted = mountSTable<Row>({
+      columns,
+      dataSource,
+      rowKey: 'id',
+      rowSelection: { type: 'checkbox' },
+      defaultSelectedRowKeys: [2, 3],
+      rowDrag: { multiple: true },
+    } as never);
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    const getRow = (key: string) =>
+      host!.querySelector<HTMLElement>(`tbody tr.s-table-row[data-row-key="${key}"]`)!;
+    const sourceRow = getRow('2');
+    const sourcePeer = getRow('3');
+    const targetRow = getRow('4');
+
+    sourceRow
+      .querySelector<HTMLElement>('.s-table-drag-handle')!
+      .dispatchEvent(new Event('dragstart', { bubbles: true, cancelable: true }));
+    await nextTick();
+
+    expect(sourceRow.classList.contains('s-table-row-drag-source')).toBe(true);
+    expect(sourcePeer.classList.contains('s-table-row-drag-source')).toBe(true);
+    expect(sourceRow.classList.contains('s-table-row-drag-over')).toBe(false);
+    expect(sourcePeer.classList.contains('s-table-row-drag-over')).toBe(false);
+
+    sourcePeer.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(sourcePeer.classList.contains('s-table-row-drag-over')).toBe(false);
+
+    targetRow.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(targetRow.classList.contains('s-table-row-drag-over')).toBe(true);
+    expect(sourceRow.classList.contains('s-table-row-drag-over')).toBe(false);
+
+    targetRow.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+    await vi.waitFor(() => {
+      expect(host!.querySelectorAll('.s-table-row-drag-source')).toHaveLength(0);
+      expect(host!.querySelectorAll('.s-table-row-drag-over')).toHaveLength(0);
+    });
+  });
+
   it('行拖拽句柄按下时不启动单元格框选', async () => {
     const mounted = mountSTable<Row>({
       columns,
@@ -188,6 +237,131 @@ describe('行拖拽排', () => {
     const handles = [...host.querySelectorAll<HTMLElement>('.s-table-drag-handle')];
     expect(handles.length).toBeGreaterThan(0);
     expect(handles.every((handle) => handle.getAttribute('draggable') === 'false')).toBe(true);
+  });
+
+  it('canDrag 返回 false 时阻止行拖拽，允许时正常拖拽', async () => {
+    const dataSource: Row[] = [
+      { id: 1, name: 'row-1' },
+      { id: 2, name: 'row-2' },
+    ];
+    const events: STableRowOrderChangeEvent<Row>[] = [];
+    const canDrag = vi.fn(({ record, index }: { record: Row; index: number }) => {
+      expect(index).toBe(record.id - 1);
+      return record.id !== 2;
+    });
+    const mounted = mountSTable<Row>({
+      columns,
+      dataSource,
+      rowKey: 'id',
+      rowDrag: { canDrag },
+      onRowOrderChange: (payload: STableRowOrderChangeEvent<Row>) => events.push(payload),
+    } as never);
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    const rows = Array.from(host.querySelectorAll<HTMLElement>('tbody tr.s-table-row'));
+    const handle = (row: HTMLElement) => row.querySelector<HTMLElement>('.s-table-drag-handle')!;
+
+    const blocked = new Event('dragstart', { bubbles: true, cancelable: true });
+    handle(rows[1]!).dispatchEvent(blocked);
+    expect(blocked.defaultPrevented).toBe(true);
+    expect(canDrag).toHaveBeenCalledWith({ record: dataSource[1], index: 1 });
+
+    // 未进入拖拽态时，后续 dragover/drop 不应产生重排。
+    rows[0]!.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+    rows[0]!.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(events).toHaveLength(0);
+
+    const allowed = new Event('dragstart', { bubbles: true, cancelable: true });
+    handle(rows[0]!).dispatchEvent(allowed);
+    expect(allowed.defaultPrevented).toBe(false);
+    expect(canDrag).toHaveBeenLastCalledWith({ record: dataSource[0], index: 0 });
+
+    rows[1]!.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+    rows[1]!.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(events).toHaveLength(1);
+    expect(events[0]!.dataSource.map((row) => row.id)).toEqual([2, 1]);
+  });
+
+  it('rowDrag 函数形式按行控制拖拽', async () => {
+    const events: STableRowOrderChangeEvent<Row>[] = [];
+    const mounted = mountSTable<Row>({
+      columns,
+      dataSource: [
+        { id: 1, name: 'row-1' },
+        { id: 2, name: 'row-2' },
+      ],
+      rowKey: 'id',
+      rowDrag: ({ record }: { record: Row }) => record.id !== 2,
+      onRowOrderChange: (payload: STableRowOrderChangeEvent<Row>) => events.push(payload),
+    } as never);
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    const rows = Array.from(host.querySelectorAll<HTMLElement>('tbody tr.s-table-row'));
+    const blocked = new Event('dragstart', { bubbles: true, cancelable: true });
+    rows[1]!.querySelector<HTMLElement>('.s-table-drag-handle')!.dispatchEvent(blocked);
+    expect(blocked.defaultPrevented).toBe(true);
+    expect(events).toHaveLength(0);
+  });
+
+  it('trigger=row 时同样受 canDrag 与排序状态约束', async () => {
+    const events: STableRowOrderChangeEvent<Row>[] = [];
+    const mounted = mountSTable<Row>({
+      columns,
+      dataSource: [
+        { id: 1, name: 'row-1' },
+        { id: 2, name: 'row-2' },
+      ],
+      rowKey: 'id',
+      rowDrag: { trigger: 'row', canDrag: () => false },
+      onRowOrderChange: (payload: STableRowOrderChangeEvent<Row>) => events.push(payload),
+    } as never);
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    const rows = Array.from(host.querySelectorAll<HTMLElement>('tbody tr.s-table-row'));
+    const blocked = new Event('dragstart', { bubbles: true, cancelable: true });
+    rows[0]!.querySelector('td[data-column-id="name"]')!.dispatchEvent(blocked);
+    expect(blocked.defaultPrevented).toBe(true);
+
+    rows[1]!.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+    rows[1]!.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(events).toHaveLength(0);
+  });
+
+  it('trigger=row 时整行可拖，交互控件除外', async () => {
+    const events: STableRowOrderChangeEvent<Row>[] = [];
+    const mounted = mountSTable<Row>({
+      columns,
+      dataSource: [
+        { id: 1, name: 'row-1' },
+        { id: 2, name: 'row-2' },
+      ],
+      rowKey: 'id',
+      rowDrag: { trigger: 'row' },
+      onRowOrderChange: (payload: STableRowOrderChangeEvent<Row>) => events.push(payload),
+    } as never);
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    const rows = Array.from(host.querySelectorAll<HTMLElement>('tbody tr.s-table-row'));
+    expect(rows[0]!.getAttribute('draggable')).toBe('true');
+
+    const start = new Event('dragstart', { bubbles: true, cancelable: true });
+    rows[0]!.querySelector('td[data-column-id="name"]')!.dispatchEvent(start);
+    expect(start.defaultPrevented).toBe(false);
+    rows[1]!.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+    rows[1]!.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(events).toHaveLength(1);
   });
 
   it('非本表行拖拽经过时不阻止默认行为，也不读取行布局', async () => {

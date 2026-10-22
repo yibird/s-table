@@ -17,6 +17,12 @@ STable 提供面向数据工作台的框选和右键菜单能力。两者都依�
 
 `selectRowOnClick: true` 只在 `mode: 'row'` 下生效，并要求同时配置 `rowSelection`。它用于把范围选择同步为行选择；普通业务点击请监听 `rowClick`。
 
+下面的示例使用行范围模式，并通过实例方法设置、追加和清空多个区间。
+
+<demo vue="../../demos/s-table/interactions-row-range.vue" />
+
+`cell` 模式下如果同时配置了 checkbox 选择列，每次框选完成会切换范围内行的选中状态：未选中变为选中，已选中变为取消选中。radio 模式只能保留一个值，不参与该联动。
+
 实例方法 `getCellRange()` 返回范围快照，`clearCellRange()` 清空当前范围。
 
 ## 复制框选内容
@@ -63,3 +69,27 @@ STable 提供面向数据工作台的框选和右键菜单能力。两者都依�
 ## 原生交互事件
 
 组件已公开行和单元格的点击、双击、右键、悬浮进入/离开事件；开启 `keyboardNavigation` 后还会触发 `cellKeydown`。完整载荷参阅[行与单元格事件](./events)。不要绕过公开事件绑定内部 DOM class，因为虚拟滚动和内部结构调整会使这种做法不稳定。
+
+## 键盘框选与多区间 API
+
+聚焦单元格后支持 Ctrl/Cmd+A、Shift+方向键、Escape。实例 API 可读取和操作多个区间：
+
+```ts
+instance.getCellRanges();
+instance.setCellRange({ startRow: 0, startCol: 0, endRow: 1, endCol: 2 });
+instance.addCellRange({ startRow: 3, startCol: 1, endRow: 3, endCol: 1 }, { mode: 'include' });
+instance.focusCell(0, 1);
+instance.clearCellRange();
+```
+
+<demo vue="../../demos/s-table/keyboard-range.vue" />
+
+## 自定义浮层容器
+
+`getPopupContainer` 同时作用于筛选、搜索、选择菜单、表头菜单、Tooltip 与右键菜单：
+
+```vue
+<div ref="popupHost">
+  <STable :get-popup-container="() => popupHost ?? document.body" />
+</div>
+```

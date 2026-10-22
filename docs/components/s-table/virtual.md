@@ -64,3 +64,20 @@ const virtual: STableVirtualProps = {
 ## 实例滚动
 
 `scrollToRow(rowKey)` 找到目标行并发起滚动时返回 `true`。`scrollToTop()` 和 `scrollToBottom()` 用于快捷定位。目标键不在当前数据集中时 `scrollToRow()` 返回 `false`。
+
+<demo vue="../../demos/s-table/virtual-instance-scroll.vue" />
+
+## 函数式行高与 autoHeight
+
+```ts
+const virtual = {
+  rowHeight: (record, index) => (record.expanded ? 88 : 44),
+  buffer: { x: 2, y: 10 },
+};
+```
+
+函数返回有限正数时作为该行的精确高度/初始估算；任一可见列设置 `autoHeight: true` 时强制动态测量。`preserveRow` 会按 `row.id` 保留实测高度，`deepWatchDataSource` / `deepWatchColumns` 支持原地修改数据或列配置。
+
+<demo vue="../../demos/s-table/virtual-dynamic-height.vue" />
+
+<demo vue="../../demos/s-table/popup-rowheight-perf.vue" />

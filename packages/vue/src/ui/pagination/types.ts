@@ -1,4 +1,16 @@
+import type { VNodeChild } from 'vue';
 import type { SComponentSize } from '../../context/size';
+
+/** 分页可渲染的条目类型。 */
+export type STablePaginationItemType = 'page' | 'prev' | 'next' | 'jump-prev' | 'jump-next';
+
+/** 自定义分页条目渲染。返回 undefined 时使用默认节点。 */
+export type STablePaginationItemRender = (
+  page: number,
+  type: STablePaginationItemType,
+  originalElement: VNodeChild,
+  info: { current: number; totalPages: number }
+) => VNodeChild;
 
 export interface PaginationProps {
   /** 当前页码 */
@@ -31,4 +43,12 @@ export interface PaginationProps {
   selectPlaceholder?: string;
   /** 内部选择器空状态文本 */
   selectEmptyText?: string;
+  /** 简洁模式：仅上一页/下一页与当前页信息。 */
+  simple?: boolean;
+  /** 页码窗口更小时只显示当前页附近的少量页码。 */
+  showLessItems?: boolean;
+  /** 只有一页时隐藏整个分页器。 */
+  hideOnSinglePage?: boolean;
+  /** 自定义分页条目渲染。 */
+  itemRender?: STablePaginationItemRender;
 }

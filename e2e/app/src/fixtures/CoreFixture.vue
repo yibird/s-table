@@ -85,6 +85,28 @@ const pagination: STablePaginationProps = {
   showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
 };
 
+const combinedRows = createRows(45);
+const combinedSelectedKeys = ref<(string | number)[]>([]);
+const combinedPagination: STablePaginationProps = { defaultPageSize: 10 };
+const combinedColumns: STableColumn<Employee>[] = [
+  { id: 'id', accessorKey: 'id', header: 'ID', width: 70 },
+  { id: 'name', accessorKey: 'name', header: 'Name', search: true },
+  {
+    id: 'department',
+    accessorKey: 'department',
+    header: 'Department',
+    filters: departments.map((department) => ({ text: department, value: department })),
+    onFilter: (value, record) => record.department === value,
+  },
+  {
+    id: 'score',
+    accessorKey: 'score',
+    header: 'Score',
+    width: 100,
+    sorter: (a, b) => a.score - b.score,
+  },
+];
+
 const originalStateRows: Employee[] = [
   { id: 1, name: '=2+2', department: 'Engineering', score: 99 },
   { id: 2, name: 'Mixed Case', department: 'Design', score: 88 },
@@ -177,6 +199,24 @@ const clearPipelineState = () => {
     />
   </section>
 
+  <section class="fixture-section" data-testid="combined-table">
+    <h2>Pagination with filter and selection</h2>
+    <output class="fixture-status" data-testid="combined-selected">
+      {{ combinedSelectedKeys.join(',') }}
+    </output>
+    <STable
+      bordered
+      row-key="id"
+      :columns="combinedColumns"
+      :data-source="combinedRows"
+      :pagination="combinedPagination"
+      :row-selection="{ type: 'checkbox' }"
+      :locale="zh_CN"
+      :selected-row-keys="combinedSelectedKeys"
+      @update:selected-row-keys="combinedSelectedKeys = $event"
+    />
+  </section>
+
   <section class="fixture-section" data-testid="state-table">
     <h2>State, slots and export</h2>
     <div class="fixture-controls">
@@ -197,7 +237,6 @@ const clearPipelineState = () => {
     </div>
     <STable
       bordered
-      show-footer
       row-key="id"
       :columns="stateColumns"
       :data-source="stateRows"

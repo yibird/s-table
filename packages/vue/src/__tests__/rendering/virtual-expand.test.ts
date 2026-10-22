@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach } from 'vite-plus/test';
 import { h, nextTick, type App } from 'vue';
 import { mountSTable } from '../helpers';
 import type { STableColumn, STableRowKey } from '../../types';

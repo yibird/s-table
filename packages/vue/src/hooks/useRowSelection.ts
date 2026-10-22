@@ -20,6 +20,7 @@ import {
   filterExistingRowKeys,
   selectableRows,
   selectRowsByParity,
+  updateSelectionIntentRows,
 } from '@zchengfeng/s-table-core';
 import { decodeRowKey, encodeRowKey, resolveRowKey, resolveRowStateEntries } from '../utils';
 import { createSelectionColumn } from '../presets/selectionColumn';
@@ -340,15 +341,127 @@ export const useRowSelection = <TData extends RowData>({
   /** 按公开行键查找 TanStack 核心行模型。 */
   const getRow = (key: STableRowKey) => getTable()?.getCoreRowModel().rowsById[encodeRowKey(key)];
 
+  /** 树形选择是否严格独立；`checkStrictly: false` 时父子级联。 */
+  const isStrictlySelect = () => rowSelection.value?.checkStrictly !== false;
+
+  /** 收集子树中的可选择行（不含根行）。 */
+  const collectSubtreeRows = (row: Row<TableFeatures, TData>): Row<TableFeatures, TData>[] => {
+    const result: Row<TableFeatures, TData>[] = [];
+    const walk = (current: Row<TableFeatures, TData>) => {
+      for (const child of current.subRows ?? []) {
+        if (child.getCanSelect()) result.push(child);
+        walk(child);
+      }
+    };
+    walk(row);
+    return result;
+  };
+
+  /** 一次性设置一组行的选中状态（keys / intent 两种模式）。 */
+  const applyRowsSelected = (rows: readonly Row<TableFeatures, TData>[], selected: boolean) => {
+    if (rows.length === 0) return;
+    if (intentMode.value) {
+      updateIntentRows(rows.map(getPublicKey), selected, 'multiple');
+      return;
+    }
+    const table = getTable();
+    if (!table) return;
+    const nextState = Object.assign(
+      Object.create(null),
+      rowSelectionState.value
+    ) as RowSelectionState;
+    for (const row of rows) {
+      if (selected) nextState[row.id] = true;
+      else delete nextState[row.id];
+    }
+    // 向上同步祖先：所有可选后代都选中时父行选中，否则清除。
+    const visitedParents = new Set<string>();
+    for (const row of rows) {
+      for (const parent of row.getParentRows()) {
+        if (visitedParents.has(parent.id)) continue;
+        visitedParents.add(parent.id);
+        const descendants = collectSubtreeRows(parent);
+        const allSelected =
+          descendants.length > 0 && descendants.every((child) => nextState[child.id] === true);
+        if (allSelected) nextState[parent.id] = true;
+        else delete nextState[parent.id];
+      }
+    }
+    runSelectionCommand('multiple', () => table.setRowSelection(nextState));
+  };
+
   /** 切换指定行的选中状态。 */
   const toggleRow = (key: STableRowKey) => {
     const row = getRow(key);
     if (!row?.getCanSelect()) return;
+    if (!isStrictlySelect()) {
+      const descendants = collectSubtreeRows(row);
+      const selected = intentMode.value ? !isIntentRowSelected(key, row) : !row.getIsSelected();
+      applyRowsSelected([row, ...descendants], selected);
+      return;
+    }
     if (intentMode.value) {
       updateIntentRows([key], !isIntentRowSelected(key, row), 'single');
       return;
     }
     runSelectionCommand('single', () => row.toggleSelected());
+  };
+
+  /**
+   * 批量切换指定行的选择状态。
+   *
+   * 单元格框选联动选择列时使用：范围内已选行取消、未选行选中，
+   * 一次性提交，避免逐行派发多次选择事件。
+   */
+  const toggleRows = (keys: readonly STableRowKey[]) => {
+    if (!rowSelection.value || keys.length === 0) return;
+    const table = getTable();
+    if (!table) return;
+
+    // checkStrictly=false：按行的当前状态级联整棵子树。
+    if (!isStrictlySelect()) {
+      for (const key of keys) {
+        const row = getRow(key);
+        if (!row?.getCanSelect()) continue;
+        const selected = intentMode.value ? !isIntentRowSelected(key, row) : !row.getIsSelected();
+        applyRowsSelected([row, ...collectSubtreeRows(row)], selected);
+      }
+      return;
+    }
+
+    if (intentMode.value) {
+      let nextIntent = selectionIntent.value;
+      let changed = false;
+      for (const key of keys) {
+        const row = getRow(key);
+        if (!row?.getCanSelect()) continue;
+        nextIntent = updateSelectionIntentRows(
+          nextIntent,
+          [key],
+          !isIntentRowSelected(key, row),
+          rowSelection.value.type
+        );
+        changed = true;
+      }
+      if (changed) commitIntent(nextIntent, 'multiple');
+      return;
+    }
+
+    const nextState = Object.assign(
+      Object.create(null),
+      rowSelectionState.value
+    ) as RowSelectionState;
+    let changed = false;
+    for (const key of keys) {
+      const row = getRow(key);
+      if (!row?.getCanSelect()) continue;
+      if (nextState[row.id]) delete nextState[row.id];
+      else nextState[row.id] = true;
+      changed = true;
+    }
+    if (changed) {
+      runSelectionCommand('multiple', () => table.setRowSelection(nextState));
+    }
   };
 
   /** 选中指定行。 */
@@ -375,13 +488,20 @@ export const useRowSelection = <TData extends RowData>({
     runSelectionCommand('single', () => row.toggleSelected(false));
   };
 
-  /** 选中全部可选行。 */
+  /** 选中全部可选行；分组行不参与选择，只选择业务数据行。 */
   const selectAll = () => {
     if (intentMode.value) {
       commitIntent({ mode: 'all', excludedRowKeys: [] }, 'all');
       return;
     }
-    runSelectionCommand('all', (table) => table.toggleAllRowsSelected(true));
+    runSelectionCommand('all', (table) => {
+      const nextState: RowSelectionState = Object.create(null) as RowSelectionState;
+      for (const row of table.getSortedRowModel().flatRows) {
+        if (row.getIsGrouped() || !row.getCanSelect()) continue;
+        nextState[row.id] = true;
+      }
+      table.setRowSelection(nextState);
+    });
   };
 
   /** 清空全部选择，包括需要保留的缺失行键。 */
@@ -390,9 +510,7 @@ export const useRowSelection = <TData extends RowData>({
       commitIntent(cloneSelectionIntent(EMPTY_SELECTION_INTENT), 'none');
       return;
     }
-    runSelectionCommand('none', (table) =>
-      table.toggleAllRowsSelected(false, { deselectAll: true })
-    );
+    runSelectionCommand('none', (table) => table.setRowSelection({}));
   };
 
   /** 按当前排序、过滤后的行序选择指定奇偶位置。 */
@@ -436,6 +554,24 @@ export const useRowSelection = <TData extends RowData>({
     });
   };
 
+  /** 表头全选状态；供标题 Checkbox 和自定义 columnTitle 共用。 */
+  const resolveHeaderSelectionState = () => {
+    const table = getTable();
+    const currentIntent = selectionIntent.value;
+    const allSelected = intentMode.value
+      ? currentIntent.mode === 'all' && currentIntent.excludedRowKeys.length === 0
+      : (table?.getIsAllRowsSelected() ?? false);
+    const someSelected = intentMode.value
+      ? currentIntent.mode === 'all' || currentIntent.includedRowKeys.length > 0
+      : (table?.getIsSomeRowsSelected() ?? false);
+    return {
+      selectedRowKeys: [...selectedRowKeys.value],
+      selectedRows: [...selectedRows.value],
+      allSelected,
+      someSelected,
+    };
+  };
+
   const selectionColumn = computed<ColumnDef<TableFeatures, TData, unknown> | undefined>(() => {
     const config = rowSelection.value;
     if (!config) return undefined;
@@ -445,22 +581,17 @@ export const useRowSelection = <TData extends RowData>({
     return createSelectionColumn<TData>({
       config,
       getHeaderProps: () => {
-        const table = getTable();
         const titleProps = config.getTitleCheckboxProps?.() ?? {};
-        const currentIntent = selectionIntent.value;
-        const allChecked = intentMode.value
-          ? currentIntent.mode === 'all' && currentIntent.excludedRowKeys.length === 0
-          : (table?.getIsAllRowsSelected() ?? false);
-        const checked = titleProps.checked ?? allChecked;
-        const someSelected = intentMode.value
-          ? currentIntent.mode === 'all' || currentIntent.includedRowKeys.length > 0
-          : (table?.getIsSomeRowsSelected() ?? false);
+        const state = resolveHeaderSelectionState();
+        const checked = titleProps.checked ?? state.allSelected;
         return {
           ...titleProps,
           checked,
-          indeterminate: titleProps.indeterminate ?? (!checked && someSelected && !allChecked),
+          indeterminate:
+            titleProps.indeterminate ?? (!checked && state.someSelected && !state.allSelected),
         };
       },
+      getSelectionState: resolveHeaderSelectionState,
       getRowPresentation: (row) => {
         const key = getPublicKey(row);
         const checkboxProps = resolveCheckboxProps(row, getCheckboxProps);
@@ -486,6 +617,10 @@ export const useRowSelection = <TData extends RowData>({
       onRadioChange: toggleRow,
       onCheckboxChange: ({ key, row }, checked, event) => {
         const type = event.shiftKey ? 'multiple' : 'single';
+        if (!isStrictlySelect()) {
+          applyRowsSelected([row, ...collectSubtreeRows(row)], checked);
+          return;
+        }
         if (intentMode.value) {
           updateIntentRows([key], checked, type);
           return;
@@ -511,6 +646,7 @@ export const useRowSelection = <TData extends RowData>({
     selectRow,
     deselectRow,
     toggleRow,
+    toggleRows,
     selectAll,
     clearSelection,
     setSelectionIntent,

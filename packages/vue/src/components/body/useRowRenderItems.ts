@@ -2,6 +2,7 @@ import { computed, type CSSProperties } from 'vue';
 import type { Row, RowData, TableFeatures } from '@tanstack/vue-table';
 import type { STableEditingState } from '../../types';
 import { decodeRowKey } from '../../utils';
+import { splitTableAttrs, type SplitTableAttrs } from '../../utils/mergeTableAttrs';
 import type { BodyEditingApi, BodyVirtualApi } from '../../types';
 
 // 行状态位掩码：把影响行渲染的四类布尔输入（选中 / 展开 / 拖拽源 / 拖拽目标）
@@ -30,6 +31,8 @@ export type RenderItem<TData extends RowData> = {
   editMemoKey: STableEditingState | null;
   rowClass?: string;
   rowStyle?: CSSProperties;
+  /** customRow 拆分后的 class / style / 其余属性。 */
+  rowAttrs?: SplitTableAttrs;
   pinnedPosition?: 'top' | 'bottom';
   pinnedStyle?: CSSProperties;
   section: 'top' | 'center' | 'bottom';
@@ -45,6 +48,7 @@ export type RowRenderItemsProps<TData extends RowData> = {
   editingApi?: BodyEditingApi;
   rowClassName?: string | ((record: TData, rowIndex: number) => string | undefined);
   rowStyle?: CSSProperties | ((record: TData, rowIndex: number) => CSSProperties | undefined);
+  customRow?: (record: TData, rowIndex: number) => Record<string, unknown> | undefined;
   isRowSelected?: (row: Row<TableFeatures, TData>) => boolean;
 };
 
@@ -52,6 +56,8 @@ type UseRowRenderItemsOptions<TData extends RowData> = {
   props: RowRenderItemsProps<TData>;
   getDragRowFromIndex: () => number;
   getDragRowOverIndex: () => number;
+  /** 多选拖拽时的整块行 id；为空集合时回退到单项索引判断。 */
+  getDragSourceRowIds?: () => ReadonlySet<string> | undefined;
   getPinnedStyle: (
     rowId: string,
     pinned: 'top' | 'bottom' | undefined
@@ -70,6 +76,7 @@ export const useRowRenderItems = <TData extends RowData>({
   props,
   getDragRowFromIndex,
   getDragRowOverIndex,
+  getDragSourceRowIds,
   getPinnedStyle,
   getRowRangeMemoKey,
   mainElementRef,
@@ -80,10 +87,18 @@ export const useRowRenderItems = <TData extends RowData>({
     let flags = 0;
     if (props.isRowSelected?.(row) ?? row.getIsSelected()) flags |= ROW_FLAG_SELECTED;
     if (row.getIsExpanded()) flags |= ROW_FLAG_EXPANDED;
+    const dragSourceIds = getDragSourceRowIds?.();
     const dragFromIndex = getDragRowFromIndex();
-    if (dragFromIndex >= 0 && index === dragFromIndex) flags |= ROW_FLAG_DRAG_SOURCE;
+    const isDragSource =
+      dragSourceIds && dragSourceIds.size > 0
+        ? dragSourceIds.has(row.id)
+        : dragFromIndex >= 0 && index === dragFromIndex;
+    if (isDragSource) flags |= ROW_FLAG_DRAG_SOURCE;
+    // 拖拽块内部成员不显示投放目标，否则多选拖拽时整块会被误标成落点。
     const dragOverIndex = getDragRowOverIndex();
-    if (dragOverIndex >= 0 && index === dragOverIndex) flags |= ROW_FLAG_DRAG_TARGET;
+    if (!isDragSource && dragOverIndex >= 0 && index === dragOverIndex) {
+      flags |= ROW_FLAG_DRAG_TARGET;
+    }
     if (row.getIsGrouped()) flags |= ROW_FLAG_GROUPED;
     return flags;
   };
@@ -102,6 +117,24 @@ export const useRowRenderItems = <TData extends RowData>({
       : props.rowClassName;
   const resolveRowStyle = (record: TData, index: number) =>
     typeof props.rowStyle === 'function' ? props.rowStyle(record, index) : props.rowStyle;
+
+  /** customRow 结果按 Row + index + 回调身份缓存，避免虚拟滚动每帧重建 attrs 使 v-memo 失效。 */
+  const rowAttrsCache = new WeakMap<
+    object,
+    { index: number; fn: typeof props.customRow; attrs: SplitTableAttrs | undefined }
+  >();
+  const resolveRowAttrs = (
+    row: Row<TableFeatures, TData>,
+    index: number
+  ): SplitTableAttrs | undefined => {
+    const fn = props.customRow;
+    if (!fn) return undefined;
+    const cached = rowAttrsCache.get(row);
+    if (cached && cached.index === index && cached.fn === fn) return cached.attrs;
+    const attrs = splitTableAttrs(fn(row.original, index));
+    rowAttrsCache.set(row, { index, fn, attrs });
+    return attrs;
+  };
 
   /** 构建行的渲染项。 */
   const createRenderItem = (
@@ -129,6 +162,7 @@ export const useRowRenderItems = <TData extends RowData>({
       editMemoKey: getRowEditingMemoKey(publicRowKey),
       rowClass: resolveRowClass(row.original, index),
       rowStyle: resolveRowStyle(row.original, index),
+      rowAttrs: resolveRowAttrs(row, index),
       pinnedPosition,
       pinnedStyle: getPinnedStyle(row.id, pinnedPosition),
       section,

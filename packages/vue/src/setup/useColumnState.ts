@@ -1,6 +1,7 @@
 import { computed } from 'vue';
 import type { ColumnDef, Row, RowData, TableFeatures } from '@tanstack/vue-table';
 import { useColumnDrag, useColumns, useRowDrag, useSeq } from '../hooks';
+import { EXPAND_COLUMN_ID } from '../constants';
 import type { useDataState } from './useDataState';
 import type { STableSetupContext } from './types';
 
@@ -13,7 +14,12 @@ import type { STableSetupContext } from './types';
 export const useColumnState = <TData extends RowData>(
   context: STableSetupContext<TData>,
   dataState: ReturnType<typeof useDataState<TData>>,
-  options: { getRows: () => Row<TableFeatures, TData>[] }
+  options: {
+    getRows: () => Row<TableFeatures, TData>[];
+    activeBreakpoint?: Readonly<import('vue').Ref<import('../types').STableBreakpoint | undefined>>;
+    /** deepWatchColumns 的失效版本号。 */
+    columnRevision?: Readonly<import('vue').Ref<number>>;
+  }
 ) => {
   const {
     columns,
@@ -27,6 +33,7 @@ export const useColumnState = <TData extends RowData>(
     slots,
     emit,
     cellRangeSelection,
+    expandable,
   } = context;
   const {
     leafColumnIds,
@@ -70,8 +77,11 @@ export const useColumnState = <TData extends RowData>(
     isDragging: isRowDragging,
     dragFromIndex: dragRowFromIndex,
     dragOverIndex: dragRowOverIndex,
+    dragSourceRowIds: dragRowSourceIds,
     dropPosition: dragRowDropPosition,
     dragColumn: dragHandleColumn,
+    rowDragTrigger,
+    handleRowDragStart,
     handleRowDragOver,
     handleRowDragEnd,
     handleRowDrop,
@@ -125,6 +135,37 @@ export const useColumnState = <TData extends RowData>(
       const id = column.id;
       return id ? [id] : [];
     });
+
+    // 显式 expandIconColumnIndex：展开列插入到用户叶子列的指定位置；
+    // 未配置时保持内置列顺序（拖拽 / 选择 / 展开 / 序号 → 用户列）。
+    const expandIndex = expandable.value?.expandIconColumnIndex;
+    if (
+      typeof expandIndex === 'number' &&
+      Number.isFinite(expandIndex) &&
+      internalLeafIds.includes(EXPAND_COLUMN_ID)
+    ) {
+      const internalOthers = internalLeafIds.filter((id) => id !== EXPAND_COLUMN_ID);
+      const userLeafIds = leafColumnIds.value;
+      const userLeafIdSet = new Set(userLeafIds);
+      const orderedUserIds: string[] = [];
+      const seenUserIds = new Set<string>();
+      if (userIds.size > 0) {
+        for (const id of userOrder) {
+          if (seenUserIds.has(id) || !userLeafIdSet.has(id)) continue;
+          seenUserIds.add(id);
+          orderedUserIds.push(id);
+        }
+      }
+      for (const id of userLeafIds) {
+        if (seenUserIds.has(id)) continue;
+        seenUserIds.add(id);
+        orderedUserIds.push(id);
+      }
+      const insertAt = Math.max(0, Math.min(Math.trunc(expandIndex), orderedUserIds.length));
+      orderedUserIds.splice(insertAt, 0, EXPAND_COLUMN_ID);
+      return [...internalOthers, ...orderedUserIds];
+    }
+
     const allLeafIds = [...internalLeafIds, ...leafColumnIds.value];
     const allLeafIdSet = new Set(allLeafIds);
     const nextOrder: string[] = [];
@@ -146,6 +187,8 @@ export const useColumnState = <TData extends RowData>(
   } = useColumns<TData>({
     columns,
     columnMap,
+    activeBreakpoint: options.activeBreakpoint,
+    revision: options.columnRevision,
     internalColumns: composedInternalColumns,
   });
 
@@ -170,8 +213,11 @@ export const useColumnState = <TData extends RowData>(
     isRowDragging,
     dragRowFromIndex,
     dragRowOverIndex,
+    dragRowSourceIds,
     dragRowDropPosition,
     dragHandleColumn,
+    rowDragTrigger,
+    handleRowDragStart,
     handleRowDragOver,
     handleRowDragEnd,
     handleRowDrop,

@@ -5,7 +5,8 @@ type UseMouseColumnDragBridgeOptions = {
   isDraggableSource: (columnId: string) => boolean;
   /** 目标表头是否为合法落点（同表且为用户列）。 */
   isValidTarget: (columnId: string) => boolean;
-  onDragStart: (columnId: string) => void;
+  /** 返回 false 表示本次拖拽被业务规则拒绝，桥接立即终止且不拦截默认行为。 */
+  onDragStart: (columnId: string) => boolean;
   onDragOver: (columnId: string, event: DragEvent) => void;
   onDragEnd: () => void;
   /** 在目标 th 上派发合成 drop 事件，复用 HeaderCell 的 drop 流程。 */
@@ -63,8 +64,11 @@ export const useMouseColumnDragBridge = ({
       if (!mouseDragActive) {
         const distance = Math.hypot(pointerEvent.clientX - startX, pointerEvent.clientY - startY);
         if (distance < 4) return;
+        if (!onDragStart(columnId)) {
+          clearMouseDrag();
+          return;
+        }
         mouseDragActive = true;
-        onDragStart(columnId);
       }
       pointerEvent.preventDefault();
       updateTarget(pointerEvent);

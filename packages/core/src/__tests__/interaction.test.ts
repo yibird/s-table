@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { createDragController, createFlipDropController, moveArrayItem } from '../index';
 
 describe('framework-agnostic interaction controllers', () => {

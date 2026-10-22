@@ -1,6 +1,6 @@
-import type { ColumnResizeMode, RowData } from '@tanstack/table-core';
+import type { RowData } from '@tanstack/table-core';
 import type { STableColumn } from './column';
-import type { PaginationProps } from '../ui/pagination';
+import type { PaginationProps, STablePaginationItemRender } from '../ui/pagination';
 import type { STableRowKey } from '@zchengfeng/s-table-core';
 
 /**
@@ -26,6 +26,14 @@ export interface STablePaginationProps extends PaginationProps {
    * @description 页码或每页条数变化时的回调。
    */
   onChange?: (page: number, pageSize: number) => void;
+  /** 简洁模式：仅上一页/下一页与当前页信息。 */
+  simple?: boolean;
+  /** 页码窗口更小时只显示当前页附近的少量页码。 */
+  showLessItems?: boolean;
+  /** 只有一页时隐藏整个分页器。 */
+  hideOnSinglePage?: boolean;
+  /** 自定义分页条目渲染。 */
+  itemRender?: STablePaginationItemRender;
 }
 
 // 表格大小
@@ -97,7 +105,7 @@ export interface STableGroupRowSlotContext<TData extends RowData = RowData> {
 }
 
 // 列宽调整模式
-export type STableColumnResizeMode = ColumnResizeMode;
+export type STableColumnResizeMode = 'onChange' | 'onEnd';
 
 export type PaginationPlacement =
   | 'topStart'
@@ -117,11 +125,11 @@ export interface STableColumnResizeEvent<TData extends RowData = RowData> {
 }
 
 // 虚拟滚动配置
-export interface STableVirtualProps {
+export interface STableVirtualProps<TData extends RowData = RowData> {
   /** 是否启用纵向行虚拟化。 */
-  y: boolean;
+  y?: boolean;
   /** 是否启用横向列虚拟化。固定在左右两侧的列始终渲染。 */
-  x: boolean;
+  x?: boolean;
   /**
    * @description 预估行高（px）。默认 47（middle 尺寸）。
    * 仅用于「动态行高」模式下的初始估算；实际高度由 ResizeObserver 测量校正。
@@ -138,8 +146,11 @@ export interface STableVirtualProps {
    *
    * 注意：要求所有主行等高。若行内容会换行 / 高度不一，请勿设置（改用 estimateSize）。
    * 存在展开行时，被展开的「逻辑行块」仍会按需测量以容纳展开内容。
+   *
+   * 也支持函数形式 `(record, index) => number | undefined`：返回值作为该行的
+   * 初始估算；行高仍会按需测量校正，不会进入固定行高快路径。
    */
-  rowHeight?: number;
+  rowHeight?: number | ((record: TData, index: number) => number | undefined);
   /**
    * @description 可视区域外额外渲染的行数（上下各 N 行）。
    * 值越大，快速滚动时越不容易出现白屏，但初始渲染的 DOM 节点越多。
@@ -155,6 +166,11 @@ export interface STableVirtualProps {
   scrollToBottomOffset?: number;
   /** 横向视口外额外渲染的中心列数。 */
   columnOverscan?: number;
+  /**
+   * @description 统一 buffer 配置；优先于 `overscan` / `columnOverscan`。
+   * 数字同时作用于横纵方向，对象可分别配置。
+   */
+  buffer?: number | { x?: number; y?: number };
   /** 未显式设置列宽时使用的预估宽度（px）。 */
   columnEstimateSize?: number;
 }

@@ -150,6 +150,8 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
 
 ## summary
 
+<demo vue="../../demos/s-table/summary.vue" />
+
 ```vue
 <script setup lang="ts">
 import { SummaryCell, SummaryRow } from '@zchengfeng/s-table-vue';
@@ -169,12 +171,14 @@ import { SummaryCell, SummaryRow } from '@zchengfeng/s-table-vue';
 
 ## footer
 
-`showFooter` 必须为 `true`，否则 Footer 容器不渲染。
+提供 `#footer` 插槽或 `footer` 属性即可渲染 Footer 容器，无需额外开关。
 
 ```vue
-<STable show-footer :columns="columns" :data-source="dataSource">
+<STable :columns="columns" :data-source="dataSource">
   <template #footer>
     <div>共 {{ dataSource.length }} 条记录</div>
   </template>
 </STable>
 ```
+
+<demo vue="../../demos/s-table/footer.vue" />

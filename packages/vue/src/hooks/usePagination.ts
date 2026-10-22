@@ -25,7 +25,7 @@ type UseSTablePaginationOptions = {
   /** 分页配置（来自 props.pagination）。 */
   pagination: Readonly<Ref<boolean | STablePaginationProps | undefined>>;
   /** 分页位置配置（来自 props.paginationPlacement）。 */
-  paginationPlacement: Readonly<Ref<PaginationPlacement | undefined>>;
+  paginationPlacement: Readonly<Ref<PaginationPlacement | PaginationPlacement[] | undefined>>;
   /**
    * 惰性读取 TanStack 分页前的总行数。
    * getter 用于打破“分页状态创建早于 table、table 又依赖分页状态”的初始化环，
@@ -48,6 +48,12 @@ export interface PaginationViewState {
   showSizeChanger: boolean;
   pageSizeOptions: number[];
   showTotal?: (total: number, range: [number, number]) => string;
+  size?: 'small' | 'middle' | 'large';
+  compact?: boolean;
+  simple?: boolean;
+  showLessItems?: boolean;
+  hideOnSinglePage?: boolean;
+  itemRender?: import('../ui/pagination/types').STablePaginationItemRender;
 }
 
 /**
@@ -164,13 +170,29 @@ export const usePagination = ({
 
   // ==================== 分页位置解析 ====================
 
-  const resolvedPaginationPlacement = computed(() => paginationPlacement.value ?? 'bottomEnd');
+  /** 去重并保持声明顺序，支持上下同时显示和同侧多个对齐位置。 */
+  const paginationPlacements = computed<PaginationPlacement[]>(() => {
+    const configured = paginationPlacement.value ?? 'bottomEnd';
+    const list = Array.isArray(configured) ? configured : [configured];
+    const seen = new Set<PaginationPlacement>();
+    const result: PaginationPlacement[] = [];
+    for (const placement of list) {
+      if (seen.has(placement)) continue;
+      seen.add(placement);
+      result.push(placement);
+    }
+    return result.length > 0 ? result : ['bottomEnd'];
+  });
 
-  const showPaginationTop = computed(
-    () => paginationEnabled.value && resolvedPaginationPlacement.value.startsWith('top')
+  const topPaginationPlacements = computed(() =>
+    paginationEnabled.value
+      ? paginationPlacements.value.filter((placement) => placement.startsWith('top'))
+      : []
   );
-  const showPaginationBottom = computed(
-    () => paginationEnabled.value && resolvedPaginationPlacement.value.startsWith('bottom')
+  const bottomPaginationPlacements = computed(() =>
+    paginationEnabled.value
+      ? paginationPlacements.value.filter((placement) => placement.startsWith('bottom'))
+      : []
   );
 
   // ==================== 事件处理 ====================
@@ -253,6 +275,12 @@ export const usePagination = ({
       showSizeChanger: c?.showSizeChanger ?? false,
       pageSizeOptions: c?.pageSizeOptions ?? [10, 20, 50, 100],
       showTotal: c?.showTotal,
+      size: c?.size,
+      compact: c?.compact,
+      simple: c?.simple ?? false,
+      showLessItems: c?.showLessItems ?? false,
+      hideOnSinglePage: c?.hideOnSinglePage ?? false,
+      itemRender: c?.itemRender,
     };
   });
 
@@ -260,9 +288,8 @@ export const usePagination = ({
     tanstackPaginationState,
     onTanStackPaginationChange,
     paginationEnabled,
-    showPaginationTop,
-    showPaginationBottom,
-    resolvedPaginationPlacement,
+    topPaginationPlacements,
+    bottomPaginationPlacements,
     paginationState,
     currentPage,
     currentPageSize,

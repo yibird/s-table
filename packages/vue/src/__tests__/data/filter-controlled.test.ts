@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { nextTick, shallowRef } from 'vue';
 import { useSortFilter } from '../../hooks/useSortFilter';
 import type { STableColumn } from '../../types';

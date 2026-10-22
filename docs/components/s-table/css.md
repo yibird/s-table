@@ -42,28 +42,27 @@
 
 ### 边框、文本与交互
 
-| CSS Variable                  | 默认值                   | 描述              |
-| ----------------------------- | ------------------------ | ----------------- |
-| `--s-color-border-cell-range` | `var(--s-primary-color)` | 框选边框          |
-| `--s-color-border`            | `#f0f0f0`                | 通用分割线        |
-| `--s-color-border-strong`     | `#e5e5e5`                | 表头底线/分组边界 |
-| `--s-color-border-control`    | `#d9d9d9`                | 控件边框          |
-| `--s-color-text`              | `rgba(0,0,0,.88)`        | 主文本            |
-| `--s-color-text-secondary`    | `rgba(0,0,0,.65)`        | 次文本（表头）    |
-| `--s-color-text-tertiary`     | `rgba(0,0,0,.45)`        | 辅助文本          |
-| `--s-color-text-quaternary`   | `rgba(0,0,0,.45)`        | 占位/禁用文本     |
-| `--s-color-text-icon`         | `#bfbfbf`                | 默认图标色        |
-| `--s-color-text-inverse`      | `#fff`                   | 实心按钮反色文本  |
-| `--s-color-sort-icon`         | `#a6a6a6`                | 排序图标默认色    |
-| `--s-color-sort-icon-hover`   | `#595959`                | 排序图标 hover    |
-| `--s-color-bg-hover`          | `rgba(0,0,0,.04)`        | 控件 hover 背景   |
-| `--s-color-bg-active`         | `rgba(0,0,0,.08)`        | 控件 active 背景  |
+| CSS Variable                  | 默认值                   | 描述             |
+| ----------------------------- | ------------------------ | ---------------- |
+| `--s-color-border-cell-range` | `var(--s-primary-color)` | 框选边框         |
+| `--s-color-border`            | `#f0f0f0`                | 通用分割线       |
+| `--s-color-border-control`    | `#d9d9d9`                | 控件边框         |
+| `--s-color-text`              | `rgba(0,0,0,.88)`        | 主文本           |
+| `--s-color-text-secondary`    | `rgba(0,0,0,.65)`        | 次文本（表头）   |
+| `--s-color-text-tertiary`     | `rgba(0,0,0,.45)`        | 辅助文本         |
+| `--s-color-text-quaternary`   | `rgba(0,0,0,.45)`        | 占位/禁用文本    |
+| `--s-color-text-icon`         | `#bfbfbf`                | 默认图标色       |
+| `--s-color-text-inverse`      | `#fff`                   | 实心按钮反色文本 |
+| `--s-color-sort-icon`         | `#a6a6a6`                | 排序图标默认色   |
+| `--s-color-sort-icon-hover`   | `#595959`                | 排序图标 hover   |
+| `--s-color-bg-hover`          | `rgba(0,0,0,.04)`        | 控件 hover 背景  |
+| `--s-color-bg-active`         | `rgba(0,0,0,.08)`        | 控件 active 背景 |
 
 ### 阴影、圆角、动效与层级
 
 | CSS Variable             | 默认值                       | 描述                   |
 | ------------------------ | ---------------------------- | ---------------------- |
-| `--s-color-shadow-fixed` | `rgba(5,5,5,.2)`             | 固定列阴影色           |
+| `--s-color-shadow-fixed` | `rgba(0,0,0,.12)`            | 固定列阴影色           |
 | `--s-shadow-dropdown`    | `0 6px 16px rgba(0,0,0,.08)` | 下拉面板阴影           |
 | `--s-shadow-menu`        | 两层阴影                     | 右键菜单阴影           |
 | `--s-shadow-elevated`    | 两层轻阴影                   | 浮层通用抬升阴影       |
@@ -77,16 +76,14 @@
 | `--s-control-height-lg`  | `40px`                       | 大尺寸控件高度         |
 | `--s-duration-fast`      | `0.1s`                       | 微交互动效             |
 | `--s-duration-normal`    | `0.2s`                       | 面板动效               |
-| `--s-duration-popover`   | `0.16s`                      | 浮层入场动效           |
-| `--s-duration-slow`      | `0.3s`                       | 长动效                 |
 | `--s-ease-out`           | 标准缓出曲线                 | 交互过渡               |
 | `--s-ease-in-out`        | 标准缓入缓出曲线             | 面板/状态过渡          |
-| `--s-ease-emphasized`    | 快速起步、柔和收尾曲线       | 浮层入场               |
+| `--s-ease-out-quint`     | antd easeOutQuint 曲线       | 浮层入场               |
 | `--s-z-index-cell-fixed` | `2`                          | 固定列单元格           |
 | `--s-z-index-header`     | `10`                         | 固定表头               |
 | `--s-z-index-resizer`    | `15`                         | 列宽拖拽手柄           |
-| `--s-z-index-loading`    | `1000`                       | 加载遮罩               |
-| `--s-z-index-dropdown`   | `1050`                       | 过滤、搜索、选择下拉层 |
+| `--s-z-index-loading`    | `10`                         | 加载遮罩               |
+| `--s-z-index-dropdown`   | `10`                         | 过滤、搜索、选择下拉层 |
 
 ## 局部主题
 

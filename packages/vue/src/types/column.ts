@@ -1,11 +1,12 @@
 import type { VNodeChild } from 'vue';
+import type { DeepKeys, RowData } from '@tanstack/table-core';
 import type {
-  ColumnDef_CellSpanning,
-  DeepKeys,
-  RowData,
-  TableFeatures,
-} from '@tanstack/table-core';
-import type { STableCellProps } from './interaction';
+  STableBreakpoint,
+  STableCellProps,
+  STableCellTooltipContext,
+  STableFilterIconContext,
+  STableHeaderMenuContext,
+} from './interaction';
 import type {
   STableColumnAlign,
   STableColumnFixed,
@@ -51,6 +52,35 @@ export type STableColumnBaseAlign = {
   align?: STableColumnAlign;
   meta?: STableColumnMeta;
 };
+
+/** 行合并判定上下文（不暴露 TanStack Row/Column）。 */
+export interface STableSpanRowContext<TData extends RowData = RowData, TValue = unknown> {
+  /** 当前合并区间的锚点行。 */
+  anchorRecord: TData;
+  anchorRowIndex: number;
+  anchorValue: TValue;
+  previousRecord: TData;
+  previousRowIndex: number;
+  record: TData;
+  rowIndex: number;
+  value: TValue;
+  columnId: string;
+}
+
+/** 列合并判定上下文。 */
+export interface STableSpanColumnContext<TData extends RowData = RowData> {
+  record: TData;
+  rowIndex: number;
+  columnId: string;
+}
+
+export type STableSpanRows<TData extends RowData, TValue = unknown> =
+  | boolean
+  | ((context: STableSpanRowContext<TData, TValue>) => boolean);
+
+export type STableSpanColumns<TData extends RowData> =
+  | number
+  | ((context: STableSpanColumnContext<TData>) => number);
 
 // ==================== 渲染上下文（稳定形状，仅暴露必要字段）====================
 
@@ -261,6 +291,10 @@ interface STableColumnBase<TData extends RowData = RowData, TValue = unknown> {
    */
   hidden?: boolean;
   /**
+   * @description 响应式断点：仅在命中的视口宽度下显示该列。
+   */
+  responsive?: STableBreakpoint[];
+  /**
    * @description 排序：`true` 使用默认比较；函数自定义排序规则。
    */
   sorter?: boolean | ((a: TData, b: TData) => number);
@@ -300,6 +334,34 @@ interface STableColumnBase<TData extends RowData = RowData, TValue = unknown> {
   /** 受控筛选值集合。 */
   filteredValue?: (string | number | boolean)[];
   /**
+   * @description 自定义筛选图标；函数接收当前列的过滤状态。
+   * @default 内置漏斗图标
+   */
+  filterIcon?: VNodeChild | ((context: STableFilterIconContext<TData>) => VNodeChild);
+  /** 受控筛选面板打开状态；提供后以该值为准（优先级高于表格级 `filterDropdownOpenKeys`）。 */
+  filterDropdownOpen?: boolean;
+  /**
+   * @description 单元格与表头超长省略；`showTitle` 控制是否补充原生 title。
+   * @default false
+   */
+  ellipsis?: boolean | { showTitle?: boolean };
+  /**
+   * @description 单元格超长时显示 Tooltip；`true` 使用单元格文本，函数可返回自定义内容。
+   * @default false
+   */
+  tooltip?: boolean | string | ((context: STableCellTooltipContext<TData>) => VNodeChild);
+  /**
+   * @description 是否在表头显示通用下拉菜单入口；需同时提供 `menuPopup`。
+   * @default false
+   */
+  showMenu?: boolean;
+  /** 通用菜单触发器图标；默认更多图标。 */
+  menuIcon?: VNodeChild;
+  /**
+   * @description 通用菜单内容；函数形式接收列与关闭方法。
+   */
+  menuPopup?: VNodeChild | ((context: STableHeaderMenuContext<TData>) => VNodeChild);
+  /**
    * @description 列搜索：`true` 使用默认文本包含匹配；函数自定义匹配规则。
    * @default false
    */
@@ -315,18 +377,24 @@ interface STableColumnBase<TData extends RowData = RowData, TValue = unknown> {
   /** accessorFn 或特殊数据结构的不可变写回函数。 */
   valueSetter?: (record: TData, value: TValue) => TData;
   /**
-   * @description 使用 TanStack cellSpanningFeature 合并相邻等值行，或提供自定义相邻判定。
+   * @description 合并相邻等值行，或提供自定义相邻判定。
    */
-  spanRows?: ColumnDef_CellSpanning<TableFeatures, TData, TValue>['spanRows'];
+  spanRows?: STableSpanRows<TData, TValue>;
   /**
-   * @description 使用 TanStack cellSpanningFeature 声明当前行的跨列数量。
+   * @description 声明当前行的跨列数量。
    */
-  spanColumns?: ColumnDef_CellSpanning<TableFeatures, TData, TValue>['spanColumns'];
+  spanColumns?: STableSpanColumns<TData>;
   /**
    * @description 设置单元格属性用于合并（colSpan / rowSpan）。
    * 返回 `{ rowSpan: 0 }` 或 `{ colSpan: 0 }` 可隐藏该单元格。
    */
   onCell?: (record: TData, rowIndex: number) => STableCellProps;
+  /**
+   * @description 允许单元格内容自动换行并按内容撑高（虚拟滚动下强制动态测量）。
+   * 与 `ellipsis` 同时配置时省略优先。
+   * @default false
+   */
+  autoHeight?: boolean;
   /**
    * @description 是否允许该列参与行分组（`groupBy`）。
    * @default false
@@ -407,6 +475,7 @@ export type STableAccessorFnColumn<TData extends RowData, TValue = unknown> = ST
 > & {
   id: string;
   accessorKey?: never;
+  dataIndex?: never;
   accessorFn: (record: TData, index: number) => TValue;
   columns?: never;
 };
@@ -418,6 +487,7 @@ export type STableDisplayColumn<TData extends RowData, TValue = unknown> = STabl
 > & {
   id: string;
   accessorKey?: never;
+  dataIndex?: never;
   accessorFn?: never;
   columns?: never;
 };
@@ -429,6 +499,7 @@ export type STableGroupColumn<TData extends RowData, TValue = unknown> = STableC
 > & {
   id: string;
   accessorKey?: never;
+  dataIndex?: never;
   accessorFn?: never;
   columns: STableAnyValueColumn<TData>[];
 };

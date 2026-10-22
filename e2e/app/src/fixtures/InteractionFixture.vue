@@ -134,6 +134,25 @@ const handleColumnOrderChange = (payload: {
 const handleResizeEnd = (payload: STableColumnResizeEvent<Person>) => {
   resizeEvent.value = `${payload.columnId}:${Math.round(payload.width)}`;
 };
+
+const multiDragRows = ref<Person[]>(baseRows.map((row) => ({ ...row })));
+const multiDragSelectedKeys = ref<(string | number)[]>([1, 3]);
+const multiDragEvent = shallowRef('idle');
+const multiDragColumns: STableColumn<Person>[] = [
+  { id: 'id', accessorKey: 'id', header: 'ID', width: 70 },
+  { id: 'name', accessorKey: 'name', header: 'Name' },
+  { id: 'score', accessorKey: 'score', header: 'Score', width: 100 },
+];
+
+const handleMultiDragOrderChange = (payload: {
+  dataSource: Person[];
+  fromIndices: number[];
+  toIndex: number;
+  position: string;
+}) => {
+  multiDragRows.value = payload.dataSource;
+  multiDragEvent.value = `${payload.fromIndices.join(',')}->${payload.toIndex}:${payload.position}`;
+};
 </script>
 
 <template>
@@ -246,6 +265,29 @@ const handleResizeEnd = (payload: STableColumnResizeEvent<Person>) => {
     >
       <template #rowDragHandle="{ record }">
         <span :data-testid="`row-drag-${record.id}`">drag</span>
+      </template>
+    </STable>
+  </section>
+
+  <section class="fixture-section" data-testid="multi-drag-table">
+    <h2>Multi-row drag</h2>
+    <output class="fixture-status" data-testid="multi-drag-event">{{ multiDragEvent }}</output>
+    <output class="fixture-status" data-testid="multi-drag-selected">
+      {{ multiDragSelectedKeys.join(',') }}
+    </output>
+    <STable
+      bordered
+      row-key="id"
+      :row-drag="{ multiple: true }"
+      :row-selection="{ type: 'checkbox' }"
+      :columns="multiDragColumns"
+      :data-source="multiDragRows"
+      :selected-row-keys="multiDragSelectedKeys"
+      @update:selected-row-keys="multiDragSelectedKeys = $event"
+      @row-order-change="handleMultiDragOrderChange"
+    >
+      <template #rowDragHandle="{ record }">
+        <span :data-testid="`multi-drag-${record.id}`">drag</span>
       </template>
     </STable>
   </section>

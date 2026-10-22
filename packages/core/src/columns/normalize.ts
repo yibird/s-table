@@ -8,6 +8,7 @@ import {
 import { resolveSafeColumnChildren } from '../utils/columnTree';
 import { retainEqualArray } from '../utils/same';
 import { resolveColumnId } from './columnId';
+import { encodeGroupingValue } from './groupingKey';
 import type { STableColumnLike, STableColumnNormalizeMetadata } from './types';
 
 /** 归一化阶段消费的过滤值形状；适配层负责把 UI 状态构造成该结构。 */
@@ -91,6 +92,7 @@ const CELL_RENDER_TOKEN_FIELDS = {
   draggable: null,
   resizable: null,
   hidden: null,
+  responsive: null,
   sorter: null,
   sortDirections: null,
   defaultSortOrder: null,
@@ -101,6 +103,13 @@ const CELL_RENDER_TOKEN_FIELDS = {
   filterMultiple: null,
   defaultFilteredValues: null,
   filteredValue: null,
+  filterIcon: null,
+  filterDropdownOpen: null,
+  ellipsis: null,
+  tooltip: null,
+  showMenu: null,
+  menuIcon: null,
+  menuPopup: null,
   search: null,
   editable: null,
   editableTrigger: null,
@@ -110,6 +119,7 @@ const CELL_RENDER_TOKEN_FIELDS = {
   spanRows: null,
   spanColumns: null,
   onCell: null,
+  autoHeight: null,
   groupable: null,
   getGroupingValue: null,
   aggregation: null,
@@ -193,6 +203,41 @@ const normalizeColumn = <
   const userSearch = column.search;
   const hasFilterOptions =
     Array.isArray(column.filters) || Array.isArray(column.defaultFilteredValues);
+
+  // 行/列合并把 TanStack context 适配为稳定的业务形状，避免公开类型泄漏上游 Row/Column。
+  const userSpanRows = column.spanRows;
+  const userSpanColumns = column.spanColumns;
+  const spanRows =
+    typeof userSpanRows === 'function'
+      ? (context: {
+          anchorRow: { original: TData; index: number };
+          anchorValue: TValue;
+          previousRow: { original: TData; index: number };
+          row: { original: TData; index: number };
+          value: TValue;
+          column: { id: string };
+        }) =>
+          (userSpanRows as (context: unknown) => boolean)({
+            anchorRecord: context.anchorRow.original,
+            anchorRowIndex: context.anchorRow.index,
+            anchorValue: context.anchorValue,
+            previousRecord: context.previousRow.original,
+            previousRowIndex: context.previousRow.index,
+            record: context.row.original,
+            rowIndex: context.row.index,
+            value: context.value,
+            columnId: columnId ?? context.column.id,
+          })
+      : userSpanRows;
+  const spanColumns =
+    typeof userSpanColumns === 'function'
+      ? (context: { row: { original: TData; index: number }; column: { id: string } }) =>
+          (userSpanColumns as (context: unknown) => number)({
+            record: context.row.original,
+            rowIndex: context.row.index,
+            columnId: columnId ?? context.column.id,
+          })
+      : userSpanColumns;
 
   if (metadata && columnId) {
     metadata.mutableColumnMap?.set(columnId, column);
@@ -319,6 +364,18 @@ const normalizeColumn = <
           }
         : undefined;
 
+  // 分组键按原始值类型编码；字符串保持原值以兼容现有分组值与展示。
+  const userGroupingValue = column.getGroupingValue;
+  const encodedGroupingValue =
+    column.groupable === true && columnId
+      ? (original: TData, _index: number, row: { getValue: (id: string) => unknown }) =>
+          encodeGroupingValue(
+            typeof userGroupingValue === 'function'
+              ? userGroupingValue(original)
+              : row.getValue(columnId)
+          )
+      : undefined;
+
   // 原始 columns 不能随 ...column 泄漏到结果：达到深度上限或遇到循环时必须真正截断。
   const { columns: _childColumns, ...columnWithoutChildren } = column;
   return {
@@ -332,9 +389,12 @@ const normalizeColumn = <
     enableSorting: hasSorter,
     enableColumnFilter: filterFn != null,
     enableGrouping: column.groupable === true,
+    ...(encodedGroupingValue && { getGroupingValue: encodedGroupingValue }),
     ...(aggregationFn !== undefined && { aggregationFn }),
     ...(sortFn && { sortFn }),
     ...(filterFn && { filterFn }),
+    ...(spanRows !== undefined && { spanRows }),
+    ...(spanColumns !== undefined && { spanColumns }),
     ...(hasChildren && {
       columns: childColumns.map((childColumn) =>
         normalizeColumn(

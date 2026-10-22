@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { h, nextTick, reactive, ref, type App, type VNodeChild } from 'vue';
 import { mountSTable } from '../helpers';
 import type {
@@ -418,8 +418,12 @@ describe('高级表格能力', () => {
     expect(triggers[0]!.disabled).toBe(false);
     expect(triggers[1]!.disabled).toBe(false);
     expect(rows[2]!.querySelector('.s-table-expand-trigger')).toBeNull();
-    expect((rows[1]!.children[1] as HTMLElement).style.paddingInlineStart).toBe('36px');
-    expect((rows[2]!.children[1] as HTMLElement).style.paddingInlineStart).toBe('56px');
+    expect((rows[1]!.children[1] as HTMLElement).style.paddingInlineStart).toBe(
+      'calc(var(--s-tree-indent-base) + 20px)'
+    );
+    expect((rows[2]!.children[1] as HTMLElement).style.paddingInlineStart).toBe(
+      'calc(var(--s-tree-indent-base) + 40px)'
+    );
     expect(
       (rows[1]!.querySelector('.s-table-expand-cell') as HTMLElement).style.paddingInlineStart
     ).toBe('');

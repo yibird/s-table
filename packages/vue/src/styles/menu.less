@@ -2,45 +2,39 @@
 
 // 右键菜单（Teleport 到 body，全局作用域）
 .s-table-context-menu {
-  z-index: var(--s-z-index-dropdown, 1050);
+  z-index: var(--s-z-index-dropdown, 10);
   position: fixed;
 
   // 菜单容器
   &-inner {
+    .s-popover-surface();
     box-sizing: border-box;
     min-width: 120px;
     padding: 4px;
-    border: 1px solid var(--s-color-border);
-    background-color: var(--s-color-bg-cell, #fff);
     color: var(--s-color-text, rgba(0, 0, 0, 0.88));
-    border-radius: var(--s-radius-lg, 8px);
-    // 右键菜单悬浮于任意内容之上，需要更强的分离感，保留两层阴影
+    // 右键菜单悬浮于任意内容之上，需要更强的分离感，覆盖为两层阴影。
     box-shadow: var(
       --s-shadow-menu,
       0 3px 6px -4px rgba(0, 0, 0, 0.12),
       0 6px 16px rgba(0, 0, 0, 0.08)
     );
-    animation: s-table-context-menu-fade var(--s-duration-normal) var(--s-ease-out);
   }
 
   // 菜单项
   &-item {
+    .s-menu-item();
     display: flex;
     align-items: center;
     gap: 8px;
     width: 100%;
-    padding: 5px 12px;
     margin: 0;
     border: none;
     background: none;
-    border-radius: var(--s-radius-sm, 4px);
-    cursor: pointer;
     font-size: 14px;
     line-height: 22px;
     color: var(--s-color-text, rgba(0, 0, 0, 0.88));
     text-align: left;
     white-space: nowrap;
-    transition: background-color var(--s-duration-fast) var(--s-ease-out);
 
     &:hover {
       background-color: var(--s-color-bg-hover, rgba(0, 0, 0, 0.04));
@@ -103,16 +97,5 @@
   // 键盘导航聚焦的菜单项与 hover 态保持一致的可见反馈。
   &-item:focus-visible {
     background-color: var(--s-color-bg-hover);
-  }
-}
-
-@keyframes s-table-context-menu-fade {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
   }
 }

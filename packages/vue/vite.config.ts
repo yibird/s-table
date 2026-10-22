@@ -2,7 +2,7 @@ import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { join, posix, resolve } from 'node:path';
 import vue from '@vitejs/plugin-vue';
 import dts from 'vite-plugin-dts';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vite-plus/test/config';
 
 const packageRoot = import.meta.dirname;
 
@@ -88,11 +88,14 @@ const externalDependencies = [
   '@tanstack/table-core',
   '@tanstack/vue-table',
   '@tanstack/vue-virtual',
-  /^hucre(\/|$)/,
 ];
 
 export default defineConfig({
   root: import.meta.dirname,
+  test: {
+    environment: 'happy-dom',
+    include: ['src/**/*.test.ts'],
+  },
   plugins: [
     vue(),
     dts({
@@ -124,6 +127,7 @@ export default defineConfig({
     lib: {
       entry: {
         index: resolve(packageRoot, 'src/index.ts'),
+        export: resolve(packageRoot, 'src/export/index.ts'),
         style: resolve(packageRoot, 'src/styles/index.ts'),
       },
       formats: ['es'],

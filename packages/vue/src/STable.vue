@@ -15,10 +15,15 @@
     @copy="handleCellRangeCopy"
     @keydown="handleCellRangeCopyShortcut"
   >
+    <div v-if="$slots.title || title !== undefined" class="s-table-title">
+      <slot v-if="$slots.title" name="title" :current-page-data="currentPageData" />
+      <RenderVNode v-else :value="titleContent" />
+    </div>
     <Pagination
-      v-if="showPaginationTop"
+      v-for="placement in topPaginationPlacements"
+      :key="placement"
       v-bind="paginationState"
-      :placement="resolvedPaginationPlacement"
+      :placement="placement"
       @change="handlePaginationChange"
     />
     <div class="s-table-scroll-shell">
@@ -54,7 +59,7 @@
           </colgroup>
           <Header
             v-if="showHeader"
-            :class="['s-table-header', { 's-table-header-fixed': fixedHeader }]"
+            :class="{ 's-table-header-fixed': fixedHeader }"
             :header-groups="headerGroups"
             :rendered-columns="renderedColumns"
           >
@@ -75,13 +80,18 @@
             :visible-column-ids="visibleColumnIds"
             :rendered-columns="renderedColumns"
             :tree-indent-size="treeIndentSize"
-            :tree-indent-base-padding="treeIndentBasePadding"
             :cell-render-token="cellRenderToken"
             :data-source-token="dataSource"
             :animate-row-drag="animateRowDrag"
             :render-expanded-row="Boolean($slots.expandedRowRender)"
             :row-class-name="props.rowClassName"
             :row-style="props.rowStyle"
+            :custom-row="props.customRow"
+            :custom-cell="props.customCell"
+            :ignore-cell-key="props.ignoreCellKey"
+            :row-drag-trigger="rowDragTrigger"
+            :on-row-drag-start="handleRowDragStart"
+            :on-navigate-cell="navigateCell"
             :is-row-selected="isRowSelected"
             :keyboard-navigation="props.keyboardNavigation"
             :fixed-header="fixedHeader"
@@ -118,7 +128,16 @@
               <slot name="groupRow" v-bind="scope" />
             </template>
           </Body>
-          <Summary v-if="$slots.summary" :visible-leaf-columns="visibleLeafColumns">
+          <ColumnFooter
+            v-if="hasColumnFooter"
+            :footer-groups="columnFooterGroups"
+            :sticky="summaryFixed"
+          />
+          <Summary
+            v-if="$slots.summary"
+            :visible-leaf-columns="visibleLeafColumns"
+            :sticky="summaryFixed"
+          >
             <slot name="summary" />
           </Summary>
         </table>
@@ -145,13 +164,19 @@
         aria-hidden="true"
       />
     </div>
-    <Footer v-if="showFooter" :styles="styles?.footer" :classes="resolvedClasses?.footer">
-      <slot name="footer" />
+    <Footer
+      v-if="$slots.footer || footer !== undefined"
+      :styles="styles?.footer"
+      :classes="classes?.footer"
+    >
+      <slot v-if="$slots.footer" name="footer" v-bind="footerScope" />
+      <RenderVNode v-else-if="footerContent !== undefined" :value="footerContent" />
     </Footer>
     <Pagination
-      v-if="showPaginationBottom"
+      v-for="placement in bottomPaginationPlacements"
+      :key="placement"
       v-bind="paginationState"
-      :placement="resolvedPaginationPlacement"
+      :placement="placement"
       @change="handlePaginationChange"
     />
     <Loading v-if="loading">
@@ -167,6 +192,8 @@
       :close="closeContextMenu"
       :aria-label="resolvedLocale.accessibility.contextMenu"
       :theme-style="themeStyle"
+      :trigger-node="rootRef"
+      :get-popup-container="resolvePopupContainer"
     >
       <template #default="scope">
         <slot name="contextMenu" v-bind="scope" />
@@ -178,13 +205,17 @@
 import {
   computed,
   isReactive,
+  nextTick,
   provide,
   shallowRef,
   toRef,
   toRefs,
   useSlots,
   useTemplateRef,
+  watch,
+  type VNodeChild,
 } from 'vue';
+import { RenderVNode } from './ui/render-vnode';
 import type { RowData, Table, TableFeatures } from '@tanstack/vue-table';
 import { SizeContextKey } from './context/size';
 import {
@@ -192,7 +223,18 @@ import {
   TableHeaderContextKey,
   TablePresentationContextKey,
 } from './context/table';
-import { Header, Body, Footer, Summary, Pagination, Loading, ContextMenu } from './components';
+import {
+  Header,
+  Body,
+  Footer,
+  Summary,
+  ColumnFooter,
+  Pagination,
+  Loading,
+  ContextMenu,
+} from './components';
+import { walkColumnTree } from './utils/columnTree';
+import { useBreakpoints } from './hooks/useBreakpoints';
 import {
   useApi,
   useCellRangeBridge,
@@ -203,7 +245,7 @@ import {
   useView,
   type STableSetupContext,
 } from './setup';
-import type { STableEmits, STableProps, STableSlots } from './types';
+import type { STableColumn, STableEmits, STableProps, STableSlots } from './types';
 import { LocaleContextKey, defaultLocale, mergeLocale } from './locales';
 
 const props = withDefaults(defineProps<STableProps<TData>>(), {
@@ -216,10 +258,15 @@ const props = withDefaults(defineProps<STableProps<TData>>(), {
   virtual: false,
   showHeader: true,
   fixedHeader: true,
-  showFooter: false,
+  // VNodeChild 含 boolean，未声明 default 时 Vue 会把缺省值转成 false，
+  // 使 `title !== undefined` / `footer !== undefined` 恒成立。
+  title: undefined,
+  footer: undefined,
   columnResizeMode: 'onEnd',
   paginationPlacement: 'bottomEnd',
   keyboardNavigation: true,
+  summaryFixed: false,
+  defaultBreakpoint: 'lg',
   locale: () => defaultLocale,
 });
 defineSlots<STableSlots<TData>>();
@@ -227,13 +274,47 @@ const emit = defineEmits<STableEmits<TData>>();
 const slots = useSlots();
 const resolvedLocale = computed(() => mergeLocale(props.locale));
 const rootRef = useTemplateRef<HTMLElement>('rootRef');
-
+/** 统一解析浮层容器；无效节点回退到触发元素所在文档的 body。 */
+const resolvePopupContainer = (trigger: HTMLElement): HTMLElement => {
+  const container = props.getPopupContainer?.(trigger);
+  return container?.isConnected ? container : trigger.ownerDocument.body;
+};
 // props 的纯引用统一从一次 toRefs 获取；context 直接展开 propRefs，避免字段写两遍。
 const propRefs = toRefs(props);
-const { tree, columnDrag, size, styles, classNames, classes } = propRefs;
+const { tree, columnDrag, size, styles, classes, breakpoints, defaultBreakpoint } = propRefs;
+/** 没有任何 responsive 列时不需要订阅 resize。 */
+const hasResponsiveColumns = computed(() => {
+  let found = false;
+  walkColumnTree(props.columns ?? [], (column) => {
+    if (column.responsive !== undefined) found = true;
+  });
+  return found;
+});
+const { activeBreakpoint } = useBreakpoints(
+  rootRef,
+  breakpoints,
+  defaultBreakpoint,
+  hasResponsiveColumns
+);
 
-// `classNames` 是对齐 Ant Design v5 的推荐命名；`classes` 保留兼容，两者同时提供时 `classNames` 优先。
-const resolvedClasses = computed(() => classNames.value ?? classes.value);
+// 可选深度监听：默认继续要求不可变更新，避免大数组上的全量遍历开销。
+const dataSourceRevision = shallowRef(0);
+const columnRevision = shallowRef(0);
+watch(
+  () => (props.deepWatchDataSource ? props.dataSource : undefined),
+  () => {
+    dataSourceRevision.value++;
+  },
+  { deep: true }
+);
+watch(
+  () => (props.deepWatchColumns ? props.columns : undefined),
+  () => {
+    columnRevision.value++;
+  },
+  { deep: true }
+);
+
 const treeIndentSize = computed(() => {
   if (!tree.value) return undefined;
   const indentSize = tree.value.indentSize;
@@ -241,17 +322,21 @@ const treeIndentSize = computed(() => {
     ? indentSize
     : 16;
 });
-const treeIndentBasePadding = computed(() => {
-  if (size.value === 'small') return 12;
-  if (size.value === 'large') return 20;
-  return 16;
-});
 const expandable = computed(() => props.expandable ?? (tree.value ? {} : undefined));
 const rowDragEnabled = toRef(() => Boolean(props.rowDrag));
-const rowDragConfig = toRef(() => (typeof props.rowDrag === 'object' ? props.rowDrag : undefined));
+const rowDragConfig = toRef(() => {
+  const value = props.rowDrag;
+  if (typeof value === 'function') return { canDrag: value };
+  return typeof value === 'object' ? value : undefined;
+});
 const animateRowDrag = toRef(() => rowDragConfig.value?.animation === true);
 const animateColumnDrag = toRef(() => columnDrag.value?.animation === true);
+/** 列拖拽开始前的权限判断；未配置 `canDrag` 时默认允许。 */
+const canColumnDrag = (column: STableColumn<any>, columnIndex: number) =>
+  columnDrag.value?.canDrag?.({ column, columnId: column.id, index: columnIndex }) !== false;
 const dataSource = computed(() => {
+  // deepWatchDataSource 开启时，嵌套字段原地修改通过 revision 使快照失效。
+  dataSourceRevision.value.toString();
   // TanStack 按 data 根引用缓存行模型：仅为需要跟踪 push/splice 的 Vue 响应式数组建立快照，
   // 普通数组直接复用父级引用，避免每次替换数据都额外执行 O(n) 拷贝。
   const source = props.dataSource;
@@ -279,7 +364,6 @@ const context: STableSetupContext<TData> = {
   resolvedLocale,
   dataSource,
   treeIndentSize,
-  treeIndentBasePadding,
   expandable,
   rowDragEnabled,
   rowDragConfig,
@@ -287,7 +371,7 @@ const context: STableSetupContext<TData> = {
   tableInstance,
   getTable,
   rootRef,
-  classes: resolvedClasses,
+  classes,
 };
 
 // 数据模型状态：排序 / 过滤、编辑、导入、分页、选择、展开、分组、固定行。
@@ -297,6 +381,8 @@ const dataState = useDataState<TData>(context);
 let tableModel!: ReturnType<typeof useTableModel<TData>>;
 const columnState = useColumnState<TData>(context, dataState, {
   getRows: () => tableModel.rows.value,
+  activeBreakpoint,
+  columnRevision,
 });
 // TanStack Table 实例与派生行模型。
 tableModel = useTableModel<TData>(context, dataState, columnState);
@@ -310,6 +396,74 @@ const view = useView<TData>(context, dataState, tableModel, cellRangeState, {
   scrollContainerRef,
   scrollBottomSentinelRef,
 });
+/** 虚拟窗口边缘：滚动到目标行/列后重新聚焦对应单元格。 */
+const navigateCell = (
+  rowIndex: number,
+  columnIndex: number,
+  direction: 'up' | 'down' | 'left' | 'right'
+): boolean => {
+  const rows = tableModel.rows.value;
+  const columns = tableModel.visibleColumnIds.value;
+  const nextRow =
+    direction === 'up' ? rowIndex - 1 : direction === 'down' ? rowIndex + 1 : rowIndex;
+  const nextColumn =
+    direction === 'left' ? columnIndex - 1 : direction === 'right' ? columnIndex + 1 : columnIndex;
+  if (nextRow < 0 || nextRow >= rows.length || nextColumn < 0 || nextColumn >= columns.length) {
+    return false;
+  }
+  view.scrollToIndex(nextRow);
+  const columnId = columns[nextColumn];
+  if (columnId) view.scrollToColumn(columnId);
+  nextTick(() => {
+    rootRef.value
+      ?.querySelector<HTMLElement>(
+        `tbody td[data-row-index="${nextRow}"][data-col-index="${nextColumn}"][tabindex]`
+      )
+      ?.focus();
+  });
+  return true;
+};
+
+/** 供标题 / 页脚渲染的当前页数据；manualPagination 直接使用外部数据源。 */
+const currentPageData = computed<TData[]>(() => {
+  if (props.manualPagination) return [...dataSource.value];
+  const model = dataState.paginationEnabled.value
+    ? tableModel.table.getPaginatedRowModel()
+    : tableModel.table.getPrePaginatedRowModel();
+  return model.flatRows.filter((row) => !row.getIsGrouped?.()).map((row) => row.original);
+});
+
+const footerScope = computed(() => ({
+  currentPageData: currentPageData.value,
+  currentPage: dataState.currentPage.value,
+  pageSize: dataState.currentPageSize.value,
+  total: dataState.paginationState.value.total,
+}));
+
+/** 标题 / 页脚共用：函数形式按当前作用域求值，其余按 VNode 原样返回。 */
+const resolveSlotContent = <TScope>(
+  value: VNodeChild | ((scope: TScope) => VNodeChild) | undefined,
+  scope: TScope
+): VNodeChild =>
+  typeof value === 'function' ? (value as (scope: TScope) => VNodeChild)(scope) : value;
+
+const titleContent = computed<VNodeChild>(() =>
+  resolveSlotContent(props.title, { currentPageData: currentPageData.value })
+);
+
+const footerContent = computed<VNodeChild>(() =>
+  resolveSlotContent(props.footer, footerScope.value)
+);
+
+const columnFooterGroups = computed(() => tableModel.table.getFooterGroups());
+const hasColumnFooter = computed(() =>
+  columnFooterGroups.value.some((group) =>
+    group.headers.some(
+      (header) => !header.isPlaceholder && header.column.columnDef.footer !== undefined
+    )
+  )
+);
+
 // 事件桥接与右键菜单。
 const events = useEvents<TData>(context, dataState);
 // 实例 API：defineExpose 的唯一出口。
@@ -325,9 +479,8 @@ defineExpose(api);
 
 // ── 模板绑定 ──
 const {
-  showPaginationTop,
-  showPaginationBottom,
-  resolvedPaginationPlacement,
+  topPaginationPlacements,
+  bottomPaginationPlacements,
   paginationState,
   handlePaginationChange,
   isRowSelected,
@@ -364,7 +517,10 @@ const {
   handleColumnOrderDrop,
   dragRowFromIndex,
   dragRowOverIndex,
+  dragRowSourceIds,
   dragRowDropPosition,
+  rowDragTrigger,
+  handleRowDragStart,
   handleRowDragOver,
   handleRowDragEnd,
   handleRowDrop,
@@ -422,9 +578,17 @@ provide(SizeContextKey, size);
 
 provide(TablePresentationContextKey, {
   styles,
-  classes: resolvedClasses,
+  classes,
   getColumnById: (columnId: string) => columnState.getColumnById(columnId),
   fixedColumnStyles: tableModel.fixedColumnStyles,
+  getPopupContainer: resolvePopupContainer,
+  getCustomHeaderCell: (column) => props.customHeaderCell?.(column as STableColumn<TData>),
+  getColumnDragGhost: (column, index) =>
+    columnDrag.value?.ghost?.({
+      column: column as STableColumn<TData>,
+      columnId: column.id,
+      index,
+    }),
 });
 
 provide(TableHeaderContextKey, {
@@ -443,11 +607,15 @@ provide(TableHeaderContextKey, {
   onColumnDragEnd: handleColumnDragEnd,
   onColumnDrop: handleColumnOrderDrop,
   animateColumnDrag,
+  canColumnDrag,
+  filterDropdownOpenKeys: toRef(() => props.filterDropdownOpenKeys),
+  onFilterDropdownOpenChange: (columnId, open) => emit('filterDropdownOpenChange', columnId, open),
 });
 
 provide(TableBodyContextKey, {
   dragRowFromIndex,
   dragRowOverIndex,
+  dragRowSourceIds,
   dragRowDropPosition,
   onRowDragOver: handleRowDragOver,
   onRowDragEnd: handleRowDragEnd,
@@ -457,6 +625,9 @@ provide(TableBodyContextKey, {
   isCellRangeDragging,
   onCellRangeMousedown: handleCellMouseDown,
   onCellRangeMouseenter: handleCellMouseEnter,
+  onCellRangeSelectAll: cellRangeState.selectAllCellRange,
+  onCellRangeExtend: cellRangeState.extendCellRange,
+  onCellRangeClear: () => cellRangeState.clearCellRangeAt(),
   cellRangeMode: toRef(() => context.cellRangeSelection.value?.mode),
   getFocusedCell: () => focusedCell.value,
 });

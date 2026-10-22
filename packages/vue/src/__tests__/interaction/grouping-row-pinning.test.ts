@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { h, nextTick, reactive, ref, type App } from 'vue';
 import type {
   STableColumn,
@@ -151,6 +151,32 @@ describe('分组与行固定集成', () => {
 
     tableRef.value!.setGroupBy(['department', 'department']);
     expect(updates).toEqual([['department']]);
+  });
+
+  it('全部列非法的 setGroupBy 调用不会清除现有分组', async () => {
+    const updates: string[][] = [];
+    const tableRef = ref<STableInstance<Row>>();
+    const mounted = mountSTable<Row>({
+      columns,
+      dataSource,
+      rowKey: 'id',
+      defaultGroupBy: ['department'],
+      ref: tableRef,
+      'onUpdate:groupBy': (value: string[]) => updates.push(value),
+    } as never);
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    tableRef.value!.setGroupBy(['name']);
+    expect(updates).toEqual([]);
+    expect(tableRef.value!.getGroupBy()).toEqual(['department']);
+    expect(host.querySelectorAll('.s-table-row-grouped')).toHaveLength(2);
+
+    // 空数组仍然表示显式清除分组。
+    tableRef.value!.setGroupBy([]);
+    expect(updates).toEqual([[]]);
+    expect(tableRef.value!.getGroupBy()).toEqual([]);
   });
 
   it('仅配置 getGroupingValue 的展示列也可分组，并响应函数热替换', async () => {

@@ -12,11 +12,6 @@
   <a href="https://github.com/zchengfeng/s-table/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@zchengfeng/s-table-vue.svg" alt="license"></a>
 </p>
 
----
-
-> **状态：0.1.0（未稳定）**。API 处于 0.x 阶段，允许破坏性调整；`experimental` 标记的能力不保证兼容性。
-> 变更记录见 [CHANGELOG.md](./CHANGELOG.md)。
-
 ## 特性
 
 - **高性能虚拟滚动** - 纵向 + 横向虚拟化、动态行高测量，10 万行级数据可用

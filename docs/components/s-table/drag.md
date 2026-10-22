@@ -38,6 +38,24 @@ function handleRowOrderChange(payload: { dataSource: User[]; fromIndex: number; 
 
 <demo vue="../../demos/s-table/row-drag-animation.vue" />
 
+## 拖拽权限
+
+`columnDrag.canDrag` 与 `rowDrag.canDrag` 在每次拖拽开始时同步求值，返回 `false` 会取消本次拖拽，不会进入拖拽态，也不会触发顺序变化。适合根据业务状态动态限制拖拽源。
+
+```ts
+const columnDrag = {
+  canDrag: ({ columnId }: { columnId: string }) => !lockedColumnIds.includes(columnId),
+};
+
+const rowDrag = {
+  canDrag: ({ record }: { record: User }) => record.status !== 'locked',
+};
+```
+
+下面的示例同时演示 `canDrag`、异步 `beforeDrop`、自定义拖拽句柄与顺序变化事件。
+
+<demo vue="../../demos/s-table/drag-permissions.vue" />
+
 ## 自定义拖拽句柄
 
 `#rowDragHandle` 接收 `{ record, index }`，只替换句柄内容，不改变拖拽逻辑。
@@ -53,3 +71,21 @@ function handleRowOrderChange(payload: { dataSource: User[]; fromIndex: number; 
 ## 命令式列顺序
 
 实例提供 `getColumnOrder()`、`setColumnOrder()`、`resetColumnOrder()`、`swapColumns()`、`moveColumn()` 和 `moveColumnByIndex()`。这些方法只处理用户叶子列，内置拖拽、选择、展开和序号列不包含在返回顺序中。
+
+## 整行拖拽与自定义预览
+
+```ts
+const rowDrag = {
+  trigger: 'row', // 整行可拖，按钮/输入框等交互控件除外
+  canDrag: ({ record }) => record.status !== 'locked',
+  ghost: ({ record }) => h('div', { class: 'drag-ghost' }, record.name),
+};
+
+const columnDrag = {
+  ghost: ({ columnId }) => h('span', { class: 'column-ghost' }, columnId),
+};
+```
+
+`rowDrag` 也可以直接传函数：`rowDrag: ({ record }) => record.status !== 'locked'`，等价于只配置 `canDrag`。
+
+<demo vue="../../demos/s-table/drag-advanced.vue" />

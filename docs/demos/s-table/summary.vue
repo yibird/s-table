@@ -136,13 +136,7 @@ const footerColumns: STableColumn<UserRecord>[] = [...columns];
       <code>#summary</code>（tfoot 汇总行）和
       <code>#footer</code>（通用内容区）可以同时存在，各负其责。
     </p>
-    <STable
-      :columns="footerColumns"
-      :data-source="dataSource"
-      :show-footer="true"
-      row-key="id"
-      bordered
-    >
+    <STable :columns="footerColumns" :data-source="dataSource" row-key="id" bordered>
       <template #summary>
         <SummaryRow>
           <SummaryCell :index="0">合计</SummaryCell>

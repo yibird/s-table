@@ -21,20 +21,29 @@ type CellRenderCacheEntry = Omit<CellRenderDependencies, 'columnSetToken' | 'dat
  * 对对象行按 record + row id + column id 保存稳定渲染状态，使 TanStack 重建 Row/Cell 包装对象时
  * 仍可跳过无关重绘；数据数组身份或列渲染 token 变化后会重建 context，避免复用旧事件闭包。
  */
-export const createCellRenderCache = <TData extends RowData>() => {
+export const createCellRenderCache = <TData extends RowData>(
+  options: {
+    /** 忽略行索引与列 token 的缓存键；仅适用于不读取这些输入的纯渲染函数。 */
+    ignoreCellKey?: () => boolean;
+  } = {}
+) => {
   let recordCache = new WeakMap<object, Map<string, CellRenderCacheEntry>>();
   let cellFallbackCache = new WeakMap<Cell<TableFeatures, TData>, CellRenderCacheEntry>();
   let activeColumnSetToken: CellRenderDependencies['columnSetToken'] | undefined;
   let activeDataSourceToken: CellRenderDependencies['dataSourceToken'];
+  let activeIgnoreCellKey: boolean | undefined;
 
   return (
     cell: Cell<TableFeatures, TData>,
     dependencies: CellRenderDependencies
   ): CachedCellRenderState => {
+    const ignoreCellKey = options.ignoreCellKey?.() ?? false;
     if (
       activeColumnSetToken !== dependencies.columnSetToken ||
-      activeDataSourceToken !== dependencies.dataSourceToken
+      activeDataSourceToken !== dependencies.dataSourceToken ||
+      activeIgnoreCellKey !== ignoreCellKey
     ) {
+      activeIgnoreCellKey = ignoreCellKey;
       // Body 同一时刻只消费一套数据与列。版本切换时替换整代 WeakMap，既让 context 失效，
       // 也立即释放仍存活 record 下已删除列的 Map 条目，避免动态列长期切换造成缓存增长。
       recordCache = new WeakMap();
@@ -62,8 +71,9 @@ export const createCellRenderCache = <TData extends RowData>() => {
     if (
       cached &&
       cached.render === dependencies.render &&
-      cached.columnToken === dependencies.columnToken &&
-      cached.rowIndex === dependencies.rowIndex
+      (ignoreCellKey ||
+        (cached.columnToken === dependencies.columnToken &&
+          cached.rowIndex === dependencies.rowIndex))
     ) {
       return cached.state;
     }

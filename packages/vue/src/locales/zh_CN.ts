@@ -7,7 +7,6 @@ const zh_CN: STableLocale = {
   localeName: 'zh_CN',
   empty: {
     title: '暂无数据',
-    description: '当前暂无可展示的数据内容',
   },
   filter: {
     reset: '重置',
@@ -44,6 +43,7 @@ const zh_CN: STableLocale = {
     contextMenu: '行操作',
     expandTrigger: '展开或收起行',
     selectionDropdown: '选择操作菜单',
+    columnMenu: '列菜单',
     resizeColumn: '调整列宽',
     loading: '加载中',
   },

@@ -24,7 +24,7 @@ export const useView = <TData extends RowData>(
     scrollBottomSentinelRef: Readonly<ShallowRef<HTMLElement | null>>;
   }
 ) => {
-  const { props, slots, emit, virtual } = context;
+  const { props, slots, emit, virtual, preserveRow } = context;
   const { editingState, setEditValue, commitEdit, cancelEdit, expandedRowKeys } = dataState;
   const { table, centerRows, fixedColumnStyles, visibleLeafColumnById } = tableModel;
   const { isCellRangeDragging, handleCellMouseEnter } = cellRange;
@@ -34,11 +34,19 @@ export const useView = <TData extends RowData>(
 
   // 阴影 overlay 位置和可见性由 useScroll 的固定列阴影段驱动。
 
-  /** Tab 进入滚动区域后把焦点交给首个数据单元格，后续方向键由 Body 统一委托处理。 */
+  /**
+   * Tab 进入滚动区域后把焦点交给首个数据单元格，后续方向键由 Body 统一委托处理。
+   *
+   * 点击横向滚动条也会让容器获得焦点；这类指针触发的焦点不能劫持到首行，
+   * 否则浏览器会把首行滚入视口，导致页面滚动条跳动。
+   * `preventScroll` 进一步保证即使发生焦点转移也不会滚动页面。
+   */
   const focusFirstBodyCell = () => {
-    scrollContainerRef.value
-      ?.querySelector<HTMLElement>('tbody td.s-table-cell[data-column-id][tabindex]')
-      ?.focus();
+    const container = scrollContainerRef.value;
+    if (!container || !container.matches(':focus-visible')) return;
+    container
+      .querySelector<HTMLElement>('tbody td.s-table-cell[data-column-id][tabindex]')
+      ?.focus({ preventScroll: true });
   };
 
   const { renderedColumns, scrollToColumn } = useColumnVirtual({
@@ -63,6 +71,13 @@ export const useView = <TData extends RowData>(
     rows: centerRows,
     scrollElementRef: scrollContainerRef,
     expandedRowKeys,
+    preserveRow,
+    hasAutoHeight: computed(() =>
+      table.getVisibleLeafColumns().some((column) => {
+        const def = column.columnDef as { autoHeight?: boolean; ellipsis?: unknown };
+        return Boolean(def.autoHeight) && !def.ellipsis;
+      })
+    ),
   });
 
   // Body 的虚拟 / 编辑能力按对象传递，减少顶层模板的 props 轰炸。

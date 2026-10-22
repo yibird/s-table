@@ -15,7 +15,20 @@
 | `loading`                | `boolean`                                             | `false`       | 否   | 显示加载遮罩                                        |
 | `showHeader`             | `boolean`                                             | `true`        | 否   | 渲染表头                                            |
 | `fixedHeader`            | `boolean`                                             | `true`        | 否   | 滚动时固定表头                                      |
-| `showFooter`             | `boolean`                                             | `false`       | 否   | 渲染 Footer 容器                                    |
+| `getPopupContainer`      | `(trigger) => HTMLElement \| null`                    | `body`        | 否   | 统一浮层挂载容器                                    |
+| `title`                  | `VNodeChild \| ((ctx) => VNodeChild)`                 | -             | 否   | 表格标题，作用域含 `currentPageData`                |
+| `footer`                 | `VNodeChild \| ((ctx) => VNodeChild)`                 | -             | 否   | 页脚，作用域含分页信息                              |
+| `summaryFixed`           | `boolean`                                             | `false`       | 否   | 汇总栏固定在滚动容器底部                            |
+| `breakpoints`            | `Partial<Record<STableBreakpoint, number>>`           | -             | 否   | 响应式断点阈值                                      |
+| `defaultBreakpoint`      | `STableBreakpoint`                                    | `'lg'`        | 否   | SSR / 首帧断点                                      |
+| `deepWatchDataSource`    | `boolean`                                             | `false`       | 否   | 深度监听数据源嵌套字段                              |
+| `deepWatchColumns`       | `boolean`                                             | `false`       | 否   | 深度监听列配置                                      |
+| `ignoreCellKey`          | `boolean`                                             | `false`       | 否   | 渲染缓存忽略行索引/列 token                         |
+| `preserveRow`            | `boolean`                                             | `false`       | 否   | 按 row.id 保留已测量行高                            |
+| `filterDropdownOpenKeys` | `string[]`                                            | -             | 否   | 受控筛选面板打开列集合                              |
+| `customRow`              | `(record, index) => Record<string, unknown>`          | -             | 否   | 注入 `<tr>` 属性                                    |
+| `customCell`             | `(record, index, column) => Record<string, unknown>`  | -             | 否   | 注入 `<td>` 属性                                    |
+| `customHeaderCell`       | `(column) => Record<string, unknown>`                 | -             | 否   | 注入 `<th>` 属性                                    |
 | `columnResizeMode`       | `'onChange' \| 'onEnd'`                               | `'onEnd'`     | 否   | 列宽更新时机                                        |
 | `rowSelection`           | `STableRowSelection<TData>`                           | -             | 否   | 选择列行为配置                                      |
 | `selectedRowKeys`        | `STableRowKey[]`                                      | -             | 否   | 受控选择键集合                                      |
@@ -25,7 +38,7 @@
 | `expandedRowKeys`        | `STableRowKey[]`                                      | -             | 否   | 受控展开键集合                                      |
 | `defaultExpandedRowKeys` | `STableRowKey[]`                                      | `[]`          | 否   | 非受控展开初始值                                    |
 | `pagination`             | `boolean \| STablePaginationProps`                    | -             | 否   | 分页开关或配置                                      |
-| `paginationPlacement`    | `PaginationPlacement`                                 | `'bottomEnd'` | 否   | 分页位置                                            |
+| `paginationPlacement`    | `PaginationPlacement \| PaginationPlacement[]`        | `'bottomEnd'` | 否   | 分页位置，数组可同时渲染多处分页                    |
 | `manualPagination`       | `boolean`                                             | `false`       | 否   | 禁用客户端分页切片                                  |
 | `manualSorting`          | `boolean`                                             | `false`       | 否   | 禁用客户端排序                                      |
 | `manualFiltering`        | `boolean`                                             | `false`       | 否   | 禁用客户端过滤和搜索                                |
@@ -51,7 +64,7 @@
 | `cellRangeSelection`     | `STableCellRangeSelection`                            | -             | 否   | 框选模式配置                                        |
 | `onCellRangeCopy`        | `(payload) => boolean \| void`                        | -             | 否   | 返回 false 时不写入框选文本，也不拦截浏览器原生复制 |
 | `keyboardNavigation`     | `boolean`                                             | `true`        | 否   | 单元格焦点与方向键                                  |
-| `rowDrag`                | `boolean \| STableRowDragConfig<TData>`               | `false`       | 否   | 行拖拽开关或配置                                    |
+| `rowDrag`                | `boolean \| fn \| STableRowDragConfig<TData>`         | `false`       | 否   | 行拖拽开关、按行判定函数或配置                      |
 | `columnDrag`             | `STableColumnDragConfig<TData>`                       | -             | 否   | 列拖拽动画与拦截                                    |
 | `styles`                 | `STableStyles`                                        | -             | 否   | 语义化内联样式                                      |
 | `classes`                | `STableClasses`                                       | -             | 否   | 语义化 class                                        |
@@ -67,6 +80,7 @@ Vue 模板中使用 kebab-case 事件名，TypeScript 类型保留源码中的 c
 
 | Event                               | 参数                                           | 触发时机                              |
 | ----------------------------------- | ---------------------------------------------- | ------------------------------------- |
+| `filterDropdownOpenChange`          | `columnId, open`                               | 筛选面板请求切换打开状态              |
 | `update:dataSource`                 | `dataSource: TData[]`                          | 编辑/行拖拽不可变提交                 |
 | `update:selectedRowKeys`            | `keys: STableRowKey[]`                         | 受控选择状态变化；intent 策略下不触发 |
 | `selectChange`                      | `keys, rows, info`                             | 行选择变化完成；intent 策略下不触发   |
@@ -192,20 +206,20 @@ function resetQueryState() {
 
 列头和单元格通过列定义的 `header` / `cell` 渲染，不走命名插槽。完整说明见 [插槽](./slots)。
 
-| Slot                | 作用域                         | 描述                            |
-| ------------------- | ------------------------------ | ------------------------------- |
-| `empty`             | 无                             | 替换空状态                      |
-| `emptyAction`       | 无                             | 默认空状态后的操作区            |
-| `loading`           | 无                             | 替换加载指示器                  |
-| `expandedRowRender` | `record`, `index`, `expanded`  | 展开行内容                      |
-| `contextMenu`       | `row`, `rowIndex`, `close`     | 行右键菜单                      |
-| `scrollToBottom`    | 无                             | 触底状态内容                    |
-| `rowDragHandle`     | `record`, `index`              | 行拖拽句柄                      |
-| `cellEditor`        | `STableCellEditorSlotContext`  | 自定义单元格编辑器              |
-| `filterPanel`       | `STableFilterPanelSlotContext` | 自定义列过滤面板                |
-| `groupRow`          | `STableGroupRowSlotContext`    | 自定义整行分组内容              |
-| `summary`           | 无                             | `<tfoot>` 汇总                  |
-| `footer`            | 无                             | 表格下方页脚（需 `showFooter`） |
+| Slot                | 作用域                         | 描述                 |
+| ------------------- | ------------------------------ | -------------------- |
+| `empty`             | 无                             | 替换空状态           |
+| `emptyAction`       | 无                             | 默认空状态后的操作区 |
+| `loading`           | 无                             | 替换加载指示器       |
+| `expandedRowRender` | `record`, `index`, `expanded`  | 展开行内容           |
+| `contextMenu`       | `row`, `rowIndex`, `close`     | 行右键菜单           |
+| `scrollToBottom`    | 无                             | 触底状态内容         |
+| `rowDragHandle`     | `record`, `index`              | 行拖拽句柄           |
+| `cellEditor`        | `STableCellEditorSlotContext`  | 自定义单元格编辑器   |
+| `filterPanel`       | `STableFilterPanelSlotContext` | 自定义列过滤面板     |
+| `groupRow`          | `STableGroupRowSlotContext`    | 自定义整行分组内容   |
+| `summary`           | 无                             | `<tfoot>` 汇总       |
+| `footer`            | 无                             | 表格下方页脚         |
 
 ## Column API
 
@@ -292,16 +306,17 @@ function resetQueryState() {
 
 ### STableVirtualProps
 
-| 属性                   | 类型      | 默认值 | 描述                      |
-| ---------------------- | --------- | ------ | ------------------------- |
-| `y`                    | `boolean` | -      | 启用纵向行虚拟化          |
-| `x`                    | `boolean` | -      | 启用横向中心列虚拟化      |
-| `estimateSize`         | `number`  | `47`   | 动态行高初始估值          |
-| `rowHeight`            | `number`  | -      | 固定主行高度，启用快路径  |
-| `overscan`             | `number`  | `15`   | 视口上下额外渲染行数      |
-| `scrollToBottomOffset` | `number`  | `50`   | 触底阈值 px               |
-| `columnOverscan`       | `number`  | `3`    | 视口外额外渲染的中心列数  |
-| `columnEstimateSize`   | `number`  | `150`  | 未配置宽度列的预估宽度 px |
+| 属性                   | 类型                                                 | 默认值 | 描述                          |
+| ---------------------- | ---------------------------------------------------- | ------ | ----------------------------- |
+| `y`                    | `boolean`                                            | -      | 启用纵向行虚拟化              |
+| `x`                    | `boolean`                                            | -      | 启用横向中心列虚拟化          |
+| `estimateSize`         | `number`                                             | `47`   | 动态行高初始估值              |
+| `rowHeight`            | `number \| ((record, index) => number \| undefined)` | -      | 固定行高或按行返回高度        |
+| `buffer`               | `number \| { x?: number; y?: number }`               | -      | 统一横纵缓冲，优先于 overscan |
+| `overscan`             | `number`                                             | `15`   | 视口上下额外渲染行数          |
+| `scrollToBottomOffset` | `number`                                             | `50`   | 触底阈值 px                   |
+| `columnOverscan`       | `number`                                             | `3`    | 视口外额外渲染的中心列数      |
+| `columnEstimateSize`   | `number`                                             | `150`  | 未配置宽度列的预估宽度 px     |
 
 `virtual: true` 为兼容旧 API，仅开启纵向虚拟化。对象模式下 `x`、`y` 必须显式声明。
 
@@ -327,28 +342,36 @@ function resetQueryState() {
 
 ### STableRowDragConfig
 
-| 属性                | 类型                                       | 默认值  | 描述                 |
-| ------------------- | ------------------------------------------ | ------- | -------------------- |
-| `animation`         | `boolean`                                  | `false` | 启用行 FLIP 动画     |
-| `multiple`          | `boolean`                                  | `false` | 拖动选中行有序块     |
-| `allowTreeReparent` | `boolean`                                  | `false` | 允许投放到树节点内部 |
-| `beforeDrop`        | `(payload) => boolean \| Promise<boolean>` | -       | 提交移动前拦截       |
+| 属性                | 类型                                          | 默认值     | 描述                                      |
+| ------------------- | --------------------------------------------- | ---------- | ----------------------------------------- |
+| `trigger`           | `'handle' \| 'row'`                           | `'handle'` | 拖拽触发区域（手柄或整行）                |
+| `ghost`             | `({ record, index }) => VNode \| HTMLElement` | -          | 自定义拖拽预览                            |
+| `animation`         | `boolean`                                     | `false`    | 启用行 FLIP 动画                          |
+| `multiple`          | `boolean`                                     | `false`    | 拖动选中行有序块                          |
+| `allowTreeReparent` | `boolean`                                     | `false`    | 允许投放到树节点内部                      |
+| `canDrag`           | `({ record, index }) => boolean`              | -          | 拖拽开始前判定，返回 `false` 阻止该行拖拽 |
+| `beforeDrop`        | `(payload) => boolean \| Promise<boolean>`    | -          | 提交移动前拦截                            |
 
 ### STableColumnDragConfig
 
-| 属性         | 类型                                       | 默认值  | 描述             |
-| ------------ | ------------------------------------------ | ------- | ---------------- |
-| `animation`  | `boolean`                                  | `false` | 启用列 FLIP 动画 |
-| `beforeDrop` | `(payload) => boolean \| Promise<boolean>` | -       | 提交移动前拦截   |
+| 属性         | 类型                                                    | 默认值  | 描述                                      |
+| ------------ | ------------------------------------------------------- | ------- | ----------------------------------------- |
+| `animation`  | `boolean`                                               | `false` | 启用列 FLIP 动画                          |
+| `ghost`      | `({ column, columnId, index }) => VNode \| HTMLElement` | -       | 自定义列拖拽预览                          |
+| `canDrag`    | `({ column, columnId, index }) => boolean`              | -       | 拖拽开始前判定，返回 `false` 阻止该列拖拽 |
+| `beforeDrop` | `(payload) => boolean \| Promise<boolean>`              | -       | 提交移动前拦截                            |
 
 ### STableExpandable
 
-| 属性              | 类型                  | 默认值 | 描述               |
-| ----------------- | --------------------- | ------ | ------------------ |
-| `multiple`        | `boolean`             | `true` | 是否允许多行展开   |
-| `columnWidth`     | `number`              | `40`   | 展开列宽度 px      |
-| `fixed`           | `boolean`             | `true` | 固定展开列         |
-| `isRowExpandable` | `(record) => boolean` | -      | 判断指定行能否展开 |
+| 属性                    | 类型                           | 默认值 | 描述               |
+| ----------------------- | ------------------------------ | ------ | ------------------ |
+| `multiple`              | `boolean`                      | `true` | 是否允许多行展开   |
+| `columnWidth`           | `number`                       | `40`   | 展开列宽度 px      |
+| `expandIcon`            | `(ctx) => VNodeChild`          | -      | 自定义展开图标     |
+| `expandIconColumnIndex` | `number`                       | `0`    | 展开列插入位置     |
+| `expandFixed`           | `boolean \| 'left' \| 'right'` | `true` | 展开列固定方向     |
+| `fixed`                 | `boolean`                      | `true` | 兼容别名           |
+| `isRowExpandable`       | `(record) => boolean`          | -      | 判断指定行能否展开 |
 
 ### STableCellRangeSelection
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { computed, createApp, h, nextTick, shallowRef } from 'vue';
 import { en_US, LocaleContextKey, type STableLocale } from '../../locales';
 import { useLocales } from '../../locales/useLocales';

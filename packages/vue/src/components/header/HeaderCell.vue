@@ -17,11 +17,14 @@
         's-table-cell-drag-column': header.column.id === DRAG_COLUMN_ID,
       },
       classes?.headerCell,
+      customAttrs?.class,
     ]"
+    v-bind="customAttrs?.attrs"
     :colspan="colSpan"
     :rowspan="rowSpan"
     :aria-sort="ariaSort"
-    :style="[fixedStyle, alignStyle, styles?.headerCell]"
+    :title="headerTitle"
+    :style="[fixedStyle, alignStyle, styles?.headerCell, customAttrs?.style]"
     :draggable="rawCol?.draggable === true ? 'true' : undefined"
     @dragstart="onDragStart"
     @dragover.prevent="onDragOver"
@@ -32,13 +35,19 @@
       <div class="s-table-cell-inner">
         <div
           class="s-table-cell-title"
-          :class="[{ 's-table-cell-title-sortable': !!rawCol?.sorter }, classes?.headerCellTitle]"
+          :class="[
+            {
+              's-table-cell-title-sortable': !!rawCol?.sorter,
+              's-table-cell-title-ellipsis': !!rawCol?.ellipsis,
+            },
+            classes?.headerCellTitle,
+          ]"
           :style="styles?.headerCellTitle"
           :role="rawCol?.sorter ? 'button' : undefined"
           :tabindex="rawCol?.sorter ? 0 : undefined"
           @click="handleToggleSort"
-          @keydown.enter.prevent="handleToggleSort"
-          @keydown.space.prevent="handleToggleSort"
+          @keydown.enter.self.prevent="handleToggleSort"
+          @keydown.space.self.prevent="handleToggleSort"
         >
           <FlexRender :header="header" />
         </div>
@@ -55,6 +64,8 @@
           :filtered-values="filteredValues"
           :filter-mode="columnFilterMode"
           :filter-multiple="columnFilterMultiple"
+          :filter-icon="filterIcon"
+          :filter-dropdown-open="rawCol?.filterDropdownOpen"
           :on-confirm="handleFilterConfirm"
           :on-reset="handleFilterReset"
         >
@@ -78,6 +89,13 @@
           :on-confirm="handleSearchConfirm"
           :on-reset="handleSearchReset"
         />
+        <HeaderMenu
+          v-if="rawCol?.showMenu && rawCol?.menuPopup !== undefined"
+          :column="rawCol"
+          :column-id="header.column.id"
+          :popup="rawCol.menuPopup"
+          :icon="rawCol.menuIcon"
+        />
       </div>
     </template>
 
@@ -92,13 +110,17 @@ import { FlexRender } from '@tanstack/vue-table';
 import { injectTableHeaderContext, injectTablePresentationContext } from '../../context/table';
 import { DRAG_COLUMN_ID } from '../../constants';
 import { resolveColumnAlignStyle } from '../../utils/column';
+import { toSTableSortOrder } from '../../utils/sort';
 import Resizer from './Resizer.vue';
 import Sort from './Sort.vue';
 import Filter from './Filter.vue';
 import Search from './Search.vue';
+import HeaderMenu from './HeaderMenu.vue';
 import { useColumnDragPreview } from './useColumnDragPreview';
+import { splitTableAttrs } from '../../utils/mergeTableAttrs';
+import { applyDragGhost } from '../../utils/dragGhost';
 
-import type { CSSProperties } from 'vue';
+import type { CSSProperties, VNodeChild } from 'vue';
 import type { Header, RowData, TableFeatures } from '@tanstack/vue-table';
 import type { STableColumn, STableFilterMode, STableSortOrder, STableSlots } from '../../types';
 
@@ -130,7 +152,8 @@ const props = withDefaults(
 defineSlots<Pick<STableSlots<TData>, 'filterPanel'>>();
 
 // HeaderCell 会按列实例化，直接消费所需 Ref 可避免为每个表头创建 proxyRefs 代理。
-const { styles, classes } = injectTablePresentationContext<TData>();
+const presentation = injectTablePresentationContext<TData>();
+const { styles, classes, getCustomHeaderCell } = presentation;
 const {
   filterState,
   searchState,
@@ -141,6 +164,7 @@ const {
   onClearSearch,
   dragColumnFromIndex,
   dragColumnOverIndex,
+  canColumnDrag,
 } = injectTableHeaderContext();
 
 const emit = defineEmits<{
@@ -154,6 +178,19 @@ const emit = defineEmits<{
 const rawCol = computed(() => props.header.column.columnDef as STableColumn<TData>);
 const alignStyle = computed(() => resolveColumnAlignStyle(rawCol.value));
 
+/** `ellipsis: { showTitle: true }` 时为表头补充原生 title。 */
+const ellipsisTitle = computed<string | undefined>(() => {
+  const ellipsis = rawCol.value?.ellipsis;
+  if (typeof ellipsis !== 'object' || ellipsis?.showTitle !== true) return undefined;
+  return typeof rawCol.value?.header === 'string' ? rawCol.value.header : undefined;
+});
+const customAttrs = computed(() => splitTableAttrs(getCustomHeaderCell?.(rawCol.value)));
+
+/** 合并 ellipsis.showTitle 与 customHeaderCell 提供的 title，后者不应被 undefined 覆盖。 */
+const headerTitle = computed(
+  () => ellipsisTitle.value ?? (customAttrs.value?.attrs?.title as string | undefined)
+);
+
 // ==================== 排序 / 过滤 / 搜索状态 ====================
 
 const columnFilters = computed(() => rawCol.value?.filters);
@@ -166,14 +203,10 @@ const columnFilterMultiple = computed<boolean>(() => {
   return rawCol.value?.filterMultiple ?? true;
 });
 
-const sortOrder = computed<STableSortOrder | null>(() => {
-  // 排序状态由 TanStack rowSortingFeature 统一维护并记忆化读取；
-  // STable 只把官方 asc/desc 映射为兼容层公开的 ascend/descend。
-  const order = props.header.column.getIsSorted();
-  if (order === 'asc') return 'ascend';
-  if (order === 'desc') return 'descend';
-  return null;
-});
+const sortOrder = computed<STableSortOrder | null>(() =>
+  // 排序状态由 TanStack rowSortingFeature 统一维护并记忆化读取。
+  toSTableSortOrder(props.header.column.getIsSorted())
+);
 
 const ariaSort = computed<'ascending' | 'descending' | 'none' | undefined>(() => {
   if (!rawCol.value?.sorter) return undefined;
@@ -215,6 +248,20 @@ const filteredValues = computed<FilterValue[]>(() => {
   return filterState.value.get(props.header.column.id) ?? EMPTY_FILTER_VALUES;
 });
 
+/** 列配置的筛选图标；函数形式在每次过滤状态变化时求值。 */
+const filterIcon = computed<VNodeChild | undefined>(() => {
+  const icon = rawCol.value?.filterIcon;
+  if (typeof icon === 'function') {
+    return icon({
+      column: rawCol.value!,
+      columnId: props.header.column.id,
+      filteredValues: filteredValues.value,
+      active: filteredValues.value.length > 0,
+    });
+  }
+  return icon;
+});
+
 const searchValue = computed<string>(() => {
   return searchState.value.get(props.header.column.id) ?? '';
 });
@@ -231,10 +278,18 @@ const onDragStart = (event: DragEvent) => {
     event.preventDefault();
     return;
   }
+  // `canDrag` 在每次拖拽开始时求值，允许按业务状态动态禁用某列的拖拽。
+  if (!canColumnDrag(rawCol.value, props.userColumnIndex)) {
+    event.preventDefault();
+    return;
+  }
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move';
   }
-  setCustomDragImage(event);
+  const customGhost = presentation.getColumnDragGhost?.(rawCol.value, props.userColumnIndex);
+  if (!applyDragGhost(event, customGhost)) {
+    setCustomDragImage(event);
+  }
   emit('columnDragStart', props.header.column.id);
 };
 

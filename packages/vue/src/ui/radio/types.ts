@@ -11,6 +11,8 @@ export interface RadioProps {
   disabled?: boolean;
   /** 尺寸（Context Size > 此属性） */
   size?: SComponentSize;
+  /** 已选中时再次点击是否取消选择。 */
+  allowUncheck?: boolean;
 }
 
 export interface RadioOption {

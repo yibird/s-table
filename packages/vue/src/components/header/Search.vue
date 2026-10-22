@@ -15,54 +15,59 @@
     </button>
 
     <Teleport v-if="teleportTarget" :to="teleportTarget">
-      <div
-        v-if="isOpen"
-        :id="dropdownId"
-        ref="floatingRef"
-        class="s-table-search-dropdown"
-        :style="floatingStyles"
-        :data-placement="placement"
-        role="dialog"
-        :aria-label="`${locale.accessibility.searchColumn}: ${columnId}`"
-        @click.stop
-        @keydown.esc.stop.prevent="closeDropdown(true)"
-      >
-        <div class="s-table-search-dropdown-content">
-          <input
-            ref="inputRef"
-            v-model="localValue"
-            class="s-table-search-input"
-            type="text"
-            :placeholder="resolvedPlaceholder"
-            @keydown.enter="handleConfirm"
-          />
+      <Transition name="scale-down" @after-leave="handleAfterLeave">
+        <div
+          v-if="isOpen"
+          :id="dropdownId"
+          ref="floatingRef"
+          class="s-table-search-dropdown"
+          :style="floatingStyles"
+          :data-placement="placement"
+          role="dialog"
+          :aria-label="`${locale.accessibility.searchColumn}: ${columnId}`"
+          @click.stop
+          @keydown.esc.stop.prevent="closeDropdown(true)"
+        >
+          <div class="s-table-search-dropdown-content">
+            <input
+              v-model="localValue"
+              class="s-table-search-input"
+              type="text"
+              :placeholder="resolvedPlaceholder"
+              @keydown.enter="handleConfirm"
+            />
+          </div>
+          <div class="s-table-search-dropdown-footer">
+            <Button
+              size="small"
+              class="s-table-search-dropdown-btn s-table-search-dropdown-btn-reset"
+              @click="handleReset"
+            >
+              {{ locale.search.reset }}
+            </Button>
+            <Button
+              size="small"
+              type="primary"
+              class="s-table-search-dropdown-btn s-table-search-dropdown-btn-confirm"
+              @click="handleConfirm"
+            >
+              {{ locale.search.confirm }}
+            </Button>
+          </div>
         </div>
-        <div class="s-table-search-dropdown-footer">
-          <button
-            type="button"
-            class="s-table-search-dropdown-btn s-table-search-dropdown-btn-reset"
-            @click="handleReset"
-          >
-            {{ locale.search.reset }}
-          </button>
-          <button
-            type="button"
-            class="s-table-search-dropdown-btn s-table-search-dropdown-btn-confirm"
-            @click="handleConfirm"
-          >
-            {{ locale.search.confirm }}
-          </button>
-        </div>
-      </div>
+      </Transition>
     </Teleport>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, nextTick, shallowRef, useId, useTemplateRef, watch } from 'vue';
+import { computed, shallowRef, useId, useTemplateRef, watch } from 'vue';
 import { useLocales } from '../../locales/useLocales';
+import { injectTablePresentationContext } from '../../context/table';
+import { Button } from '../../ui/button';
 import { SearchIcon } from '../icon';
 import { useFloatingDropdown } from './useFloatingDropdown';
+import { useDropdownFocus } from './useDropdownFocus';
 
 const locale = useLocales();
 
@@ -88,10 +93,15 @@ const props = withDefaults(
 const triggerRef = useTemplateRef<HTMLElement>('triggerRef');
 const triggerButtonRef = useTemplateRef<HTMLButtonElement>('triggerButtonRef');
 const floatingRef = useTemplateRef<HTMLElement>('floatingRef');
-const teleportTarget = computed(() => triggerRef.value?.ownerDocument.body ?? null);
-const inputRef = useTemplateRef<HTMLInputElement>('inputRef');
 const dropdownId = `s-table-search-${useId()}`;
-const { isOpen, floatingStyles, placement } = useFloatingDropdown(triggerRef, floatingRef);
+const { getPopupContainer } = injectTablePresentationContext();
+const { isOpen, floatingStyles, placement, teleportTarget } = useFloatingDropdown(
+  triggerRef,
+  floatingRef,
+  {
+    getContainer: () => (triggerRef.value ? getPopupContainer(triggerRef.value) : null),
+  }
+);
 
 // 本地临时输入状态
 const localValue = shallowRef(props.searchValue);
@@ -110,32 +120,39 @@ watch(
 // 是否有活跃搜索（已确认的关键词非空）
 const isActive = computed(() => !!props.searchValue);
 
+const { focusInitial, closeWithFocus, closeWithoutFocus, resetRestoreFocus, handleAfterLeave } =
+  useDropdownFocus({
+    triggerRef: triggerButtonRef,
+    floatingRef,
+    isOpen,
+    getInitialFocus: (root) => root.querySelector<HTMLElement>('input'),
+  });
+
 const closeDropdown = (restoreFocus = false) => {
-  isOpen.value = false;
-  if (restoreFocus) nextTick(() => triggerButtonRef.value?.focus());
+  if (restoreFocus) closeWithFocus();
+  else closeWithoutFocus();
 };
 
-/** 提交当前搜索词并关闭面板。 */
+/** 提交当前搜索词并关闭面板，焦点回到触发器。 */
 const handleConfirm = () => {
   props.onConfirm?.(localValue.value);
-  isOpen.value = false;
+  closeDropdown(true);
 };
 
-/** 清空搜索词并通知外部重置。 */
+/** 清空搜索词并通知外部重置，焦点回到触发器。 */
 const handleReset = () => {
   localValue.value = '';
   props.onReset?.();
-  isOpen.value = false;
+  closeDropdown(true);
 };
 
 /** 切换搜索浮层，并在打开后聚焦输入框。 */
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value;
   if (isOpen.value) {
+    resetRestoreFocus();
     localValue.value = props.searchValue;
-    nextTick(() => {
-      inputRef.value?.focus();
-    });
+    focusInitial();
   }
 };
 </script>

@@ -20,6 +20,10 @@ export type {
   STableHeaderRenderModel,
   STableRenderModel,
   STableRowRenderModel,
+  STableSpanColumnContext,
+  STableSpanColumns,
+  STableSpanRowContext,
+  STableSpanRows,
 } from './column';
 export type * from './interaction';
 export type * from './selection';

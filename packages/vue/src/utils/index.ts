@@ -12,5 +12,6 @@ export * from './resolveRowKey';
 export * from './rowState';
 export * from './same';
 export * from './scheduleAnimationFrame';
+export * from './sort';
 export * from './tableEvents';
 export * from './virtual';

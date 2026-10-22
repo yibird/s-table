@@ -18,6 +18,10 @@ const tree = {
 
 `defaultExpandAllRows` 负责初始全部展开，`expandRowByClick` 允许点击行展开；`expandable.isRowExpandable(record)` 可禁用特定节点。实例提供 `expandRow`、`collapseRow`、`toggleExpand`、`expandAll` 和 `collapseAll`。
 
+树形行选择默认父子级联，设置 `rowSelection.checkStrictly: true` 可让每个节点独立选择。
+
+<demo vue="../../demos/s-table/tree-selection.vue" />
+
 ## 树拖拽
 
 `rowDrag: { allowTreeReparent: true }` 开启跨层级投放。目标行上、中、下区域分别映射为 `before`、`inside`、`after`，事件载荷包含移动行键、目标行键、目标父键和最终树数据。服务端规则可放在异步 `beforeDrop` 中。

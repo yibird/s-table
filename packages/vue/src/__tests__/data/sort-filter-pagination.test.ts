@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach } from 'vite-plus/test';
 import { computed, nextTick, reactive, shallowRef, watch, type App } from 'vue';
 import { mountSTable } from '../helpers';
 import { useSortFilter } from '../../hooks/useSortFilter';
@@ -264,7 +264,7 @@ describe('内置排序/过滤/分页迁移', () => {
 
     host.querySelector<HTMLElement>('.s-table-filter-trigger')!.click();
     await nextTick();
-    document.querySelector<HTMLElement>('.s-table-filter-dropdown-checkbox')!.click();
+    document.querySelector<HTMLElement>('.s-table-filter-dropdown-menu-item')!.click();
     document.querySelector<HTMLElement>('.s-table-filter-dropdown-btn-confirm')!.click();
     await nextTick();
 

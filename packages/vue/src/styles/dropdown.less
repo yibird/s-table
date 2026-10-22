@@ -1,116 +1,34 @@
 @import './mixins.less';
 
-// 过滤/搜索/选择下拉面板（Teleport 到 body，全局作用域）
-// 入场动画围绕触发元素展开：默认向下，flip 到上/左/右时调整原点与位移方向。
-.s-table-filter-dropdown,
-.s-table-search-dropdown,
-.s-table-selection-dropdown-menu {
-  transform-origin: top center;
-  --s-popover-shift: -4px;
-
-  &[data-placement^='top'] {
-    transform-origin: bottom center;
-    --s-popover-shift: 4px;
-  }
-
-  &[data-placement^='left'] {
-    transform-origin: center right;
-    --s-popover-shift: 0px;
-  }
-
-  &[data-placement^='right'] {
-    transform-origin: center left;
-    --s-popover-shift: 0px;
-  }
-}
-
 // 过滤下拉面板（Teleport 到 body，全局作用域）
 .s-table-filter-dropdown {
+  .s-popover-surface();
   z-index: var(--s-z-index-dropdown);
   min-width: 160px;
   box-sizing: border-box;
-  border: 1px solid var(--s-color-border);
-  background-color: var(--s-color-bg-cell);
   color: var(--s-color-text);
-  border-radius: var(--s-radius-lg, 8px);
-  box-shadow: var(--s-shadow-elevated, var(--s-shadow-dropdown));
-  animation: s-table-popover-in var(--s-duration-popover, 0.16s) var(--s-ease-emphasized);
 
-  &-content {
-    padding: 8px 0;
-  }
-
-  &-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 280px;
-    overflow-y: auto;
-    padding: 0 8px;
-  }
-
-  &-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 8px;
-    border-radius: var(--s-radius-sm, 4px);
-    cursor: pointer;
-    font-size: 14px;
-    line-height: 22px;
-    transition: background-color var(--s-duration-fast) var(--s-ease-out);
-
-    &:hover {
-      background-color: var(--s-color-bg-hover);
-    }
-
-    &:focus-visible {
-      .s-focus-ring();
-    }
-  }
-
-  .s-table-filter-checkbox-box {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    border: 1px solid var(--s-color-border-control);
-    border-radius: var(--s-radius-sm, 4px);
-    background-color: var(--s-color-bg-cell);
-    flex-shrink: 0;
-    transition:
-      color var(--s-duration-fast) var(--s-ease-out),
-      border-color var(--s-duration-fast) var(--s-ease-out),
-      background-color var(--s-duration-fast) var(--s-ease-out);
-
-    &.checked {
-      background-color: var(--s-primary-color, #1677ff);
-      border-color: var(--s-primary-color, #1677ff);
-      color: var(--s-color-text-inverse, #fff);
-    }
-  }
-
-  .s-table-filter-checkbox-label {
-    color: var(--s-color-text);
-    white-space: nowrap;
-  }
-
+  // 单选/多选共用同一个列表容器。
   &-menu {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 4px;
+    max-height: 280px;
+    margin-top: 8px;
+    overflow-y: auto;
+  }
+
+  // 内置 Checkbox/Radio 容器自带圆角，列表行铺满时不需要。
+  &-menu &-menu-item {
+    border-radius: 0;
   }
 
   &-menu-item {
-    padding: 5px 12px;
-    border-radius: var(--s-radius-sm, 4px);
-    cursor: pointer;
+    .s-menu-item();
+    width: 100%;
+    padding: 8px 12px;
     font-size: 14px;
     line-height: 22px;
     color: var(--s-color-text);
-    transition: background-color var(--s-duration-fast) var(--s-ease-out);
 
     &:hover {
       background-color: var(--s-color-bg-hover);
@@ -119,159 +37,43 @@
     &:focus-visible {
       .s-focus-ring();
     }
-
-    &-selected {
-      color: var(--s-primary-color, #1677ff);
-      background-color: var(--s-color-bg-row-selected);
-    }
   }
 
-  &-footer {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 8px 12px 0;
-    border-top: 1px solid var(--s-color-border);
-    margin-top: 4px;
-  }
-
-  &-btn {
-    flex: 1;
-    padding: 4px 15px;
-    border-radius: var(--s-radius-md, 6px);
-    font-size: 14px;
-    line-height: 22px;
-    cursor: pointer;
-    transition:
-      color var(--s-duration-fast) var(--s-ease-out),
-      border-color var(--s-duration-fast) var(--s-ease-out),
-      background-color var(--s-duration-fast) var(--s-ease-out);
-    text-align: center;
-
-    &:focus-visible {
-      .s-focus-ring();
-    }
-
-    &-reset {
-      background-color: var(--s-color-bg-cell);
-      border: 1px solid var(--s-color-border-control);
-      color: var(--s-color-text);
-
-      &:hover {
-        border-color: var(--s-primary-color, #1677ff);
-        color: var(--s-primary-color, #1677ff);
-      }
-    }
-
-    &-confirm {
-      background-color: var(--s-primary-color, #1677ff);
-      border: 1px solid var(--s-primary-color, #1677ff);
-      color: var(--s-color-text-inverse, #fff);
-
-      &:hover {
-        background-color: var(
-          --s-primary-color-hover,
-          color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
-        );
-        border-color: var(
-          --s-primary-color-hover,
-          color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
-        );
-      }
-
-      &:active {
-        background-color: var(
-          --s-primary-color-active,
-          color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
-        );
-        border-color: var(
-          --s-primary-color-active,
-          color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
-        );
-      }
-    }
+  // 内置 Radio 的容器样式在更后面导入，提高一级优先级确保选中态生效。
+  &-menu &-menu-item-selected {
+    color: var(--s-primary-color, #1677ff);
+    background-color: var(--s-color-bg-row-selected);
   }
 }
 
 // 搜索下拉面板（Teleport 到 body，全局作用域）
 .s-table-search-dropdown {
+  .s-popover-surface();
   z-index: var(--s-z-index-dropdown);
   width: 220px;
   box-sizing: border-box;
-  border: 1px solid var(--s-color-border);
-  background-color: var(--s-color-bg-cell);
   color: var(--s-color-text);
-  border-radius: var(--s-radius-lg, 8px);
-  box-shadow: var(--s-shadow-elevated, var(--s-shadow-dropdown));
-  animation: s-table-popover-in var(--s-duration-popover, 0.16s) var(--s-ease-emphasized);
 
   &-content {
     padding: 12px;
   }
+}
 
+// 过滤 / 搜索面板共用的底部操作区。
+.s-table-filter-dropdown,
+.s-table-search-dropdown {
   &-footer {
     display: flex;
     justify-content: space-between;
     gap: 8px;
     padding: 8px 12px;
-    border-top: 1px solid var(--s-color-border);
+    border-top: 1px solid var(--s-color-border-control);
   }
 
+  // 内置 Button 承担外观，这里只让两个按钮等宽铺满。
   &-btn {
     flex: 1;
-    padding: 4px 15px;
-    border-radius: var(--s-radius-md, 6px);
-    font-size: 14px;
-    line-height: 22px;
-    cursor: pointer;
-    transition:
-      color var(--s-duration-fast) var(--s-ease-out),
-      border-color var(--s-duration-fast) var(--s-ease-out),
-      background-color var(--s-duration-fast) var(--s-ease-out);
-    text-align: center;
-
-    &:focus-visible {
-      .s-focus-ring();
-    }
-
-    &-reset {
-      background-color: var(--s-color-bg-cell);
-      border: 1px solid var(--s-color-border-control);
-      color: var(--s-color-text);
-
-      &:hover {
-        border-color: var(--s-primary-color, #1677ff);
-        color: var(--s-primary-color, #1677ff);
-      }
-    }
-
-    &-confirm {
-      background-color: var(--s-primary-color, #1677ff);
-      border: 1px solid var(--s-primary-color, #1677ff);
-      color: var(--s-color-text-inverse, #fff);
-
-      &:hover {
-        background-color: var(
-          --s-primary-color-hover,
-          color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
-        );
-        border-color: var(
-          --s-primary-color-hover,
-          color-mix(in srgb, var(--s-primary-color, #1677ff) 80%, white)
-        );
-      }
-
-      &:active {
-        background-color: var(
-          --s-primary-color-active,
-          color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
-        );
-        border-color: var(
-          --s-primary-color-active,
-          color-mix(in srgb, var(--s-primary-color, #1677ff) 85%, black)
-        );
-      }
-    }
+    min-width: 0;
   }
 }
 
@@ -350,31 +152,23 @@
 }
 
 .s-table-selection-dropdown-menu {
+  .s-popover-surface();
   z-index: var(--s-z-index-dropdown);
   min-width: 140px;
   box-sizing: border-box;
-  padding: 4px;
-  border: 1px solid var(--s-color-border);
-  background-color: var(--s-color-bg-cell);
   color: var(--s-color-text);
-  border-radius: var(--s-radius-lg, 8px);
-  box-shadow: var(--s-shadow-elevated, var(--s-shadow-menu));
-  animation: s-table-popover-in var(--s-duration-popover, 0.16s) var(--s-ease-emphasized);
 }
 
 .s-table-selection-dropdown-item {
+  .s-menu-item();
   display: block;
   width: 100%;
-  padding: 5px 12px;
   border: none;
-  border-radius: var(--s-radius-sm, 4px);
   background: transparent;
   color: var(--s-color-text);
   font-size: 14px;
   line-height: 22px;
   text-align: left;
-  cursor: pointer;
-  transition: background-color var(--s-duration-fast) var(--s-ease-out);
   white-space: nowrap;
 
   &:hover {
@@ -390,22 +184,52 @@
   }
 }
 
+// 表头通用菜单
+.s-table-header-menu {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  &-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: var(--s-radius-sm, 4px);
+    background: transparent;
+    color: var(--s-color-text-tertiary);
+    cursor: pointer;
+    transition: color var(--s-duration-fast) var(--s-ease-out);
+
+    &:hover {
+      color: var(--s-color-text);
+    }
+
+    &:focus-visible {
+      .s-focus-ring();
+    }
+
+    &-open {
+      color: var(--s-primary-color, #1677ff);
+    }
+  }
+
+  &-popup {
+    .s-popover-surface();
+    z-index: var(--s-z-index-dropdown);
+    min-width: 140px;
+    box-sizing: border-box;
+    padding: 4px;
+    color: var(--s-color-text);
+  }
+}
+
 .s-table-selection-dropdown-divider {
   height: 1px;
   margin: 4px 0;
   background-color: var(--s-color-border);
-}
-
-// 使用独立 translate / scale 属性：floating-ui 通过 transform 定位，动画不能覆盖它。
-@keyframes s-table-popover-in {
-  from {
-    opacity: 0;
-    scale: 0.96;
-    translate: 0 var(--s-popover-shift, -4px);
-  }
-  to {
-    opacity: 1;
-    scale: 1;
-    translate: 0 0;
-  }
 }

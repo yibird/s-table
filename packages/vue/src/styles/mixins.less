@@ -29,3 +29,12 @@
     background-color var(--s-duration-fast) var(--s-ease-out),
     color var(--s-duration-fast) var(--s-ease-out);
 }
+
+/// 单元格尺寸 / 背景过渡：不包含 border-color，避免列显隐时深色边框闪动。
+.s-cell-state-transition() {
+  transition:
+    padding var(--s-duration-normal) var(--s-ease-out),
+    font-size var(--s-duration-normal) var(--s-ease-out),
+    line-height var(--s-duration-normal) var(--s-ease-out),
+    background-color var(--s-duration-normal) var(--s-ease-out);
+}

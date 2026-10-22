@@ -1,9 +1,16 @@
 import { computed, type CSSProperties, type Ref, type ShallowRef } from 'vue';
 import type { ColumnSizingState, RowData, Table, TableFeatures } from '@tanstack/vue-table';
-import type { STableVirtualProps } from '../types';
-import { isColumnVirtualEnabled } from '../utils';
+import { isColumnVirtualEnabled, type STableVirtualValue } from '../utils';
 import { useRafValue } from './useRafValue';
 import { useFixedColumnModel } from './useFixedColumnModel';
+
+/**
+ * 未声明宽度的列在空间不足时的最小宽度。
+ *
+ * `table-layout: fixed` 会把剩余宽度分给自动列；当固定/注入列已经占满容器时，
+ * 自动列会被压到接近 0，文字逐字竖排。保留一个可读下限，让表格改为内部横向滚动。
+ */
+const MIN_AUTO_COLUMN_WIDTH = 100;
 
 /** 可见叶子列的布局度量。 */
 export type STableVisibleLeafColumn = {
@@ -23,7 +30,7 @@ export const useColumnMetrics = <TData extends RowData>(options: {
   columnSizing: Readonly<Ref<ColumnSizingState>>;
   explicitWidthIds: Readonly<Ref<ReadonlySet<string>>>;
   explicitMinWidth: Readonly<Ref<number>>;
-  getVirtual: () => boolean | STableVirtualProps | undefined;
+  getVirtual: () => STableVirtualValue;
   shouldRafSyncSizing: Readonly<Ref<boolean>>;
 }) => {
   const {
@@ -79,12 +86,19 @@ export const useColumnMetrics = <TData extends RowData>(options: {
   });
 
   const tableStyle = computed<CSSProperties>(() => {
-    const virtualWidth = isColumnVirtualEnabled(getVirtual())
-      ? visibleLeafColumnModel.value.totalSize
-      : 0;
+    const columnVirtual = isColumnVirtualEnabled(getVirtual());
+    const virtualWidth = columnVirtual ? visibleLeafColumnModel.value.totalSize : 0;
+    // 横向虚拟化时总宽度已包含自动列；普通模式下需要为自动列保留最小可读宽度。
+    const autoColumnCount = columnVirtual
+      ? 0
+      : visibleLeafColumnModel.value.columns.reduce(
+          (count, column) => count + (column.hasExplicitWidth ? 0 : 1),
+          0
+        );
+    const autoMinWidth = autoColumnCount * MIN_AUTO_COLUMN_WIDTH;
     return {
       width: virtualWidth > 0 ? `${virtualWidth}px` : '100%',
-      minWidth: `${Math.max(explicitMinWidth.value, virtualWidth)}px`,
+      minWidth: `${Math.max(explicitMinWidth.value + autoMinWidth, virtualWidth)}px`,
       ...fixedColumnModel.value.variables,
     } as CSSProperties;
   });

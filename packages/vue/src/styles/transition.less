@@ -1,0 +1,110 @@
+/* ========================================
+ * Slide + Fade
+ * ======================================== */
+
+.slide-down-enter-active,
+.slide-down-leave-active,
+.slide-up-enter-active,
+.slide-up-leave-active,
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition:
+    opacity var(--s-duration-normal) var(--s-ease-out),
+    transform var(--s-duration-normal) var(--s-ease-out-quint);
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.slide-left-enter-from,
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(6px);
+}
+
+.slide-right-enter-from,
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(-6px);
+}
+
+/* ========================================
+ * Scale + Fade
+ * ======================================== */
+
+.scale-down-enter-active,
+.scale-down-leave-active,
+.scale-up-enter-active,
+.scale-up-leave-active,
+.scale-left-enter-active,
+.scale-left-leave-active,
+.scale-right-enter-active,
+.scale-right-leave-active {
+  transition:
+    opacity var(--s-duration-normal) var(--s-ease-out),
+    transform var(--s-duration-normal) var(--s-ease-out-quint);
+}
+
+.scale-down-enter-from,
+.scale-down-leave-to {
+  opacity: 0;
+  transform: translateY(-3px) scale(0.96);
+  transform-origin: top center;
+}
+
+.scale-up-enter-from,
+.scale-up-leave-to {
+  opacity: 0;
+  transform: translateY(3px) scale(0.96);
+  transform-origin: bottom center;
+}
+
+.scale-left-enter-from,
+.scale-left-leave-to {
+  opacity: 0;
+  transform: translateX(3px) scale(0.96);
+  transform-origin: center right;
+}
+
+.scale-right-enter-from,
+.scale-right-leave-to {
+  opacity: 0;
+  transform: translateX(-3px) scale(0.96);
+  transform-origin: center left;
+}
+
+/* ========================================
+ * Reduced Motion
+ * ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-down-enter-active,
+  .slide-down-leave-active,
+  .slide-up-enter-active,
+  .slide-up-leave-active,
+  .slide-left-enter-active,
+  .slide-left-leave-active,
+  .slide-right-enter-active,
+  .slide-right-leave-active,
+  .scale-down-enter-active,
+  .scale-down-leave-active,
+  .scale-up-enter-active,
+  .scale-up-leave-active,
+  .scale-left-enter-active,
+  .scale-left-leave-active,
+  .scale-right-enter-active,
+  .scale-right-leave-active {
+    transition: none;
+  }
+}

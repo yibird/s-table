@@ -63,6 +63,8 @@ const rowSelection: STableRowSelection<User> = {
 
 `renderCell(checked, record, index, originNode)` 可以在默认 Checkbox/Radio 外包裹提示或业务标记。应保留 `originNode`，否则会丢失内置选择交互。
 
+<demo vue="../../demos/s-table/selection-custom-cell.vue" />
+
 ## 数据更新与跨页保留
 
 - 默认情况下，已从 `dataSource` 移除的键会从选择状态中清理。
@@ -92,6 +94,23 @@ const selectionIntent = ref<STableSelectionIntent>({
 
 `getSelectedRowKeys()` 在 `mode: 'all'` 时返回 `[]`（未物化全量键）。`selectChange` 和 `v-model:selectedRowKeys` 在 intent 策略下不会更新；请使用 `v-model:selection-intent` 或 `selectionIntentChange`。
 
+<demo vue="../../demos/s-table/selection-intent.vue" />
+
 ## 实例方法
 
 `selectAll()`、`clearSelection()`、`toggleRowSelection()` 可处理命令式操作。`keys` 策略下一般业务状态仍建议优先使用 `v-model:selectedRowKeys`；intent 策略下应使用 `v-model:selection-intent`。
+
+## 选择细节
+
+```ts
+const rowSelection = {
+  type: 'checkbox',
+  checkStrictly: false, // 树形父子级联
+  allowCancelRadio: true, // 单选可再次点击取消
+  hideDefaultSelections: true, // 隐藏内置批量动作
+  columnTitle: ({ allSelected }) => (allSelected ? '已全选' : '选择'),
+  selections: [{ key: 'tech', text: '选择技术部' }],
+};
+```
+
+<demo vue="../../demos/s-table/selection-expand-advanced.vue" />

@@ -66,7 +66,7 @@ const roleCount = computed(() => {
     <p style="margin: 0 0 8px; font-size: 13px; color: #666">
       通过 <code>#footer</code> 插槽在表格下方展示描述性文本。
     </p>
-    <STable :columns="columns" :data-source="dataSource" :show-footer="true" row-key="id" bordered>
+    <STable :columns="columns" :data-source="dataSource" row-key="id" bordered>
       <template #footer>
         <span style="color: rgba(0, 0, 0, 0.45)">📋 {{ footerText }}，数据更新于 2026-07-01</span>
       </template>
@@ -79,7 +79,6 @@ const roleCount = computed(() => {
     <STable
       :columns="actionColumns"
       :data-source="dataSource"
-      :show-footer="true"
       :row-selection="selectionConfig"
       v-model:selected-row-keys="selectedRows"
       row-key="id"
@@ -128,7 +127,7 @@ const roleCount = computed(() => {
     <p style="margin: 0 0 8px; font-size: 13px; color: #666">
       在 footer 中展示数据统计摘要，如平均年龄、角色分布等。
     </p>
-    <STable :columns="columns" :data-source="dataSource" :show-footer="true" row-key="id" bordered>
+    <STable :columns="columns" :data-source="dataSource" row-key="id" bordered>
       <template #footer>
         <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap">
           <div style="font-size: 13px">
@@ -164,7 +163,7 @@ const roleCount = computed(() => {
     <p style="margin: 0 0 8px; font-size: 13px; color: #666">
       在 footer 中放置任意 HTML 内容，实现复杂的自定义布局。
     </p>
-    <STable :columns="columns" :data-source="dataSource" :show-footer="true" row-key="id" bordered>
+    <STable :columns="columns" :data-source="dataSource" row-key="id" bordered>
       <template #footer>
         <div
           style="

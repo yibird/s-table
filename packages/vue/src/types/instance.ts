@@ -1,5 +1,10 @@
 import type { RowData, Table, TableFeatures } from '@tanstack/table-core';
 import type {
+  STableCsvOptions,
+  STableExcelOptions,
+  STableExportColumn,
+  STableExportOptions,
+  STableExportSource,
   STablePinnedRowKeys,
   STableRowKey,
   STableSelectionIntent,
@@ -71,6 +76,20 @@ export interface STableInstance<TData extends RowData = RowData> {
   /** 复制当前框选范围。监听器拒绝或没有范围时返回空串。 */
   copyCellRange(options?: STableCopyOptions): Promise<string>;
 
+  // ============ 导出方法 ============
+  /** 导出 CSV 文本；`download: true` 时同时触发下载。 */
+  exportCsv(options?: STableCsvOptions<TData>): string;
+  /** 异步分块导出 CSV；默认触发下载。 */
+  exportCsvAsync(options?: STableCsvOptions<TData>): Promise<Blob>;
+  /** 导出 Excel；需传入或全局注册适配器。 */
+  exportExcel(options?: STableExcelOptions<TData>): Promise<Blob | Uint8Array | ArrayBuffer>;
+  /** 获取本次导出将使用的列。 */
+  getExportColumns(
+    options?: Pick<STableExportOptions<TData>, 'columns'>
+  ): STableExportColumn<TData>[];
+  /** 获取指定来源的导出行。 */
+  getExportRows(source?: STableExportSource | readonly TData[]): TData[];
+
   // ============ 展开方法 ============
   /**
    * @desc 获取当前展开行键值集合
@@ -141,10 +160,21 @@ export interface STableInstance<TData extends RowData = RowData> {
    * @desc 获取当前框选范围
    */
   getCellRange(): STableCellRange | null;
+  /** 获取全部框选区间快照。 */
+  getCellRanges(): STableCellRange[];
+  /** 设置区间；mode 为 replace / include / exclude。 */
+  setCellRange(
+    range: STableCellRange | null,
+    options?: { mode?: 'replace' | 'include' | 'exclude' }
+  ): boolean;
+  /** 追加或排除一个区间。 */
+  addCellRange(range: STableCellRange, options?: { mode?: 'include' | 'exclude' }): boolean;
+  /** 聚焦单个单元格。 */
+  focusCell(rowIndex: number, columnIndex: number): boolean;
   /**
-   * @desc 清除框选范围
+   * @desc 清除全部框选范围，或按下标清除单个区间。
    */
-  clearCellRange(): void;
+  clearCellRange(index?: number): void;
 
   // ============ 列顺序方法 ============
   /**

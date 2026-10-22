@@ -1,7 +1,7 @@
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { join, posix, resolve } from 'node:path';
 import dts from 'vite-plugin-dts';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vite-plus/test/config';
 
 const packageRoot = import.meta.dirname;
 
@@ -55,6 +55,10 @@ const fixDeclarationImports = async (dir: string): Promise<void> => {
 
 export default defineConfig({
   root: packageRoot,
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+  },
   plugins: [
     dts({
       tsconfigPath: resolve(packageRoot, 'tsconfig.build.json'),

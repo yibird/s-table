@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { h, nextTick, reactive, type App } from 'vue';
 import { mountSTable } from '../helpers';
 import type { STableColumn, STableInstance, STableRowKey } from '../../types';
@@ -25,7 +25,11 @@ const bodyCheckboxes = () =>
 afterEach(() => {
   app?.unmount();
   host?.remove();
-  document.querySelectorAll('.s-table-selection-dropdown-menu').forEach((el) => el.remove());
+  document
+    .querySelectorAll(
+      '.s-table-filter-dropdown, .s-table-search-dropdown, .s-table-selection-dropdown-menu'
+    )
+    .forEach((el) => el.remove());
   app = null;
   host = null;
 });
@@ -501,7 +505,7 @@ describe('审查回归：分页与选择语义', () => {
 
     host.querySelector<HTMLElement>('.s-table-filter-trigger')!.click();
     await nextTick();
-    document.querySelector<HTMLElement>('.s-table-filter-dropdown-checkbox')!.click();
+    document.querySelector<HTMLElement>('.s-table-filter-dropdown-menu-item')!.click();
     document.querySelector<HTMLElement>('.s-table-filter-dropdown-btn-confirm')!.click();
     await nextTick();
     expect(bodyRows().map((row) => row.querySelector('td')?.textContent?.trim())).toEqual([
@@ -906,6 +910,45 @@ describe('审查回归：TanStack 列排', () => {
     expect(events.at(-1)?.columnOrder).toEqual(['score', 'name']);
   });
 
+  it('columnDrag.canDrag 返回 false 时阻止该列拖拽，允许时正常拖拽', async () => {
+    const events: Array<{ columnOrder: string[] }> = [];
+    const canDrag = vi.fn(({ columnId }: { columnId: string }) => columnId !== 'name');
+    const mounted = mountSTable<Row>({
+      columns: [
+        { id: 'name', accessorKey: 'name', header: 'Name', draggable: true },
+        { id: 'score', accessorKey: 'score', header: 'Score', draggable: true },
+      ],
+      dataSource: [{ id: 1, name: 'b', score: 1 }],
+      rowKey: 'id',
+      columnDrag: { canDrag },
+      onColumnOrderChange: (payload: { columnOrder: string[] }) => events.push(payload),
+    } as never);
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    const nameHeader = host.querySelector<HTMLElement>('th[data-column-id="name"]')!;
+    const scoreHeader = host.querySelector<HTMLElement>('th[data-column-id="score"]')!;
+
+    const blocked = new Event('dragstart', { bubbles: true, cancelable: true });
+    nameHeader.dispatchEvent(blocked);
+    expect(blocked.defaultPrevented).toBe(true);
+    expect(canDrag).toHaveBeenCalledWith(expect.objectContaining({ columnId: 'name', index: 0 }));
+
+    scoreHeader.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+    scoreHeader.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(events).toHaveLength(0);
+
+    const allowed = new Event('dragstart', { bubbles: true, cancelable: true });
+    scoreHeader.dispatchEvent(allowed);
+    expect(allowed.defaultPrevented).toBe(false);
+    nameHeader.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+    nameHeader.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(events.at(-1)?.columnOrder).toEqual(['score', 'name']);
+  });
+
   it('嵌套叶子列拖拽通过 columnOrder 改变实际渲染顺序', async () => {
     const events: Array<{ columnOrder: string[]; fromIndex: number; toIndex: number }> = [];
     const columns: STableColumn<Row>[] = [
@@ -1132,7 +1175,7 @@ describe('审查回归：locale 与过滤', () => {
     host.querySelector<HTMLElement>('.s-table-filter-trigger')!.click();
     await nextTick();
     const options = Array.from(
-      document.querySelectorAll<HTMLElement>('.s-table-filter-dropdown-checkbox')
+      document.querySelectorAll<HTMLElement>('.s-table-filter-dropdown-menu-item')
     );
     expect(options.map((option) => option.textContent?.trim())).toEqual(['Group', 'Child']);
     options[1]!.click();

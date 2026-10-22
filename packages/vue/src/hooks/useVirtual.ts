@@ -16,23 +16,27 @@ import { useExpandedRow } from './useExpandedRow';
  */
 type UseSTableVirtualOptions<TData extends RowData> = {
   /** 虚拟配置（来自 props.virtual）。 */
-  virtual: Readonly<Ref<boolean | STableVirtualProps | undefined>>;
+  virtual: Readonly<Ref<boolean | STableVirtualProps<TData> | undefined>>;
   /** TanStack Table 全量行（来自 useSTable 返回的 rows）。 */
   rows: Readonly<Ref<Row<TableFeatures, TData>[]>>;
   /** 滚动容器 DOM 引用（绑定到 `.s-table-container`）。 */
   scrollElementRef: Readonly<Ref<HTMLElement | null>>;
   /** 展开行键值（用于把展开内容并入同一逻辑行块测量）。 */
   expandedRowKeys?: Readonly<Ref<STableRowKey[]>>;
+  /** 按 row.id 保留已测量高度。 */
+  preserveRow?: Readonly<Ref<boolean | undefined>>;
+  /** 任一可见列启用 autoHeight 时强制动态测量。 */
+  hasAutoHeight?: Readonly<Ref<boolean>>;
 };
 
 /**
  * 从 virtual 配置中解析 STableVirtualProps 对象。
  */
-function resolveVirtualConfig(
-  virtual: boolean | STableVirtualProps | undefined
+function resolveVirtualConfig<TData extends RowData>(
+  virtual: boolean | STableVirtualProps<TData> | undefined
 ): Pick<
-  STableVirtualProps,
-  'estimateSize' | 'rowHeight' | 'overscan' | 'scrollToBottomOffset'
+  STableVirtualProps<TData>,
+  'estimateSize' | 'rowHeight' | 'overscan' | 'scrollToBottomOffset' | 'buffer'
 > | null {
   if (virtual === true) return {};
   if (isRowVirtualEnabled(virtual) && typeof virtual === 'object') return virtual;
@@ -72,17 +76,28 @@ export const useVirtual = <TData extends RowData>({
   rows,
   scrollElementRef,
   expandedRowKeys,
+  preserveRow,
+  hasAutoHeight,
 }: UseSTableVirtualOptions<TData>) => {
   // ==================== 配置解析 ====================
 
   const virtualConfig = computed(() => resolveVirtualConfig(virtual.value));
   const virtualEnabled = computed(() => virtualConfig.value !== null);
 
-  // overscan 上限 clamp 为 100，防止过大值导致渲染项爆炸。
-  const overscan = computed(() => resolveOverscan(virtualConfig.value?.overscan));
+  // overscan 上限 clamp 为 100，防止过大值导致渲染项爆炸；buffer 优先于旧字段。
+  const overscan = computed(() => {
+    const buffer = virtualConfig.value?.buffer;
+    return resolveOverscan(
+      typeof buffer === 'number' ? buffer : (buffer?.y ?? virtualConfig.value?.overscan)
+    );
+  });
 
   // 固定行高（用户显式配置）。设置后进入「固定行高」快路径。
-  const fixedRowHeight = computed(() => resolveFixedRowHeight(virtualConfig.value?.rowHeight));
+  const fixedRowHeight = computed(() => {
+    if (hasAutoHeight?.value) return null;
+    const configured = virtualConfig.value?.rowHeight;
+    return typeof configured === 'number' ? resolveFixedRowHeight(configured) : null;
+  });
 
   // estimateSize：固定行高模式返回精确值（未测量的行即为该高度）；否则用预估值。
   const estimateSize = computed(() =>
@@ -105,10 +120,52 @@ export const useVirtual = <TData extends RowData>({
   // 函数型 option 必须保持引用稳定。TanStack 把 getItemKey 引用纳入测量 memo；若用
   // getter 每次返回新闭包，仅修改 overscan 也会误触发一次 O(rows) 布局重算。
   const getScrollElement = () => (virtualEnabled.value ? scrollElementRef.value : null);
-  const estimateItemSize = () => estimateSize.value;
+  /** preserveRow 模式下按 row.id 缓存实测高度，数据刷新后仍可作为估算值。 */
+  const PRESERVED_HEIGHT_LIMIT = 5000;
+  const preservedHeights = new Map<string, number>();
+  watch(preserveRow ?? (() => undefined), (enabled) => {
+    if (!enabled) preservedHeights.clear();
+  });
+  /** 函数式 rowHeight 结果缓存：虚拟器会反复估算未测量行，避免重复执行用户回调。 */
+  const rowHeightCache = new Map<string, number | undefined>();
+  watch([virtualConfig, rows], () => rowHeightCache.clear());
+  const estimateItemSize = (index: number) => {
+    const row = rows.value[index];
+    if (preserveRow?.value) {
+      const cached = row ? preservedHeights.get(row.id) : undefined;
+      if (cached !== undefined) return cached;
+    }
+    const configured = virtualConfig.value?.rowHeight;
+    if (typeof configured === 'function' && row) {
+      if (rowHeightCache.has(row.id)) {
+        const cached = rowHeightCache.get(row.id);
+        return cached ?? estimateSize.value;
+      }
+      const height = configured(row.original, index);
+      const valid =
+        typeof height === 'number' && Number.isFinite(height) && height > 0 ? height : undefined;
+      rowHeightCache.set(row.id, valid);
+      return valid ?? estimateSize.value;
+    }
+    return estimateSize.value;
+  };
   // 逻辑行块高度：主行 + 展开兄弟行。与返回给 Body 的 measureElement（DOM 注册入口）不同。
-  const measureElementBlock = (element: Element, entry: ResizeObserverEntry | undefined) =>
-    measureVirtualRowBlock(element, entry, fixedRowHeight.value);
+  const measureElementBlock = (element: Element, entry: ResizeObserverEntry | undefined) => {
+    const height = measureVirtualRowBlock(element, entry, fixedRowHeight.value);
+    if (preserveRow?.value) {
+      const index = Number(element.getAttribute('data-index'));
+      const row = Number.isFinite(index) ? rows.value[index] : undefined;
+      if (row) {
+        if (!preservedHeights.has(row.id) && preservedHeights.size >= PRESERVED_HEIGHT_LIMIT) {
+          // Map 按插入序迭代：淘汰最早写入的 key，避免长生命周期表格无限增长。
+          const oldest = preservedHeights.keys().next().value;
+          if (oldest !== undefined) preservedHeights.delete(oldest);
+        }
+        preservedHeights.set(row.id, height);
+      }
+    }
+    return height;
+  };
   const getItemKey = (index: number) => {
     const row = rows.value[index];
     if (!row) return index;

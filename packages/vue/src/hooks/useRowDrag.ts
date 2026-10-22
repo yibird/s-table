@@ -2,6 +2,7 @@ import { computed, shallowRef, type Ref } from 'vue';
 import { useDrag } from './useDrag';
 import type { ColumnDef, Row, RowData, TableFeatures } from '@tanstack/vue-table';
 import { decodeRowKey } from '../utils';
+import { applyDragGhost } from '../utils/dragGhost';
 import { getTreeChildren } from '@zchengfeng/s-table-core';
 import { createDragHandleColumn } from '../presets/dragHandleColumn';
 import type {
@@ -50,6 +51,11 @@ export const useRowDrag = <TData extends RowData>({
   renderDragHandle,
 }: UseSTableRowDragOptions<TData>) => {
   const currentDropPosition = shallowRef<STableDropPosition>('after');
+  /**
+   * 本次拖拽实际移动的行 id 集合：单选时只有起始行；多选时包含全部选中行。
+   * 渲染层用它给整个有序块加高亮，并避免把块内行显示成投放目标。
+   */
+  const dragSourceRowIds = shallowRef<ReadonlySet<string>>(new Set());
   const getChildren = (record: TData): TData[] | undefined => getTreeChildren(record, tree?.value);
   const withChildren = (record: TData, children: TData[]): TData => {
     const config = tree?.value;
@@ -124,7 +130,7 @@ export const useRowDrag = <TData extends RowData>({
     handleDragStart: handleRowDragStartBase,
     handleDragOver: handleRowDragOverBase,
     handleDragEnd: handleRowDragEndBase,
-    handleDrop: handleRowDrop,
+    handleDrop: handleRowDropBase,
   } = useDrag({
     getItemCount: () => getRows().length,
     canMove: canReorder,
@@ -193,14 +199,49 @@ export const useRowDrag = <TData extends RowData>({
     cachedDragOverFrame = -1;
   };
 
-  const handleRowDragStart = (rowIndex: number) => {
+  const handleRowDragStart = (rowIndex: number, event?: DragEvent): boolean => {
+    const visibleRows = getRows();
+    const fromRow = visibleRows[rowIndex];
+    // 整行拖拽与手柄共用同一套权限判定：排序激活 / canDrag=false 都必须阻止。
+    if (!fromRow || canReorder?.() === false) {
+      event?.preventDefault();
+      return false;
+    }
+    if (config.value?.canDrag?.({ record: fromRow.original, index: rowIndex }) === false) {
+      event?.preventDefault();
+      return false;
+    }
     resetDragOverRect();
+    const ghost = config.value?.ghost;
+    if (event && ghost) {
+      applyDragGhost(event, ghost({ record: fromRow.original, index: rowIndex }));
+    }
+    const sourceIds = new Set<string>();
+    if (config.value?.multiple && fromRow?.getIsSelected()) {
+      for (const row of visibleRows) {
+        if (row.getIsSelected()) sourceIds.add(row.id);
+      }
+    } else if (fromRow) {
+      sourceIds.add(fromRow.id);
+    }
+    dragSourceRowIds.value = sourceIds;
     handleRowDragStartBase(rowIndex);
+    return true;
   };
 
   const handleRowDragOver = (rowIndex: number, event: DragEvent) => {
     if (!isDragging.value) return;
     const rowElement = (event.target as Element | null)?.closest?.('.s-table-row');
+    // 拖拽块内部的行没有有效落点：清除悬停态，避免块内出现目标高亮。
+    const overRowId = rowElement?.getAttribute('data-row-id') ?? undefined;
+    const isOverSourceRow =
+      overRowId !== undefined
+        ? dragSourceRowIds.value.has(overRowId)
+        : dragSourceRowIds.value.has(getRows()[rowIndex]?.id ?? '');
+    if (isOverSourceRow) {
+      handleRowDragOverBase(-1, event);
+      return;
+    }
     if (rowElement) {
       const frame = Math.floor(event.timeStamp / (1000 / 60));
       if (rowElement !== cachedDragOverElement || frame !== cachedDragOverFrame) {
@@ -223,7 +264,17 @@ export const useRowDrag = <TData extends RowData>({
   const handleRowDragEnd = () => {
     resetDragOverRect();
     currentDropPosition.value = 'after';
+    dragSourceRowIds.value = new Set();
     handleRowDragEndBase();
+  };
+
+  /** Drop 后无论成功、拒绝还是数据过期，都清理本次拖拽块高亮。 */
+  const handleRowDrop = async () => {
+    try {
+      await handleRowDropBase();
+    } finally {
+      dragSourceRowIds.value = new Set();
+    }
   };
 
   // 拖拽句柄列定义（视图细节由 presets 持有，hook 只提供交互回调）。
@@ -231,6 +282,7 @@ export const useRowDrag = <TData extends RowData>({
     if (!enabled.value) return undefined;
     return createDragHandleColumn<TData>({
       getCanReorder: () => canReorder?.() !== false,
+      getCanDrag: ({ record, index }) => config.value?.canDrag?.({ record, index }) !== false,
       renderDragHandle,
       onDragStart: handleRowDragStart,
     });
@@ -240,7 +292,9 @@ export const useRowDrag = <TData extends RowData>({
     isDragging,
     dragFromIndex,
     dragOverIndex,
+    dragSourceRowIds,
     dropPosition: currentDropPosition,
+    rowDragTrigger: computed(() => config.value?.trigger ?? 'handle'),
     dragColumn,
     handleRowDragStart,
     handleRowDragOver,

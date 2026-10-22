@@ -63,84 +63,6 @@ export function computeScrollSpeed(
 }
 
 /**
- * 滚动边界检测结果
- */
-export interface ScrollBoundary {
-  /** 是否在左边缘 */
-  atLeft: boolean;
-  /** 是否在右边缘 */
-  atRight: boolean;
-  /** 是否在顶部边缘 */
-  atTop: boolean;
-  /** 是否在底部边缘 */
-  atBottom: boolean;
-  /** 最大横向滚动距离 */
-  maxScrollLeft: number;
-  /** 最大纵向滚动距离 */
-  maxScrollTop: number;
-}
-
-/**
- * 滚动边界检测选项
- */
-export interface ScrollBoundaryOptions {
-  /** 边缘判定误差（px），用于处理小数像素 */
-  epsilon?: number;
-}
-
-const DEFAULT_EPSILON = 1;
-
-/**
- * 检测滚动容器的边界状态
- *
- * @param element - 滚动容器元素
- * @param options - 检测选项
- * @returns 边界状态
- *
- * @example
- * ```ts
- * const boundary = detectScrollBoundary(container);
- * if (boundary.atLeft) {
- *   console.log('已滚动到最左侧');
- * }
- * if (boundary.atBottom) {
- *   console.log('已滚动到底部');
- * }
- * ```
- */
-export function detectScrollBoundary(
-  element: HTMLElement | null | undefined,
-  options: ScrollBoundaryOptions = {}
-): ScrollBoundary {
-  const epsilon = options.epsilon ?? DEFAULT_EPSILON;
-
-  if (!element) {
-    return {
-      atLeft: false,
-      atRight: false,
-      atTop: false,
-      atBottom: false,
-      maxScrollLeft: 0,
-      maxScrollTop: 0,
-    };
-  }
-
-  const scrollLeft = Math.max(0, element.scrollLeft);
-  const scrollTop = Math.max(0, element.scrollTop);
-  const maxScrollLeft = Math.max(0, element.scrollWidth - element.clientWidth);
-  const maxScrollTop = Math.max(0, element.scrollHeight - element.clientHeight);
-
-  return {
-    atLeft: scrollLeft <= epsilon,
-    atRight: maxScrollLeft - scrollLeft <= epsilon,
-    atTop: scrollTop <= epsilon,
-    atBottom: maxScrollTop - scrollTop <= epsilon,
-    maxScrollLeft,
-    maxScrollTop,
-  };
-}
-
-/**
  * 计算滚动条宽度
  *
  * @param element - 滚动容器元素
@@ -156,34 +78,6 @@ export function detectScrollBoundary(
 export function computeScrollbarWidth(element: HTMLElement | null | undefined): number {
   if (!element) return 0;
   return Math.max(0, element.offsetWidth - element.clientWidth);
-}
-
-/**
- * 计算距离底部的距离
- *
- * @param element - 滚动容器元素
- * @returns 距离底部的距离（px），负值表示已超出底部
- */
-export function computeDistanceFromBottom(element: HTMLElement | null | undefined): number {
-  if (!element) return 0;
-  const maxScrollTop = Math.max(0, element.scrollHeight - element.clientHeight);
-  return maxScrollTop - element.scrollTop;
-}
-
-/**
- * 检查是否滚动到底部
- *
- * @param element - 滚动容器元素
- * @param offset - 触底阈值（px）
- * @returns 是否已触底
- */
-export function isScrolledToBottom(
-  element: HTMLElement | null | undefined,
-  offset: number = 0
-): boolean {
-  if (!element) return false;
-  const distance = computeDistanceFromBottom(element);
-  return distance <= offset;
 }
 
 /** 默认触底阈值（px）。 */

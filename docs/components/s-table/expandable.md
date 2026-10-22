@@ -48,3 +48,20 @@ const expandable: STableExpandable<Order> = {
 ## 树形数据
 
 树形数据通过 `tree` 配置启用，并与详情展开复用同一套 TanStack 展开状态；完整用法参阅[树形数据](./tree)。
+
+## 自定义展开图标与位置
+
+```ts
+const expandable = {
+  expandIcon: ({ expanded, expandable }) =>
+    h('span', expanded ? '▾' : '▸', { 'aria-hidden': String(!expandable) }),
+  expandIconColumnIndex: 1,
+  expandFixed: false,
+};
+```
+
+`expandIconColumnIndex` 在可见业务叶子列中定位；固定列由 TanStack pinning 统一重排到两侧。
+
+<demo vue="../../demos/s-table/expandable-custom-icon.vue" />
+
+<demo vue="../../demos/s-table/selection-expand-advanced.vue" />

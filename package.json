@@ -19,9 +19,9 @@
     "check": "pnpm lint && pnpm check:boundaries && pnpm format:check && pnpm typecheck:all && pnpm test && pnpm build && pnpm check:bundle-size && pnpm test:package && pnpm docs:build",
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "check:bundle-size": "pnpm --filter @zchengfeng/s-table-vue exec node benchmarks/check-dist-size.mjs",
-    "lint": "oxlint .",
-    "lint:fix": "oxlint . --fix",
-    "format:check": "oxfmt --check packages/core/src packages/core/vite.config.ts packages/vue/src packages/vue/vite.config.ts packages/vue/benchmarks docs e2e playwright.config.ts",
+    "lint": "vp lint .",
+    "lint:fix": "vp lint . --fix",
+    "format:check": "vp fmt --check packages/core/src packages/core/vite.config.ts packages/vue/src packages/vue/vite.config.ts packages/vue/benchmarks docs e2e playwright.config.ts",
     "test": "pnpm --filter @zchengfeng/s-table-core test && pnpm --filter @zchengfeng/s-table-core build && pnpm --filter @zchengfeng/s-table-vue test",
     "test:e2e": "playwright test",
     "test:e2e:perf": "playwright test e2e/specs/performance-baseline.spec.ts --project=chromium",
@@ -46,20 +46,18 @@
     "husky": "^9.1.7",
     "less": "^4.9.1",
     "lint-staged": "^17.6.0",
-    "oxfmt": "^0.73.0",
-    "oxlint": "^1.88.0",
     "publint": "^0.3.25",
     "typescript": "^6.0.3",
     "vite": "^8.3.4",
     "vite-plugin-dts": "^5.1.2",
-    "vitest": "^5.0.5",
+    "vite-plus": "^1.3.0",
     "vue": "^3.5.44",
     "vue-tsc": "^3.3.13"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue}": [
-      "oxlint",
-      "oxfmt --write"
+      "vp lint",
+      "vp fmt --write"
     ]
   },
   "packageManager": "pnpm@10.32.1"

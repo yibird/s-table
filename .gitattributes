@@ -1,0 +1,2 @@
+# 统一仓库换行符：索引与工作区均使用 LF，避免 Windows 下 autocrlf 反复转换。
+* text=auto eol=lf

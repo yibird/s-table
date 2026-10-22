@@ -7,7 +7,6 @@ const en_US: STableLocale = {
   localeName: 'en_US',
   empty: {
     title: 'No Data',
-    description: 'No data available to display',
   },
   filter: {
     reset: 'Reset',
@@ -44,6 +43,7 @@ const en_US: STableLocale = {
     contextMenu: 'Row actions',
     expandTrigger: 'Expand or collapse row',
     selectionDropdown: 'Selection actions menu',
+    columnMenu: 'Column menu',
     resizeColumn: 'Resize column',
     loading: 'Loading',
   },

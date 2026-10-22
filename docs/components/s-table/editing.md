@@ -45,4 +45,6 @@ function handleEditPatch(patch: STableEditPatch<Invoice>) {
 
 `editPatch` 包含 `rowKey`、本次修改的 `values`、`previousRecord`、`nextRecord` 和递增的 `revision`。校验失败不会派发 patch，草稿会保留在当前编辑状态中。
 
+<demo vue="../../demos/s-table/editing-validation-patch.vue" />
+
 虚拟滚动场景应先调用 `scrollToRow(rowKey)`，再在下一帧调用 `startCellEdit` 或 `startRowEdit`；目标行不存在时 `scrollToRow` 返回 `false`。

@@ -14,6 +14,10 @@
     @dragend="ctx.onRowDragEnd()"
     @mouseover="handleBodyMouseover"
     @mouseout="handleBodyMouseout"
+    @mouseover.capture="handleTooltipOver"
+    @mouseout.capture="handleTooltipOut"
+    @focusin.capture="handleTooltipOver"
+    @focusout.capture="handleTooltipOut"
     @mousedown="handleBodyMousedown"
     @dblclick="handleBodyDblclick"
     @keydown="handleBodyKeydown"
@@ -67,7 +71,6 @@
           tableCtx.fixedColumnStyles,
           visibleColumnIds,
           props.treeIndentSize,
-          props.treeIndentBasePadding,
           props.cellRenderToken,
           item.rangeMemoKey,
           ctx.cellRangeMode,
@@ -79,16 +82,22 @@
           ctx.dragRowDropPosition,
           item.rowClass,
           item.rowStyle,
+          item.rowAttrs,
           item.pinnedStyle,
+          rowDragTrigger,
         ]"
         :ref="item.ref"
+        :draggable="rowDragTrigger === 'row' ? 'true' : undefined"
+        @dragstart="handleRowDragStartEvent"
         :data-index="item.dataIndex"
         :data-row-index="item.index"
         :data-row-id="item.row.id"
         :data-row-key="item.publicRowKey"
+        v-bind="item.rowAttrs?.attrs"
         :class="[
           's-table-row',
           item.rowClass,
+          item.rowAttrs?.class,
           {
             's-table-row-selected': item.flags & ROW_FLAG_SELECTED,
             's-table-row-expanded': item.flags & ROW_FLAG_EXPANDED,
@@ -106,7 +115,7 @@
               item.flags & ROW_FLAG_DRAG_TARGET && ctx.dragRowDropPosition === 'inside',
           },
         ]"
-        :style="[item.rowStyle, item.pinnedStyle]"
+        :style="[item.rowAttrs?.style, item.rowStyle, item.pinnedStyle]"
       >
         <td
           v-if="item.flags & ROW_FLAG_GROUPED && $slots.groupRow"
@@ -131,12 +140,15 @@
                 's-table-group-cell',
                 getFixedClassName(entry.column.id),
                 bodyCellClass,
+                getCustomCellAttrs(entry, item)?.class,
               ]"
               :style="[
                 getFixedStyle(entry.column.id),
                 getAlignStyle(entry.column.id),
                 bodyCellStyle,
+                getCustomCellAttrs(entry, item)?.style,
               ]"
+              v-bind="getCustomCellAttrs(entry, item)?.attrs"
               :data-row-index="item.index"
               :data-col-index="getColIndex(entry.column.id)"
               :data-row-id="entry.row.id"
@@ -167,18 +179,26 @@
                 getFixedClassName(entry.column.id),
                 cellRangeEnabled ? getRangeClasses(entry, item) : undefined,
                 bodyCellClass,
+                getCustomCellAttrs(entry, item)?.class,
+                {
+                  's-table-cell-ellipsis': isEllipsisColumn(entry.column.id),
+                  's-table-cell-auto-height': isAutoHeightColumn(entry.column.id),
+                },
               ]"
+              v-bind="getCustomCellAttrs(entry, item)?.attrs"
               :style="[
                 getFixedStyle(entry.column.id),
                 getAlignStyle(entry.column.id),
                 getTreeIndentStyle(entry, item.row),
                 bodyCellStyle,
+                getCustomCellAttrs(entry, item)?.style,
               ]"
               :data-row-index="item.index"
               :data-col-index="getColIndex(entry.column.id)"
               :data-row-id="entry.row.id"
               :data-column-id="entry.column.id"
               :tabindex="keyboardNavigation ? -1 : undefined"
+              :title="getCellTitle(entry, item)"
             >
               <CachedCellContent :state="getCellRenderState(entry, item)" />
             </td>
@@ -207,6 +227,10 @@
               :on-commit-edit="editingApi?.onCommit"
               :on-cancel-edit="editingApi?.onCancel"
               :cell-render-state="getCellRenderState(entry, item)"
+              :custom-attrs="getCustomCellAttrs(entry, item)"
+              :ellipsis="isEllipsisColumn(entry.column.id)"
+              :ellipsis-title="getEllipsisTitle(entry)"
+              :auto-height="isAutoHeightColumn(entry.column.id)"
             >
               <template v-if="$slots.cellEditor" #editor="scope">
                 <slot name="cellEditor" v-bind="scope" />
@@ -240,10 +264,26 @@
         :style="{ height: virtualApi.bottomSpacerHeight + 'px', contain: 'strict' }"
       />
     </tr>
+    <Tooltip
+      :open="tooltipOpen"
+      :reference="tooltipTarget"
+      :content="tooltipContent"
+      :get-container="getPopupContainer"
+    />
   </tbody>
 </template>
 <script lang="ts" setup generic="TData extends RowData = RowData">
-import { computed, proxyRefs, toRefs, useTemplateRef, type CSSProperties } from 'vue';
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  proxyRefs,
+  shallowRef,
+  toRefs,
+  useTemplateRef,
+  type CSSProperties,
+  type VNodeChild,
+} from 'vue';
 import Empty from '../empty/index.vue';
 import type { Cell, Row, RowData, TableFeatures } from '@tanstack/vue-table';
 import type { BodyEditingApi, BodyVirtualApi } from '../../types';
@@ -251,6 +291,7 @@ import type { STableEditingState, STableSlots } from '../../types';
 import { injectTableBodyContext, injectTablePresentationContext } from '../../context/table';
 import { useLocales } from '../../locales/useLocales';
 import { createFixedColumnStyleAccessors } from '../../utils/columnMetrics';
+import { splitTableAttrs } from '../../utils/mergeTableAttrs';
 import { useFlipDropAnimation } from '../../interaction/useFlipAnimation';
 import BodyCell from './BodyCell.vue';
 import CachedCellContent from './CachedCellContent';
@@ -272,6 +313,7 @@ import {
 } from './useRowRenderItems';
 import { useBodyColumnFeatures } from './useBodyColumnFeatures';
 import { useEditingFocus } from './useEditingFocus';
+import { Tooltip } from '../../ui/tooltip';
 
 /** 虚拟滚动 API（父层预计算直传，保持热路径稳定性）。 */
 const props = withDefaults(
@@ -291,8 +333,6 @@ const props = withDefaults(
     visibleColumnIds?: string[];
     /** 树节点每层缩进宽度；未启用树形数据时为 undefined。 */
     treeIndentSize?: number;
-    /** 当前尺寸下业务单元格原有的行内起始 padding。 */
-    treeIndentBasePadding?: number;
     /** 仅在叶子列单元格渲染器变化时更新的稳定 token。 */
     cellRenderToken?: ReadonlyMap<string, readonly unknown[]>;
     /** 数据数组身份变化时失效 Cell context；普通表格状态变化保持稳定。 */
@@ -303,10 +343,25 @@ const props = withDefaults(
     renderExpandedRow?: boolean;
     rowClassName?: string | ((record: TData, rowIndex: number) => string | undefined);
     rowStyle?: CSSProperties | ((record: TData, rowIndex: number) => CSSProperties | undefined);
+    customRow?: (record: TData, rowIndex: number) => Record<string, unknown> | undefined;
+    customCell?: (
+      record: TData,
+      rowIndex: number,
+      column: import('../../types').STableColumn<TData>
+    ) => Record<string, unknown> | undefined;
     isRowSelected?: (row: Row<TableFeatures, TData>) => boolean;
     renderedColumns?: STableRenderedColumn[];
     keyboardNavigation?: boolean;
     fixedHeader?: boolean;
+    ignoreCellKey?: boolean;
+    rowDragTrigger?: 'handle' | 'row';
+    onRowDragStart?: (rowIndex: number, event: DragEvent) => boolean | void;
+    /** 虚拟窗口边缘的跨窗口单元格导航。 */
+    onNavigateCell?: (
+      rowIndex: number,
+      columnIndex: number,
+      direction: 'up' | 'down' | 'left' | 'right'
+    ) => boolean;
   }>(),
   {
     rows: () => [],
@@ -317,7 +372,6 @@ const props = withDefaults(
     virtualApi: undefined,
     editingApi: undefined,
     visibleColumnIds: () => [],
-    treeIndentBasePadding: 16,
     cellRenderToken: () => new Map(),
     dataSourceToken: () => [],
     animateRowDrag: false,
@@ -330,6 +384,7 @@ const props = withDefaults(
 
 // Context 只在顶层解包 Ref，避免把列、样式和 TanStack 对象递归代理成深层 Proxy。
 const tablePresentationContext = injectTablePresentationContext<TData>();
+const getPopupContainer = tablePresentationContext.getPopupContainer;
 const tableCtx = proxyRefs(tablePresentationContext);
 const ctx = proxyRefs(injectTableBodyContext());
 const locale = useLocales();
@@ -378,6 +433,7 @@ const { renderItems } = useRowRenderItems<TData>({
   props,
   getDragRowFromIndex: () => ctx.dragRowFromIndex,
   getDragRowOverIndex: () => ctx.dragRowOverIndex,
+  getDragSourceRowIds: () => ctx.dragRowSourceIds,
   getPinnedStyle,
   getRowRangeMemoKey,
   mainElementRef,
@@ -426,6 +482,11 @@ const {
     ctx.onCellRangeMousedown(rowId, columnId, event),
   onCellRangeMouseenter: (rowId, columnId, event) =>
     ctx.onCellRangeMouseenter(rowId, columnId, event),
+  onCellRangeSelectAll: () => ctx.onCellRangeSelectAll(),
+  onCellRangeExtend: (direction) => ctx.onCellRangeExtend(direction),
+  onCellRangeClear: () => ctx.onCellRangeClear(),
+  onBoundaryNavigate: (rowIndex, columnIndex, direction) =>
+    props.onNavigateCell?.(rowIndex, columnIndex, direction) ?? false,
   onRowDragOver: (rowIndex, event) => ctx.onRowDragOver(rowIndex, event),
   emit,
 });
@@ -448,6 +509,157 @@ const bodyCellStyle = computed(() => {
 
 const getEditorType = (columnId: string) => tableCtx.getColumnById(columnId)?.editor ?? 'text';
 const getRawColumn = (columnId: string) => tableCtx.getColumnById(columnId);
+
+/** 整行拖拽：忽略交互控件与自带手柄，避免抢占按钮/输入框手势。 */
+const handleRowDragStartEvent = (event: DragEvent) => {
+  if (props.rowDragTrigger !== 'row') return;
+  const target = event.target as Element | null;
+  if (target?.closest('button,input,select,textarea,a,[contenteditable],.s-table-drag-handle')) {
+    event.preventDefault();
+    return;
+  }
+  const rowElement = target?.closest<HTMLElement>('tr.s-table-row');
+  const rowIndex = Number(rowElement?.getAttribute('data-row-index'));
+  if (!Number.isFinite(rowIndex)) return;
+  if (props.onRowDragStart?.(rowIndex, event) === false) {
+    event.preventDefault();
+  }
+};
+
+const isEllipsisColumn = (columnId: string) => Boolean(getRawColumn(columnId)?.ellipsis);
+const isAutoHeightColumn = (columnId: string) => {
+  const column = getRawColumn(columnId);
+  return Boolean(column?.autoHeight) && !column?.ellipsis;
+};
+
+/**
+ * `ellipsis: { showTitle: true }` 时补充原生 title。
+ * 直接使用 accessor 值，避免为每个单元格读取已渲染 DOM 产生额外布局开销。
+ */
+const getEllipsisTitle = (entry: Cell<TableFeatures, TData>): string | undefined => {
+  const ellipsis = getRawColumn(entry.column.id)?.ellipsis;
+  if (typeof ellipsis !== 'object' || ellipsis?.showTitle !== true) return undefined;
+  const value = entry.getValue();
+  if (value == null || typeof value === 'object') return undefined;
+  return String(value);
+};
+
+// ==================== 单元格 Tooltip ====================
+const tooltipTarget = shallowRef<HTMLElement | null>(null);
+const tooltipContent = shallowRef<VNodeChild>(undefined);
+const tooltipOpen = shallowRef(false);
+
+const hideTooltip = () => {
+  tooltipOpen.value = false;
+  tooltipTarget.value = null;
+  tooltipContent.value = undefined;
+};
+
+/** 优先按可见索引 O(1) 命中，避免每次 hover 合并/复制整份行数组。 */
+const findRowForTooltip = (rowId: string | undefined, rowIndex: number) => {
+  const direct = props.rows[rowIndex];
+  if (direct && (!rowId || direct.id === rowId)) return direct;
+  if (!rowId) return undefined;
+  for (const pool of [props.topRows, props.centerRows, props.bottomRows]) {
+    const row = pool?.find((candidate) => candidate.id === rowId);
+    if (row) return row;
+  }
+  return undefined;
+};
+
+/** 仅在内容确实溢出时显示 Tooltip；单一浮层由 tbody 事件委托驱动。 */
+const handleTooltipOver = (event: MouseEvent | FocusEvent) => {
+  const cell = (event.target as Element | null)?.closest<HTMLElement>('td[data-column-id]');
+  if (!cell) {
+    hideTooltip();
+    return;
+  }
+  if (tooltipOpen.value && cell === tooltipTarget.value) return;
+  const columnId = cell.dataset.columnId!;
+  const column = getRawColumn(columnId);
+  if (!column?.tooltip) {
+    hideTooltip();
+    return;
+  }
+  if (cell.scrollWidth <= cell.clientWidth + 1) {
+    hideTooltip();
+    return;
+  }
+  const rowElement = cell.closest('tr');
+  const rowIndex = Number(rowElement?.getAttribute('data-row-index') ?? 0);
+  const row = findRowForTooltip(rowElement?.getAttribute('data-row-id') ?? undefined, rowIndex);
+  const tooltip = column.tooltip;
+  tooltipContent.value =
+    typeof tooltip === 'function'
+      ? tooltip({ record: row?.original as TData, rowIndex, columnId })
+      : tooltip === true
+        ? (cell.textContent ?? '')
+        : tooltip;
+  tooltipTarget.value = cell;
+  tooltipOpen.value = tooltipContent.value !== undefined;
+};
+
+const handleTooltipOut = (event: MouseEvent | FocusEvent) => {
+  const cell = (event.target as Element | null)?.closest<HTMLElement>('td[data-column-id]');
+  if (!cell || cell !== tooltipTarget.value) return;
+  const related = event.relatedTarget as Node | null;
+  if (related && cell.contains(related)) return;
+  hideTooltip();
+};
+
+// 滚动后单元格可能被虚拟化复用或移出视口，旧的 Tooltip 会指向错误内容。
+let tooltipScrollContainer: HTMLElement | null = null;
+let tooltipScrollWindow: Window | null = null;
+const handleTooltipScroll = () => {
+  if (tooltipOpen.value) hideTooltip();
+};
+
+onMounted(() => {
+  const body = tbodyRef.value;
+  tooltipScrollContainer = body?.closest<HTMLElement>('.s-table-container') ?? null;
+  tooltipScrollWindow = body?.ownerDocument.defaultView ?? null;
+  tooltipScrollContainer?.addEventListener('scroll', handleTooltipScroll, { passive: true });
+  tooltipScrollWindow?.addEventListener('scroll', handleTooltipScroll, { passive: true });
+});
+
+onBeforeUnmount(() => {
+  tooltipScrollContainer?.removeEventListener('scroll', handleTooltipScroll);
+  tooltipScrollWindow?.removeEventListener('scroll', handleTooltipScroll);
+  tooltipScrollContainer = null;
+  tooltipScrollWindow = null;
+});
+
+/** customCell 的属性拆分结果；结构属性已由工具过滤。 */
+/**
+ * customCell 每个单元格每帧只求值一次：
+ * 模板会为 class / attrs / style / title 多处读取，WeakMap 避免重复调用用户回调。
+ */
+const customCellAttrsCache = new WeakMap<
+  Cell<TableFeatures, TData>,
+  { rowIndex: number; attrs: ReturnType<typeof splitTableAttrs> }
+>();
+const getCustomCellAttrs = (entry: Cell<TableFeatures, TData>, item: RenderItem<TData>) => {
+  if (!props.customCell) return undefined;
+  const cached = customCellAttrsCache.get(entry);
+  if (cached && cached.rowIndex === item.index) return cached.attrs;
+  const column = getRawColumn(entry.column.id);
+  const attrs = column
+    ? splitTableAttrs(props.customCell(item.row.original, item.index, column))
+    : undefined;
+  customCellAttrsCache.set(entry, { rowIndex: item.index, attrs });
+  return attrs;
+};
+
+/** ellipsis.showTitle 优先；没有时保留 customCell 提供的 title。 */
+const getCellTitle = (
+  entry: Cell<TableFeatures, TData>,
+  item: RenderItem<TData>
+): string | undefined =>
+  getEllipsisTitle(entry) ??
+  (props.customCell
+    ? (getCustomCellAttrs(entry, item)?.attrs?.title as string | undefined)
+    : undefined);
+
 const getCellRenderer = (cell: Cell<TableFeatures, TData>) => {
   const columnDef = cell.column.columnDef;
   if (cell.getIsAggregated?.()) return columnDef.aggregatedCell ?? columnDef.cell;
@@ -455,7 +667,9 @@ const getCellRenderer = (cell: Cell<TableFeatures, TData>) => {
   return columnDef.cell;
 };
 const getCellRenderToken = (columnId: string) => props.cellRenderToken.get(columnId);
-const resolveCellRenderState = createCellRenderCache<TData>();
+const resolveCellRenderState = createCellRenderCache<TData>({
+  ignoreCellKey: () => props.ignoreCellKey === true,
+});
 const getCellRenderState = (cell: Cell<TableFeatures, TData>, item: RenderItem<TData>) =>
   resolveCellRenderState(cell, {
     render: getCellRenderer(cell),

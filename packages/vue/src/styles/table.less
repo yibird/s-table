@@ -97,8 +97,7 @@
     opacity: 1 !important;
     --s-table-cell-bg: var(--s-color-bg-column-drag-source);
     background-color: var(--s-color-bg-column-drag-source);
-    outline: 2px solid var(--s-primary-color, #1677ff);
-    outline-offset: -2px;
+    // 仅保留背景高亮，不再额外描边，避免拖拽列出现边框高亮。
     box-shadow: var(--s-shadow-menu);
     z-index: calc(var(--s-z-index-header) + 1);
   }
@@ -184,7 +183,24 @@
     .@{prefix}-cell {
       --s-table-cell-bg: var(--s-color-bg-row-selected);
       background-color: var(--s-table-cell-bg);
-      box-shadow: inset 0 0 0 2px var(--s-primary-color, #1677ff);
+      // 只画整行的上下边，左右边交给首尾单元格，避免每个单元格都被框成独立高亮。
+      box-shadow:
+        inset 0 2px 0 0 var(--s-primary-color, #1677ff),
+        inset 0 -2px 0 0 var(--s-primary-color, #1677ff);
+    }
+
+    .@{prefix}-cell:first-child {
+      box-shadow:
+        inset 2px 0 0 0 var(--s-primary-color, #1677ff),
+        inset 0 2px 0 0 var(--s-primary-color, #1677ff),
+        inset 0 -2px 0 0 var(--s-primary-color, #1677ff);
+    }
+
+    .@{prefix}-cell:last-child {
+      box-shadow:
+        inset -2px 0 0 0 var(--s-primary-color, #1677ff),
+        inset 0 2px 0 0 var(--s-primary-color, #1677ff),
+        inset 0 -2px 0 0 var(--s-primary-color, #1677ff);
     }
   }
 
@@ -264,6 +280,8 @@
   }
 
   &-small {
+    --s-tree-indent-base: 12px;
+
     .@{prefix}-header,
     .@{prefix}-body,
     .@{prefix}-summary {
@@ -276,6 +294,8 @@
   }
 
   &-middle {
+    --s-tree-indent-base: 16px;
+
     .@{prefix}-header,
     .@{prefix}-body,
     .@{prefix}-summary {
@@ -288,6 +308,8 @@
   }
 
   &-large {
+    --s-tree-indent-base: 20px;
+
     .@{prefix}-header,
     .@{prefix}-body,
     .@{prefix}-summary {
@@ -319,11 +341,7 @@
       overflow-wrap: anywhere;
       // 不参与 border-color 过渡：bordered 模式下列显示/隐藏会改变 :last-child
       // 的 border-inline-end，过渡会从 currentColor（深色）闪到灰色。
-      transition:
-        padding var(--s-duration-normal) var(--s-ease-out),
-        font-size var(--s-duration-normal) var(--s-ease-out),
-        line-height var(--s-duration-normal) var(--s-ease-out),
-        background-color var(--s-duration-normal) var(--s-ease-out);
+      .s-cell-state-transition();
 
       .s-table-cell-inner {
         display: flex;
@@ -361,7 +379,7 @@
       inset-inline: 0;
       bottom: 0;
       height: 1px;
-      background-color: var(--s-color-border-strong);
+      background-color: var(--s-color-border);
       pointer-events: none;
     }
 
@@ -691,11 +709,7 @@
       vertical-align: middle;
       overflow-wrap: anywhere;
       // 同上：避免列显隐时右边框出现深色 → 灰色的过渡。
-      transition:
-        padding var(--s-duration-normal) var(--s-ease-out),
-        font-size var(--s-duration-normal) var(--s-ease-out),
-        line-height var(--s-duration-normal) var(--s-ease-out),
-        background-color var(--s-duration-normal) var(--s-ease-out);
+      .s-cell-state-transition();
 
       &.s-table-cell-fixed-left,
       &.s-table-cell-fixed-right {
@@ -721,6 +735,15 @@
     }
   }
 
+  // 标题（表格上方通用内容区域）
+  &-title {
+    padding: 12px 16px;
+    color: var(--s-color-text);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 24px;
+  }
+
   // 页脚（表格下方通用内容区域）
   &-footer {
     padding: 12px 16px;
@@ -732,6 +755,17 @@
 
   // 汇总行（tfoot）
   &-summary {
+    // 固定汇总栏：粘在滚动容器底部。
+    &-fixed {
+      position: sticky;
+      bottom: 0;
+      z-index: calc(var(--s-z-index-header, 10) - 1);
+
+      .@{prefix}-cell {
+        background-color: var(--s-color-bg-summary);
+      }
+    }
+
     .@{prefix}-summary-row {
       .@{prefix}-cell {
         // 尺寸（padding / font-size / line-height）统一继承 small / middle / large。
@@ -753,6 +787,21 @@
   &-cell {
     box-sizing: border-box;
 
+    // 超长省略：作用于 td / th 的内容盒，配合 tooltip 使用。
+    &-ellipsis {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: keep-all;
+    }
+
+    // 自动换行并按内容撑高；与 ellipsis 同时配置时由 ellipsis 优先（组件层已互斥）。
+    &-auto-height {
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
     &-fixed-left,
     &-fixed-right {
       background-color: var(--s-table-cell-bg, var(--s-color-bg-cell));
@@ -763,12 +812,15 @@
       --s-fixed-blur-shadow: 0 0 transparent;
     }
 
-    // 固定组边界列开启模糊投影；组内其余列保持 0 阴影以控制 paint 成本。
-    &-fixed-left:nth-last-child(1 of .@{prefix}-cell-fixed-left) {
+    // 非 bordered 表格由滚动叠层（.s-table-fixed-column-shadow）统一绘制阴影：
+    // 叠层只在固定列遮挡内容时出现，且整表每侧仅一个绘制层。
+    // 单元格再叠加 box-shadow 会双重加深，并让每行固定列在横向滚动时重复 paint。
+    // bordered 模式不渲染叠层，仍由边界列投影维持与相邻单元格的分离。
+    .@{prefix}-bordered &-fixed-left:nth-last-child(1 of .@{prefix}-cell-fixed-left) {
       --s-fixed-blur-shadow: 6px 0 8px -6px var(--s-color-shadow-fixed);
     }
 
-    &-fixed-right:nth-child(1 of .@{prefix}-cell-fixed-right) {
+    .@{prefix}-bordered &-fixed-right:nth-child(1 of .@{prefix}-cell-fixed-right) {
       --s-fixed-blur-shadow: -6px 0 8px -6px var(--s-color-shadow-fixed);
     }
 
@@ -808,6 +860,9 @@
     display: flex;
     align-items: center;
     padding: 12px 0;
+    // 分页器位于表格内部，需要自带表面色：暗色主题下若沿用页面背景，
+    // 白色文字会落在浅色页面上而不可见（与单元格保持同一表面色）。
+    background-color: var(--s-color-bg-cell, #fff);
 
     &-topStart,
     &-bottomStart {
@@ -837,23 +892,17 @@
     > .s-table-selection-dropdown {
       position: absolute;
       top: 50%;
-      // 18px 复选框 + 20px 触发器在默认 62px 选择列内不溢出。
       left: calc(50% + 10px);
       transform: translateY(-50%);
     }
   }
 
-  // 选择列单元格容器：确保控件完美居中
   .s-table-selection-cell {
     display: flex;
     align-items: center;
-    justify-content: center;
   }
 
-  // 选择列单元格：减少 padding 使控件居中
-  // 注意：表头内容嵌套在 .s-table-cell-title 中，:has() 需匹配完整链路
-  &-header
-    .@{prefix}-cell:has(> .s-table-cell-inner > .s-table-cell-title > .s-table-selection-header),
+  // 选择列表体单元格：减少 padding 使控件居中（表头沿用 .s-table-cell 的标准 padding）
   &-body .@{prefix}-cell:has(> .s-table-selection-cell) {
     padding-left: 4px;
     padding-right: 4px;
@@ -892,6 +941,12 @@
         border-radius: var(--s-radius-sm, 4px);
       }
     }
+
+    &-ellipsis {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   // 排序图标
@@ -920,6 +975,7 @@
     opacity: 0.75;
     line-height: 0;
     margin: -2px 0;
+    user-select: none;
     transition:
       color var(--s-duration-fast) var(--s-ease-out),
       opacity var(--s-duration-fast) var(--s-ease-out);

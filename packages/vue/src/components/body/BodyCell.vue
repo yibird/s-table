@@ -1,14 +1,23 @@
 <template>
   <td
     v-if="!isCellHidden"
-    :class="['s-table-cell', fixedClassName, rangeClasses, bodyCellClass]"
-    :style="[fixedStyle, alignStyle, treeIndentStyle, bodyCellStyle]"
+    ref="cellRef"
+    v-bind="mergedAttrs"
+    :class="[
+      's-table-cell',
+      fixedClassName,
+      rangeClasses,
+      bodyCellClass,
+      customAttrs?.class,
+      { 's-table-cell-ellipsis': ellipsis, 's-table-cell-auto-height': autoHeight },
+    ]"
+    :style="[fixedStyle, alignStyle, treeIndentStyle, bodyCellStyle, customAttrs?.style]"
     :data-row-index="rowIndex"
     :data-col-index="colIndex"
     :data-row-id="cell.row.id"
     :data-column-id="cell.column.id"
-    v-bind="spanAttrs"
     :tabindex="focusable ? -1 : undefined"
+    :title="cellTitle"
   >
     <template v-if="editing">
       <slot
@@ -31,8 +40,8 @@
           :checked="editorType === 'checkbox' ? Boolean(editValue) : undefined"
           :value="editorType === 'checkbox' ? undefined : (editValue ?? '')"
           @input="handleInput"
-          @keydown.enter.prevent="requestCommit"
-          @keydown.esc.prevent="cancel"
+          @keydown.enter.prevent="requestCommitAndFocus"
+          @keydown.esc.prevent="cancelAndFocus"
           @blur="handleEditorBlur"
         />
       </slot>
@@ -43,11 +52,12 @@
 
 <script lang="ts" setup generic="TData extends RowData = RowData">
 import type { CSSProperties } from 'vue';
-import { computed } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import type { Cell, RowData, TableFeatures } from '@tanstack/vue-table';
-import type { STableCellProps, STableRowKey } from '../../types';
+import type { STableCellEditorSlotContext, STableCellProps, STableRowKey } from '../../types';
 import CachedCellContent from './CachedCellContent';
 import type { CachedCellRenderState } from './cellRenderCache';
+import type { SplitTableAttrs } from '../../utils/mergeTableAttrs';
 
 // BodyCell 是「可见行数 × 列数」级别的热路径组件，刻意保持轻量：
 // - 不 inject / reactive 包装 context（context 由父层 Body 注入一次即可）；
@@ -95,14 +105,45 @@ const props = defineProps<{
   onCommitEdit?: () => Promise<boolean>;
   onCancelEdit?: () => void;
   cellRenderState: CachedCellRenderState;
+  /** customCell 拆分后的属性。 */
+  customAttrs?: SplitTableAttrs;
+  /** 是否应用超长省略样式。 */
+  ellipsis?: boolean;
+  /** `ellipsis.showTitle` 生成的原生 title。 */
+  ellipsisTitle?: string;
+  /** 是否允许内容撑高单元格。 */
+  autoHeight?: boolean;
 }>();
 
+/** 自定义编辑器插槽：与表格公开的 `cellEditor` 共享同一套作用域类型。 */
+defineSlots<{
+  editor?: (scope: STableCellEditorSlotContext<TData>) => unknown;
+}>();
+
+const cellRef = ref<HTMLTableCellElement | null>(null);
 const setValue = (value: unknown) => props.onSetEditValue?.(props.cell.column.id, value);
 const commit = () => props.onCommitEdit?.() ?? Promise.resolve(false);
 const cancel = () => props.onCancelEdit?.();
 /** DOM 事件不能等待异步校验；在组件边界处理拒绝，避免产生未处理 Promise。 */
 const requestCommit = () => {
   commit().catch(() => false);
+};
+/** 键盘提交成功后把焦点还给单元格（编辑器卸载后焦点默认会落到 body）。 */
+const focusCell = () => {
+  nextTick(() => cellRef.value?.focus());
+};
+const requestCommitAndFocus = () => {
+  commit()
+    .then((committed) => {
+      if (committed) focusCell();
+      return committed;
+    })
+    .catch(() => false);
+};
+/** Esc 取消编辑后同样归还单元格焦点。 */
+const cancelAndFocus = () => {
+  cancel();
+  focusCell();
 };
 const handleEditorBlur = () => {
   if (props.commitOnBlur) requestCommit();
@@ -152,4 +193,17 @@ const spanAttrs = computed<Record<string, number> | undefined>(() => {
   if (rowSpan > 1) attrs.rowspan = rowSpan;
   return Object.keys(attrs).length > 0 ? attrs : undefined;
 });
+
+/** 自定义属性与合并后 span 属性一次绑定；onCell 的 span 结果优先。 */
+const mergedAttrs = computed<Record<string, unknown> | undefined>(() => {
+  const custom = props.customAttrs?.attrs;
+  const spans = spanAttrs.value;
+  if (!custom && !spans) return undefined;
+  return { ...custom, ...spans };
+});
+
+/** ellipsis.showTitle 优先；没有时保留 customCell 提供的 title。 */
+const cellTitle = computed(
+  () => props.ellipsisTitle ?? (mergedAttrs.value?.title as string | undefined)
+);
 </script>

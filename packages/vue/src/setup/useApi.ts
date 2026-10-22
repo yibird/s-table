@@ -8,6 +8,7 @@ import type { useDataState } from './useDataState';
 import type { useTableModel } from './useTableModel';
 import type { useView } from './useView';
 import type { STableSetupContext } from './types';
+import { useExport } from './useExport';
 
 /**
  * 实例 API：把各模块能力收敛为 `defineExpose` 使用的对象。
@@ -62,7 +63,16 @@ export const useApi = <TData extends RowData>(options: {
     handlePageChange,
   } = dataState;
   const { table, topRows, centerRows, bottomRows } = tableModel;
-  const { getCellRangeSnapshot, clearCellRange, copyCellRange } = cellRange;
+  const exportApi = useExport({ context, dataState, tableModel });
+  const {
+    getCellRangeSnapshot,
+    getCellRanges,
+    setCellRange,
+    addCellRange,
+    clearCellRangeAt,
+    focusCell,
+    copyCellRange,
+  } = cellRange;
   const { scrollToIndex, scrollToTop, scrollToEnd, scrollToColumn, scrollContainerRef } = view;
   const {
     getColumnOrder,
@@ -190,7 +200,11 @@ export const useApi = <TData extends RowData>(options: {
       scrollContainerRef.value?.scrollTo?.(position),
     // 框选相关方法
     getCellRange: getCellRangeSnapshot,
-    clearCellRange,
+    getCellRanges,
+    setCellRange,
+    addCellRange,
+    focusCell,
+    clearCellRange: clearCellRangeAt,
     // 列顺序方法直接复用 TanStack columnOrderingFeature 的状态入口。
     getColumnOrder,
     setColumnOrder,
@@ -198,6 +212,8 @@ export const useApi = <TData extends RowData>(options: {
     swapColumns,
     moveColumn,
     moveColumnByIndex,
+    // 导出
+    ...exportApi,
   } satisfies STableInstance<TData>;
 
   return api;

@@ -9,6 +9,21 @@
   color: var(--s-color-text, rgba(0, 0, 0, 0.88));
   list-style: none;
 
+  // ── 简洁模式 ──
+  &-simple-pager {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 48px;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+    color: var(--s-color-text, rgba(0, 0, 0, 0.88));
+  }
+
+  &-simple-separator {
+    color: var(--s-color-text-tertiary, rgba(0, 0, 0, 0.45));
+  }
+
   // ── 禁用 ──
   &-disabled {
     .s-pagination-item {
@@ -115,12 +130,13 @@
     }
 
     &-active {
-      color: var(--s-primary-color, #1677ff);
+      // 文字使用对背景满足 AA 的主色文本 token；边框仍保持主色。
+      color: var(--s-primary-color-text, var(--s-primary-color, #1677ff));
       border-color: var(--s-primary-color, #1677ff);
       font-weight: 600;
 
       &:hover {
-        color: var(--s-primary-color, #1677ff);
+        color: var(--s-primary-color-text, var(--s-primary-color, #1677ff));
         border-color: var(--s-primary-color, #1677ff);
       }
     }

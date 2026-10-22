@@ -1,4 +1,5 @@
 import { computed, type CSSProperties } from 'vue';
+import { decodeGroupingValue } from '@zchengfeng/s-table-core';
 import type { Cell, Row, RowData, TableFeatures } from '@tanstack/vue-table';
 import { isInternalColumn } from '../../utils/column';
 import type { STableRenderedColumn } from '../../types';
@@ -10,7 +11,6 @@ export type BodyRowRenderingProps<TData extends RowData> = {
   renderedColumns: STableRenderedColumn[];
   visibleColumnIds: string[];
   treeIndentSize?: number;
-  treeIndentBasePadding: number;
   cellRenderToken: ReadonlyMap<string, readonly unknown[]>;
   dataSourceToken: readonly TData[];
 };
@@ -50,7 +50,10 @@ export const useBodyRowRendering = <TData extends RowData>(options: {
     ) {
       return undefined;
     }
-    return { paddingInlineStart: `${props.treeIndentBasePadding + row.depth * indentSize}px` };
+    // 基准 padding 由尺寸 class 上的 CSS 变量提供，避免在 TS/LESS 两处维护同一组数值。
+    return {
+      paddingInlineStart: `calc(var(--s-tree-indent-base) + ${row.depth * indentSize}px)`,
+    };
   };
 
   /**
@@ -92,7 +95,7 @@ export const useBodyRowRendering = <TData extends RowData>(options: {
       groupRowId: row.id,
       columnId,
       column: getColumnById(columnId),
-      groupValue: row.groupingValue,
+      groupValue: decodeGroupingValue(row.groupingValue),
       count: getGroupLeafCount(row),
       depth: row.depth,
       expanded: row.getIsExpanded(),

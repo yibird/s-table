@@ -8,13 +8,16 @@ import { DragHandleIcon } from '../components/icon';
 export type CreateDragHandleColumnOptions<TData extends RowData> = {
   /** 每次渲染时求值：排序 / 分组 / 固定行使手工重排失去稳定语义。 */
   getCanReorder: () => boolean;
+  /** 拖拽开始前求值：返回 false 阻止该行拖拽。 */
+  getCanDrag?: (scope: { record: TData; index: number }) => boolean;
   renderDragHandle?: (scope: { record: TData; index: number }) => unknown;
-  onDragStart: (index: number) => void;
+  onDragStart: (index: number, event?: DragEvent) => void;
 };
 
 /** 内置行拖拽句柄列；调用方只传入交互回调。 */
 export const createDragHandleColumn = <TData extends RowData>({
   getCanReorder,
+  getCanDrag,
   renderDragHandle,
   onDragStart,
 }: CreateDragHandleColumnOptions<TData>): ColumnDef<TableFeatures, TData, unknown> => {
@@ -34,11 +37,11 @@ export const createDragHandleColumn = <TData extends RowData>({
         'aria-disabled': reorderingEnabled ? undefined : 'true',
         onDragstart: (event: DragEvent) => {
           event.stopPropagation();
-          if (!reorderingEnabled || index < 0) {
+          if (!reorderingEnabled || index < 0 || (getCanDrag && !getCanDrag({ record, index }))) {
             event.preventDefault();
             return;
           }
-          onDragStart(index);
+          onDragStart(index, event);
         },
       },
       [handleContent]

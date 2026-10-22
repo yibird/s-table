@@ -58,6 +58,7 @@ export default defineConfig({
             { text: '虚拟滚动', link: '/components/s-table/virtual' },
             { text: '框选与右键菜单', link: '/components/s-table/interactions' },
             { text: '行列拖拽', link: '/components/s-table/drag' },
+            { text: '导入与导出', link: '/components/s-table/export' },
             { text: '行与单元格事件', link: '/components/s-table/events' },
             { text: '样式与主题', link: '/components/s-table/css' },
           ],

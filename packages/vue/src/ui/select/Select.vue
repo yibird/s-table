@@ -75,42 +75,44 @@
     </div>
 
     <Teleport v-if="teleportTarget" :to="teleportTarget">
-      <div
-        v-if="isOpen"
-        :id="listboxId"
-        ref="dropdownRef"
-        class="s-select-dropdown"
-        :style="floatingStyles"
-        role="listbox"
-        :aria-multiselectable="isMultiple || undefined"
-      >
+      <Transition name="scale-down">
         <div
-          v-for="(option, index) in options"
-          :id="getOptionId(index)"
-          :key="getValueKey(option.value)"
-          class="s-select-item-option"
-          :class="{
-            's-select-item-option-selected': isOptionSelected(option.value),
-            's-select-item-option-disabled': option.disabled,
-            's-select-item-option-active': activeIndex === index,
-          }"
-          role="option"
-          :aria-selected="isOptionSelected(option.value)"
-          :aria-disabled="option.disabled || undefined"
-          @click="selectOption(option)"
-          @mousemove="activeIndex = option.disabled ? activeIndex : index"
+          v-if="isOpen"
+          :id="listboxId"
+          ref="dropdownRef"
+          class="s-select-dropdown"
+          :style="floatingStyles"
+          role="listbox"
+          :aria-multiselectable="isMultiple || undefined"
         >
-          <span class="s-select-item-option-content">{{ option.label }}</span>
-          <span v-if="isOptionSelected(option.value)" class="s-select-item-option-check">
-            <svg viewBox="64 64 896 896" width="1em" height="1em" fill="currentColor">
-              <path
-                d="M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 00-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1.4-12.8-6.3-12.8z"
-              />
-            </svg>
-          </span>
+          <div
+            v-for="(option, index) in options"
+            :id="getOptionId(index)"
+            :key="getValueKey(option.value)"
+            class="s-select-item-option"
+            :class="{
+              's-select-item-option-selected': isOptionSelected(option.value),
+              's-select-item-option-disabled': option.disabled,
+              's-select-item-option-active': activeIndex === index,
+            }"
+            role="option"
+            :aria-selected="isOptionSelected(option.value)"
+            :aria-disabled="option.disabled || undefined"
+            @click="selectOption(option)"
+            @mousemove="activeIndex = option.disabled ? activeIndex : index"
+          >
+            <span class="s-select-item-option-content">{{ option.label }}</span>
+            <span v-if="isOptionSelected(option.value)" class="s-select-item-option-check">
+              <svg viewBox="64 64 896 896" width="1em" height="1em" fill="currentColor">
+                <path
+                  d="M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 00-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1.4-12.8-6.3-12.8z"
+                />
+              </svg>
+            </span>
+          </div>
+          <div v-if="!options || options.length === 0" class="s-select-empty">{{ emptyText }}</div>
         </div>
-        <div v-if="!options || options.length === 0" class="s-select-empty">{{ emptyText }}</div>
-      </div>
+      </Transition>
     </Teleport>
   </div>
 </template>
@@ -165,6 +167,8 @@ const { floatingStyles: positionStyles } = useFloating(triggerRef, dropdownRef, 
   open: isOpen,
   placement: 'bottom-start',
   strategy: 'fixed',
+  // 使用 top/left 定位，把 transform 留给 Vue 过渡（scale-down）。
+  transform: false,
   whileElementsMounted: autoUpdate,
   middleware: [
     offset(4),

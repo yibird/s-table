@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { collectThemeVariables, invalidateThemeVariableCache } from '../../theme/useThemeVariables';
 import { getOwnerDocument, getOwnerWindow } from '../../utils/dom';
 

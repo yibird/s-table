@@ -11,8 +11,23 @@ import { getOwnerDocument, getOwnerWindow } from '../utils/dom';
  * 波纹独立于控件 DOM，因此按钮点击后即使菜单立即关闭、控件被卸载，动画仍可完整播放。
  */
 
-/** 视为“无颜色”的计算样式值，需继续回退或放弃波纹。 */
-const TRANSPARENT_COLORS = new Set(['transparent', 'rgba(0, 0, 0, 0)']);
+/** 视为“无颜色”的计算样式值，需继续回退或放弃波纹（与 antd isValidWaveColor 一致）。 */
+const INVALID_WAVE_COLORS = new Set([
+  'transparent',
+  'canvastext',
+  '#fff',
+  '#ffffff',
+  'rgb(255, 255, 255)',
+  'rgba(255, 255, 255, 1)',
+]);
+
+/** 判断计算样式颜色是否可以用于波纹。 */
+const isValidWaveColor = (color: string): boolean => {
+  if (!color || INVALID_WAVE_COLORS.has(color.toLowerCase())) return false;
+  const alphaMatch = color.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)$/);
+  if (alphaMatch && Number(alphaMatch[1]) === 0) return false;
+  return true;
+};
 
 /**
  * 解析波纹颜色：显式颜色优先，随后使用边框色和背景色。
@@ -21,17 +36,17 @@ const TRANSPARENT_COLORS = new Set(['transparent', 'rgba(0, 0, 0, 0)']);
  * `border-color`，调用方可以传入当前实例的主题色避免误判。
  */
 const resolveWaveColor = (node: HTMLElement, explicitColor?: string): string | null => {
-  if (explicitColor && !TRANSPARENT_COLORS.has(explicitColor)) return explicitColor;
+  if (explicitColor && isValidWaveColor(explicitColor)) return explicitColor;
   const style = getOwnerWindow(node)?.getComputedStyle(node);
   if (!style) return null;
-  if (!TRANSPARENT_COLORS.has(style.borderColor)) return style.borderColor;
-  if (!TRANSPARENT_COLORS.has(style.backgroundColor)) return style.backgroundColor;
-  return null;
+  return (
+    [style.borderTopColor, style.borderColor, style.backgroundColor].find(isValidWaveColor) ?? null
+  );
 };
 
 /**
  * 在指定控件上播放一次波纹扩散动画。
- * 动画节点固定定位到目标的视口矩形，不响应指针事件，也不依赖目标继续留在 DOM 中。
+ * 动画节点固定定位到目标的视口矩形；目标一旦卸载（如点击后关闭面板），波纹立即清理。
  */
 export const showWave = (node: HTMLElement, explicitColor?: string): void => {
   const ownerDocument = getOwnerDocument(node);
@@ -60,17 +75,47 @@ export const showWave = (node: HTMLElement, explicitColor?: string): void => {
     return;
   }
 
-  // 与 antd WaveEffect 一致：从控件边缘扩散 6px，透明度 0.2 → 0。
-  const animation = wave.animate(
-    [
-      { boxShadow: `0 0 0 0 ${color}`, opacity: 0.2 },
-      { boxShadow: `0 0 0 6px ${color}`, opacity: 0 },
-    ],
-    { duration: 400, easing: 'cubic-bezier(0.08, 0.82, 0.17, 1)' }
+  // 与 antd WaveEffect 一致：边框阴影 0.4s 扩散到 6px；透明度用 2s 缓慢淡出，
+  // 否则波纹会在几帧内消失，看起来像没有生效。
+  const easing = 'cubic-bezier(0.08, 0.82, 0.17, 1)';
+  const shadow = wave.animate(
+    [{ boxShadow: `0 0 0 0 ${color}` }, { boxShadow: `0 0 0 6px ${color}` }],
+    { duration: 400, easing, fill: 'forwards' }
   );
+  const fade = wave.animate([{ opacity: 0.2 }, { opacity: 0 }], {
+    duration: 2000,
+    easing,
+    fill: 'forwards',
+  });
 
-  /** 动画结束或被取消（节点卸载）后都清理临时节点。 */
-  const cleanup = () => wave.remove();
-  animation.onfinish = cleanup;
-  animation.oncancel = cleanup;
+  let frame: number | null = null;
+
+  /** 清理临时节点：动画结束、卸载或目标失效时都会走到这里。 */
+  const cleanup = () => {
+    if (frame !== null) ownerWindow.cancelAnimationFrame?.(frame);
+    frame = null;
+    // 直接移除节点即可停止绘制；不调用 Animation.cancel()，避免部分 DOM 实现
+    // 将取消操作变成未处理的 AbortError。
+    shadow.onfinish = null;
+    shadow.oncancel = null;
+    fade.onfinish = null;
+    fade.oncancel = null;
+    wave.remove();
+  };
+
+  /**
+   * 目标控件被卸载（例如点击过滤/搜索面板的按钮后面板关闭）时，
+   * 波纹不能继续悬停在原位置，需在下一帧立即清理。
+   */
+  const watchTargetConnection = () => {
+    if (!node.isConnected) {
+      cleanup();
+      return;
+    }
+    frame = ownerWindow.requestAnimationFrame?.(watchTargetConnection) ?? null;
+  };
+  frame = ownerWindow.requestAnimationFrame?.(watchTargetConnection) ?? null;
+
+  fade.onfinish = cleanup;
+  fade.oncancel = cleanup;
 };

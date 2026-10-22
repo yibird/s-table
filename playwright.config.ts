@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const e2ePort = 4175;
+// 支持并行测试进程使用独立端口，避免多个 Playwright 实例抢占同一 dev server。
+const e2ePort = Number(process.env.PLAYWRIGHT_E2E_PORT ?? 4175);
 
 export default defineConfig({
   testDir: './e2e/specs',

@@ -118,6 +118,14 @@ const columns: STableColumn<Order>[] = [
 
 `tree` 与行分组互斥：同时传入时树形优先。分组展开不走 `expandedRowKeys`，请使用 `expandAllGroups`、`collapseAllGroups`、`toggleGroup` 或 `#groupRow`。
 
+<demo vue="../../demos/s-table/columns-grouping.vue" />
+
+## 列 footer 与固定汇总
+
+列定义上的 `footer` 会渲染为 `<tfoot>` 汇总行；`summaryFixed` 让该行固定在滚动容器底部。
+
+<demo vue="../../demos/s-table/column-footer-fixed.vue" />
+
 ## 固定列
 
 `fixed: 'left' | 'right'` 会使用 sticky 定位。固定列必须配置明确的 `width`，并确保表格总宽度大于容器宽度以产生横向滚动。
@@ -135,3 +143,74 @@ const columns: STableColumn<Order>[] = [
 `hidden: true` 用于隐藏列。运行时列显示控制可以通过响应式列定义更新 `hidden`，也可以通过 `getTanStackTable()` 使用底层列可见性 API。组件当前不内置列设置面板，工具栏由业务页面自行组织。
 
 <demo vue="../../demos/s-table/column-visibility.vue" />
+
+## 省略与 Tooltip
+
+`ellipsis: true` 同时作用于表头与单元格；`tooltip: true` 仅在内容真实溢出时显示浮层，也支持字符串或返回 VNode 的函数。
+
+```ts
+const columns: STableColumn<User>[] = [
+  {
+    id: 'email',
+    accessorKey: 'email',
+    header: '邮箱',
+    width: 220,
+    ellipsis: true,
+    tooltip: ({ record }) => `联系 ${record.name}：${record.email}`,
+  },
+];
+```
+
+`autoHeight: true` 允许内容换行撑高行；与 `ellipsis` 同时配置时省略优先。虚拟滚动下任一可见列启用 `autoHeight` 会自动切换到动态测量。
+
+<demo vue="../../demos/s-table/columns-ellipsis-tooltip.vue" />
+
+## 表头通用菜单
+
+```ts
+const columns = [
+  {
+    id: 'department',
+    accessorKey: 'department',
+    header: '部门',
+    showMenu: true,
+    menuPopup: ({ column, close }) => h('button', { onClick: close }, `复制列 ID：${column.id}`),
+  },
+];
+```
+
+菜单触发器排在排序、筛选、搜索之后，点击不会触发表头排序；`menuPopup` 缺失时不渲染入口。
+
+<demo vue="../../demos/s-table/columns-header-menu.vue" />
+
+## 响应式列
+
+```ts
+const columns = [
+  { id: 'name', accessorKey: 'name', header: '姓名' },
+  { id: 'email', accessorKey: 'email', header: '邮箱', responsive: ['md', 'lg', 'xl', 'xxl'] },
+];
+
+// 表格级阈值与 SSR 首帧断点
+const breakpoints = { md: 768, lg: 992 };
+const defaultBreakpoint = 'lg';
+```
+
+命中规则为「阈值 <= 视口宽度的最大断点」；`hidden` 的优先级高于 `responsive`。
+
+<demo vue="../../demos/s-table/columns-responsive.vue" />
+
+## 自定义行 / 单元格 / 表头属性
+
+```ts
+const customRow = (record: User) => ({ 'data-user-id': record.id, onClick: handleRowClick });
+const customCell = (record: User, index: number, column: STableColumn<User>) =>
+  column.id === 'name' ? { class: 'user-name', 'data-index': index } : undefined;
+const customHeaderCell = (column: STableColumn<User>) => ({ title: `列 ${column.id}` });
+```
+
+结构属性（`colspan`、`rowspan`、`data-row-*`、`data-column-*` 等）由组件保留，不可被覆盖。
+
+<demo vue="../../demos/s-table/columns-custom-attrs.vue" />
+
+<demo vue="../../demos/s-table/columns-advanced.vue" />

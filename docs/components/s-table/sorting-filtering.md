@@ -28,6 +28,10 @@
 
 过滤值应使用可序列化的 `string | number | boolean`。默认值通过 `defaultFilteredValues` 提供；列级 `filteredValue` 可由外部完全控制。`filterMode: 'custom'` 配合 `#filterPanel` 可渲染业务筛选面板，插槽会收到 `selectedKeys`、`setSelectedKeys`、`confirm`、`reset` 和 `close`。
 
+下面的示例同时受控 `sorting` 与列级 `filteredValue`，便于接入外部查询状态。
+
+<demo vue="../../demos/s-table/filtering-controlled.vue" />
+
 ## 列搜索
 
 `search: true` 使用文本包含匹配；函数形式可处理拼音、编号规范化或多字段检索。

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { computed, createApp, h, nextTick, ref, shallowRef, type App } from 'vue';
 import {
   cellSelectionFeature,

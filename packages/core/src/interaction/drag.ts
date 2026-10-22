@@ -80,7 +80,12 @@ export const createDragController = (options: DragControllerOptions): DragContro
 
   const over = (index: number): boolean => {
     if (!state.isDragging || !isMoveEnabled(options)) return false;
-    if (index < 0 || index >= options.getItemCount()) return false;
+    if (index < 0 || index >= options.getItemCount()) {
+      // 显式传入负索引表示「当前没有合法落点」，立即清除悬停态，
+      // 避免拖拽块经过自身或离开可投放区域后残留目标高亮。
+      state.dragOverIndex = -1;
+      return false;
+    }
     state.dragOverIndex = index;
     return true;
   };

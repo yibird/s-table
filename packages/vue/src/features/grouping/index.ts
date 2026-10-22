@@ -128,6 +128,9 @@ export const useGrouping = <TData extends RowData>({
 
   const setGroupBy = (next: string[]) => {
     const normalized = normalizeGroupBy(next);
+    // 请求非空但全部列非法时视为无效调用，保留现有分组；
+    // 否则 setGroupBy(['name']) 这类笔误会意外清除已生效的分组。
+    if (next.length > 0 && normalized.length === 0) return;
     const current = groupingState.value;
     if (
       normalized.length === current.length &&

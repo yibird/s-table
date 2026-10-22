@@ -99,6 +99,18 @@ const handleCellRangeChange4 = (range: STableCellRange | null) => {
   cellRange4.value = range;
 };
 
+// ── 示例 5：cell 模式 + 选择列联动 ──
+const cellRange5 = ref<STableCellRange | null>(null);
+const selectedKeys5 = ref<(string | number)[]>([]);
+
+const rowSelection5: STableRowSelection<DemoData> = {
+  type: 'checkbox',
+};
+
+const handleCellRangeChange5 = (range: STableCellRange | null) => {
+  cellRange5.value = range;
+};
+
 const formatRange = (range: STableCellRange | null): string => {
   if (!range) return '无';
   const minRow = Math.min(range.startRow, range.endRow);
@@ -169,6 +181,23 @@ const formatRange = (range: STableCellRange | null): string => {
     style="height: 300px"
     :cell-range-selection="{ mode: 'cell' }"
     @cell-range-change="handleCellRangeChange4"
+  />
+
+  <h2 style="margin-top: 48px">示例 5：单元格框选联动选择列</h2>
+  <p>框选单元格后，范围内未选中的行会被选中，已选中的行会被取消选中（仅 checkbox 模式）。</p>
+  <p class="range-info">
+    <strong>当前范围：</strong>{{ formatRange(cellRange5) }}
+    <span v-if="selectedKeys5.length > 0"> | 已选 {{ selectedKeys5.length }} 行</span>
+  </p>
+  <STable
+    bordered
+    :data-source="data"
+    :columns="columns"
+    :row-key="'id'"
+    :row-selection="rowSelection5"
+    v-model:selected-row-keys="selectedKeys5"
+    :cell-range-selection="{ mode: 'cell' }"
+    @cell-range-change="handleCellRangeChange5"
   />
 </template>
 

@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-08-28T07:16:07.317Z",
+  "generatedAt": "2026-10-18T16:29:03.693Z",
   "runtime": {
-    "node": "v24.14.0",
+    "node": "v24.10.0",
     "platform": "win32 x64",
-    "cpu": "13th Gen Intel(R) Core(TM) i5-13400",
+    "cpu": "13th Gen Intel(R) Core(TM) i5-13400F",
     "logicalCpus": 16,
-    "totalMemoryBytes": 68448337920
+    "totalMemoryBytes": 34206056448
   },
   "mode": "quick",
   "methodology": {
@@ -42,12 +42,12 @@
         "denseAllocationExecuted": true
       },
       "memory": {
-        "heapStartMb": 5.29,
-        "heapAfterDataMb": 5.6,
-        "heapAfterCoreMb": 6.76,
-        "heapFinalMb": 8.42,
+        "heapStartMb": 5.22,
+        "heapAfterDataMb": 5.53,
+        "heapAfterCoreMb": 6.68,
+        "heapFinalMb": 8.29,
         "dataHeapDeltaMb": 0.31,
-        "coreHeapDeltaMb": 1.16
+        "coreHeapDeltaMb": 1.15
       },
       "instrumentation": {
         "performanceObserverMeasures": 208
@@ -55,94 +55,94 @@
       "metrics": {
         "dataAllocation": {
           "samples": 1,
-          "p50": 1.39,
-          "p95": 1.39,
-          "p99": 1.39,
-          "max": 1.39
+          "p50": 1.96,
+          "p95": 1.96,
+          "p99": 1.96,
+          "max": 1.96
         },
         "columnDefinition": {
           "samples": 1,
-          "p50": 0.18,
-          "p95": 0.18,
-          "p99": 0.18,
-          "max": 0.18
+          "p50": 0.15,
+          "p95": 0.15,
+          "p99": 0.15,
+          "max": 0.15
         },
         "tableConstruction": {
+          "samples": 1,
+          "p50": 1.52,
+          "p95": 1.52,
+          "p99": 1.52,
+          "max": 1.52
+        },
+        "coreRowModel": {
           "samples": 1,
           "p50": 1.5,
           "p95": 1.5,
           "p99": 1.5,
           "max": 1.5
         },
-        "coreRowModel": {
-          "samples": 1,
-          "p50": 1.65,
-          "p95": 1.65,
-          "p99": 1.65,
-          "max": 1.65
-        },
         "coreRowModelCacheHit": {
           "samples": 1,
-          "p50": 0.07,
-          "p95": 0.07,
-          "p99": 0.07,
-          "max": 0.07
+          "p50": 0.08,
+          "p95": 0.08,
+          "p99": 0.08,
+          "max": 0.08
         },
         "headerModel": {
           "samples": 1,
-          "p50": 1.79,
-          "p95": 1.79,
-          "p99": 1.79,
-          "max": 1.79
+          "p50": 1.74,
+          "p95": 1.74,
+          "p99": 1.74,
+          "max": 1.74
         },
         "visibleCellIndexCold": {
           "samples": 1,
-          "p50": 1.03,
-          "p95": 1.03,
-          "p99": 1.03,
-          "max": 1.03
+          "p50": 1.02,
+          "p95": 1.02,
+          "p99": 1.02,
+          "max": 1.02
         },
         "visibleCellIndexCacheHit": {
           "samples": 1,
-          "p50": 0.11,
-          "p95": 0.11,
-          "p99": 0.11,
-          "max": 0.11
+          "p50": 0.12,
+          "p95": 0.12,
+          "p99": 0.12,
+          "max": 0.12
         },
         "sort": {
           "samples": 15,
-          "p50": 0.36,
-          "p95": 2.58,
-          "p99": 2.58,
-          "max": 2.58
+          "p50": 0.46,
+          "p95": 3.53,
+          "p99": 3.53,
+          "max": 3.53
         },
         "filter": {
           "samples": 15,
-          "p50": 0.45,
-          "p95": 1.88,
-          "p99": 1.88,
-          "max": 1.88
+          "p50": 0.59,
+          "p95": 3.1,
+          "p99": 3.1,
+          "max": 3.1
         },
         "selectAll": {
           "samples": 15,
-          "p50": 0.25,
-          "p95": 0.57,
-          "p99": 0.57,
-          "max": 0.57
+          "p50": 0.31,
+          "p95": 0.74,
+          "p99": 0.74,
+          "max": 0.74
         },
         "immutableCellCommit": {
           "samples": 5,
-          "p50": 0.43,
-          "p95": 0.59,
-          "p99": 0.59,
-          "max": 0.59
+          "p50": 0.61,
+          "p95": 0.72,
+          "p99": 0.72,
+          "max": 0.72
         },
         "columnResizeState": {
           "samples": 150,
           "p50": 0,
           "p95": 0.01,
-          "p99": 0.08,
-          "max": 0.18
+          "p99": 0.07,
+          "max": 0.2
         }
       },
       "budget": {
@@ -184,12 +184,12 @@
         "denseAllocationExecuted": true
       },
       "memory": {
-        "heapStartMb": 5.28,
-        "heapAfterDataMb": 10.56,
-        "heapAfterCoreMb": 20.01,
-        "heapFinalMb": 30.74,
+        "heapStartMb": 5.22,
+        "heapAfterDataMb": 10.49,
+        "heapAfterCoreMb": 19.93,
+        "heapFinalMb": 30.58,
         "dataHeapDeltaMb": 5.27,
-        "coreHeapDeltaMb": 9.45
+        "coreHeapDeltaMb": 9.44
       },
       "instrumentation": {
         "performanceObserverMeasures": 156
@@ -197,94 +197,94 @@
       "metrics": {
         "dataAllocation": {
           "samples": 1,
-          "p50": 22.22,
-          "p95": 22.22,
-          "p99": 22.22,
-          "max": 22.22
+          "p50": 23.42,
+          "p95": 23.42,
+          "p99": 23.42,
+          "max": 23.42
         },
         "columnDefinition": {
           "samples": 1,
-          "p50": 0.13,
-          "p95": 0.13,
-          "p99": 0.13,
-          "max": 0.13
+          "p50": 0.2,
+          "p95": 0.2,
+          "p99": 0.2,
+          "max": 0.2
         },
         "tableConstruction": {
           "samples": 1,
-          "p50": 1.39,
-          "p95": 1.39,
-          "p99": 1.39,
-          "max": 1.39
+          "p50": 1.55,
+          "p95": 1.55,
+          "p99": 1.55,
+          "max": 1.55
         },
         "coreRowModel": {
           "samples": 1,
-          "p50": 10.18,
-          "p95": 10.18,
-          "p99": 10.18,
-          "max": 10.18
+          "p50": 14.21,
+          "p95": 14.21,
+          "p99": 14.21,
+          "max": 14.21
         },
         "coreRowModelCacheHit": {
           "samples": 1,
-          "p50": 0.08,
-          "p95": 0.08,
-          "p99": 0.08,
-          "max": 0.08
+          "p50": 0.16,
+          "p95": 0.16,
+          "p99": 0.16,
+          "max": 0.16
         },
         "headerModel": {
           "samples": 1,
-          "p50": 2,
-          "p95": 2,
-          "p99": 2,
-          "max": 2
+          "p50": 2.45,
+          "p95": 2.45,
+          "p99": 2.45,
+          "max": 2.45
         },
         "visibleCellIndexCold": {
           "samples": 1,
-          "p50": 1.57,
-          "p95": 1.57,
-          "p99": 1.57,
-          "max": 1.57
+          "p50": 1.66,
+          "p95": 1.66,
+          "p99": 1.66,
+          "max": 1.66
         },
         "visibleCellIndexCacheHit": {
           "samples": 1,
-          "p50": 0.13,
-          "p95": 0.13,
-          "p99": 0.13,
-          "max": 0.13
+          "p50": 0.16,
+          "p95": 0.16,
+          "p99": 0.16,
+          "max": 0.16
         },
         "sort": {
           "samples": 11,
-          "p50": 2.37,
-          "p95": 8.42,
-          "p99": 8.42,
-          "max": 8.42
+          "p50": 2.9,
+          "p95": 9.84,
+          "p99": 9.84,
+          "max": 9.84
         },
         "filter": {
           "samples": 11,
-          "p50": 2.91,
-          "p95": 8.43,
-          "p99": 8.43,
-          "max": 8.43
+          "p50": 4.86,
+          "p95": 9.75,
+          "p99": 9.75,
+          "max": 9.75
         },
         "selectAll": {
           "samples": 11,
-          "p50": 2.05,
-          "p95": 2.68,
-          "p99": 2.68,
-          "max": 2.68
+          "p50": 3.61,
+          "p95": 5.77,
+          "p99": 5.77,
+          "max": 5.77
         },
         "immutableCellCommit": {
           "samples": 5,
-          "p50": 3.42,
-          "p95": 4.23,
-          "p99": 4.23,
-          "max": 4.23
+          "p50": 7.57,
+          "p95": 13.42,
+          "p99": 13.42,
+          "max": 13.42
         },
         "columnResizeState": {
           "samples": 110,
           "p50": 0,
-          "p95": 0.01,
-          "p99": 0.09,
-          "max": 0.22
+          "p95": 0.02,
+          "p99": 0.11,
+          "max": 0.28
         }
       },
       "budget": {
@@ -326,12 +326,12 @@
         "denseAllocationExecuted": true
       },
       "memory": {
-        "heapStartMb": 5.28,
-        "heapAfterDataMb": 96.01,
-        "heapAfterCoreMb": 190.98,
-        "heapFinalMb": 294.65,
+        "heapStartMb": 5.22,
+        "heapAfterDataMb": 95.95,
+        "heapAfterCoreMb": 190.9,
+        "heapFinalMb": 294.43,
         "dataHeapDeltaMb": 90.73,
-        "coreHeapDeltaMb": 94.96
+        "coreHeapDeltaMb": 94.95
       },
       "instrumentation": {
         "performanceObserverMeasures": 104
@@ -339,94 +339,94 @@
       "metrics": {
         "dataAllocation": {
           "samples": 1,
-          "p50": 348.39,
-          "p95": 348.39,
-          "p99": 348.39,
-          "max": 348.39
+          "p50": 430.81,
+          "p95": 430.81,
+          "p99": 430.81,
+          "max": 430.81
         },
         "columnDefinition": {
           "samples": 1,
-          "p50": 0.21,
-          "p95": 0.21,
-          "p99": 0.21,
-          "max": 0.21
+          "p50": 0.22,
+          "p95": 0.22,
+          "p99": 0.22,
+          "max": 0.22
         },
         "tableConstruction": {
           "samples": 1,
-          "p50": 2.63,
-          "p95": 2.63,
-          "p99": 2.63,
-          "max": 2.63
+          "p50": 1.75,
+          "p95": 1.75,
+          "p99": 1.75,
+          "max": 1.75
         },
         "coreRowModel": {
           "samples": 1,
-          "p50": 86.76,
-          "p95": 86.76,
-          "p99": 86.76,
-          "max": 86.76
+          "p50": 118.85,
+          "p95": 118.85,
+          "p99": 118.85,
+          "max": 118.85
         },
         "coreRowModelCacheHit": {
           "samples": 1,
-          "p50": 0.15,
-          "p95": 0.15,
-          "p99": 0.15,
-          "max": 0.15
+          "p50": 0.2,
+          "p95": 0.2,
+          "p99": 0.2,
+          "max": 0.2
         },
         "headerModel": {
           "samples": 1,
-          "p50": 2.6,
-          "p95": 2.6,
-          "p99": 2.6,
-          "max": 2.6
+          "p50": 3.98,
+          "p95": 3.98,
+          "p99": 3.98,
+          "max": 3.98
         },
         "visibleCellIndexCold": {
           "samples": 1,
-          "p50": 3.54,
-          "p95": 3.54,
-          "p99": 3.54,
-          "max": 3.54
+          "p50": 5.38,
+          "p95": 5.38,
+          "p99": 5.38,
+          "max": 5.38
         },
         "visibleCellIndexCacheHit": {
           "samples": 1,
-          "p50": 0.29,
-          "p95": 0.29,
-          "p99": 0.29,
-          "max": 0.29
+          "p50": 0.38,
+          "p95": 0.38,
+          "p99": 0.38,
+          "max": 0.38
         },
         "sort": {
           "samples": 7,
-          "p50": 45.43,
-          "p95": 87.46,
-          "p99": 87.46,
-          "max": 87.46
+          "p50": 55.38,
+          "p95": 106.7,
+          "p99": 106.7,
+          "max": 106.7
         },
         "filter": {
           "samples": 7,
-          "p50": 30.63,
-          "p95": 65.71,
-          "p99": 65.71,
-          "max": 65.71
+          "p50": 35.35,
+          "p95": 78.31,
+          "p99": 78.31,
+          "max": 78.31
         },
         "selectAll": {
           "samples": 7,
-          "p50": 32.34,
-          "p95": 33.52,
-          "p99": 33.52,
-          "max": 33.52
+          "p50": 37.9,
+          "p95": 45.61,
+          "p99": 45.61,
+          "max": 45.61
         },
         "immutableCellCommit": {
           "samples": 5,
-          "p50": 64.7,
-          "p95": 73.91,
-          "p99": 73.91,
-          "max": 73.91
+          "p50": 87.9,
+          "p95": 99.39,
+          "p99": 99.39,
+          "max": 99.39
         },
         "columnResizeState": {
           "samples": 70,
           "p50": 0,
           "p95": 0.02,
-          "p99": 0.24,
-          "max": 0.24
+          "p99": 0.25,
+          "max": 0.25
         }
       },
       "budget": {

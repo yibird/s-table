@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { nextTick, reactive, type App } from 'vue';
 import { mountSTable } from '../helpers';
 import { SELECTION_COLUMN_ID } from '../../constants';
@@ -73,6 +73,45 @@ describe('cellRangeSelection', () => {
     state.mode = undefined;
     await nextTick();
     expect(firstCell().classList.contains('s-table-cell-range-selected')).toBe(false);
+  });
+
+  it('cell 模式框选联动选择列，范围内未选行选中、已选行取消', async () => {
+    const selections: Array<Array<string | number>> = [];
+    const mounted = mountSTable<Row>({
+      columns,
+      dataSource: [
+        { id: 1, name: 'A' },
+        { id: 2, name: 'B' },
+        { id: 3, name: 'C' },
+      ],
+      rowKey: 'id',
+      rowSelection: { type: 'checkbox' },
+      defaultSelectedRowKeys: [2],
+      cellRangeSelection: { mode: 'cell' },
+      onSelectChange: (keys: Array<string | number>) => selections.push(keys),
+    } as never);
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    const rows = [...host.querySelectorAll<HTMLElement>('tbody tr.s-table-row')];
+    const cell = (index: number) =>
+      rows[index]!.querySelector<HTMLElement>('td.s-table-cell[data-column-id="id"]')!;
+    const dragTo = (index: number) => {
+      cell(0).dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+      cell(index).dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mouseup'));
+    };
+
+    dragTo(2);
+    await nextTick();
+    // 1、3 未选中 → 选中；2 已选中 → 取消。
+    expect(selections.at(-1)).toEqual([1, 3]);
+
+    dragTo(2);
+    await nextTick();
+    // 再次框选同一范围时反向切换。
+    expect(selections.at(-1)).toEqual([2]);
   });
 
   it('row 模式首次点击也会触发 cellRangeSelect', async () => {

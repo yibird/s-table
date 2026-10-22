@@ -87,7 +87,14 @@ const { handleMouseDragCandidate, clearMouseDrag } = useMouseColumnDragBridge({
   isDraggableSource: (columnId) =>
     presentation.getColumnById(columnId)?.draggable === true && getUserColumnIndex(columnId) >= 0,
   isValidTarget: (columnId) => getUserColumnIndex(columnId) >= 0,
-  onDragStart: (columnId) => handleCellDragStart(columnId),
+  onDragStart: (columnId) => {
+    // 原生 dragstart 路径已在 HeaderCell 内校验，这里覆盖鼠标桥接回退路径。
+    const column = presentation.getColumnById(columnId);
+    const index = getUserColumnIndex(columnId);
+    if (!column || index < 0 || !ctx.canColumnDrag(column, index)) return false;
+    handleCellDragStart(columnId);
+    return true;
+  },
   onDragOver: (columnId, event) => handleCellDragOver(columnId, event),
   onDragEnd: () => ctx.onColumnDragEnd(),
   onDrop: (target) => target.dispatchEvent(new Event('drop', { cancelable: true })),

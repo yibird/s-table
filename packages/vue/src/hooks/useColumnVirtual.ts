@@ -2,7 +2,7 @@ import { computed, type Ref } from 'vue';
 import { useVirtualizer } from '@tanstack/vue-virtual';
 import type { RowData, Table, TableFeatures } from '@tanstack/vue-table';
 import type { STableRenderedColumn, STableVirtualProps } from '../types';
-import { isColumnVirtualEnabled } from '../utils';
+import { isColumnVirtualEnabled, type STableVirtualValue } from '../utils';
 
 export type { STableRenderedColumn } from '../types';
 
@@ -10,14 +10,14 @@ type VisibleColumn = { id: string; size: number; hasExplicitWidth: boolean };
 
 type UseSTableColumnVirtualOptions<TData extends RowData> = {
   table: Table<TableFeatures, TData>;
-  virtual: Readonly<Ref<boolean | STableVirtualProps | undefined>>;
+  virtual: Readonly<Ref<STableVirtualValue>>;
   /** 列模型阶段已按 ID 建立的尺寸快照，避免横向虚拟化再次遍历完整列数组。 */
   visibleColumnById: Readonly<Ref<ReadonlyMap<string, VisibleColumn>>>;
   scrollElementRef: Readonly<Ref<HTMLElement | null>>;
 };
 
-const resolveConfig = (value: boolean | STableVirtualProps | undefined) =>
-  isColumnVirtualEnabled(value) && typeof value === 'object' ? value : null;
+const resolveConfig = (value: STableVirtualValue): STableVirtualProps | null =>
+  isColumnVirtualEnabled(value) && typeof value === 'object' ? (value as STableVirtualProps) : null;
 
 type VirtualColumnItem = { index: number; start: number; end: number };
 
@@ -95,9 +95,12 @@ export const useColumnVirtual = <TData extends RowData>({
 }: UseSTableColumnVirtualOptions<TData>) => {
   const config = computed(() => resolveConfig(virtual.value));
   const enabled = computed(() => config.value !== null);
-  const overscan = computed(() =>
-    Math.max(0, Math.min(20, Math.trunc(config.value?.columnOverscan ?? 3)))
-  );
+  const overscan = computed(() => {
+    const buffer = config.value?.buffer;
+    const value =
+      typeof buffer === 'number' ? buffer : (buffer?.x ?? config.value?.columnOverscan ?? 3);
+    return Math.max(0, Math.min(20, Math.trunc(value)));
+  });
   const centerColumns = computed<VisibleColumn[]>((previous) => {
     // 直接读取 TanStack 的中心区域，固定列、隐藏列和列顺序已由内置 pinning/
     // visibility/ordering feature 统一处理；组件只补充渲染层需要的尺寸标记。

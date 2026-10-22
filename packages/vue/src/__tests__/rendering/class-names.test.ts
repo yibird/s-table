@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { nextTick } from 'vue';
 import { mountSTable } from '../helpers';
 
@@ -14,34 +14,19 @@ const columns = [
 const dataSource: Row[] = [{ id: 1, name: 'A' }];
 
 describe('表格类名入口', () => {
-  it('classNames 优先于已废弃的 classes', async () => {
+  it('classes 注入到对应的语义节点', async () => {
     const mounted = mountSTable<Row>({
       columns,
       dataSource,
       rowKey: 'id',
-      classNames: { body: 'new-body' },
-      classes: { body: 'legacy-body' },
+      classes: { body: 'custom-body', header: 'custom-header' },
     } as never);
     await nextTick();
 
     const tbody = mounted.host.querySelector('tbody')!;
-    expect(tbody.classList.contains('new-body')).toBe(true);
-    expect(tbody.classList.contains('legacy-body')).toBe(false);
-
-    mounted.app.unmount();
-    mounted.host.remove();
-  });
-
-  it('仅提供 classes 时保持兼容', async () => {
-    const mounted = mountSTable<Row>({
-      columns,
-      dataSource,
-      rowKey: 'id',
-      classes: { body: 'legacy-body' },
-    } as never);
-    await nextTick();
-
-    expect(mounted.host.querySelector('tbody')!.classList.contains('legacy-body')).toBe(true);
+    const thead = mounted.host.querySelector('thead')!;
+    expect(tbody.classList.contains('custom-body')).toBe(true);
+    expect(thead.classList.contains('custom-header')).toBe(true);
 
     mounted.app.unmount();
     mounted.host.remove();

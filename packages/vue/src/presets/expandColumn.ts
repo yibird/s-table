@@ -3,6 +3,7 @@ import type { ColumnDef, Row, RowData, TableFeatures } from '@tanstack/vue-table
 import { EXPAND_COLUMN_ID } from '../constants';
 import type { STableExpandable, STableRowKey } from '../types';
 import { toColumnDef } from '../utils';
+import { getRowVisibleIndex } from '../adapter/tableDisplayOrder';
 import { ExpandIcon } from '../components/icon';
 
 type CreateExpandColumnOptions<TData extends RowData> = {
@@ -28,7 +29,8 @@ export const createExpandColumn = <TData extends RowData>({
     config.columnWidth > 0
       ? config.columnWidth
       : 40;
-  const isFixed = config.fixed ?? true;
+  const fixedSetting = config.expandFixed ?? config.fixed ?? true;
+  const fixed = fixedSetting === true ? 'left' : fixedSetting === false ? undefined : fixedSetting;
   const cellRenderer = (context: { row: Row<TableFeatures, TData> }) => {
     const row = context.row;
     const expanded = row.getIsExpanded();
@@ -36,6 +38,16 @@ export const createExpandColumn = <TData extends RowData>({
     if (treeEnabled && row.subRows.length === 0 && disabled) {
       return h('div', { class: 's-table-expand-cell', 'aria-hidden': 'true' });
     }
+    const toggle = () => onToggle(getPublicKey(row));
+    const icon = config.expandIcon
+      ? config.expandIcon({
+          expanded,
+          expandable: !disabled,
+          record: row.original,
+          rowIndex: getRowVisibleIndex(row),
+          toggle,
+        })
+      : h(ExpandIcon, { size: 12 });
 
     return h('div', { class: 's-table-expand-cell' }, [
       h(
@@ -54,10 +66,10 @@ export const createExpandColumn = <TData extends RowData>({
           'aria-expanded': expanded,
           onClick: (event: MouseEvent) => {
             event.stopPropagation();
-            if (!disabled) onToggle(getPublicKey(row));
+            if (!disabled) toggle();
           },
         },
-        [h(ExpandIcon, { size: 12 })]
+        [icon]
       ),
     ]);
   };
@@ -71,6 +83,6 @@ export const createExpandColumn = <TData extends RowData>({
     maxSize: columnWidth,
     enableResizing: false,
     meta: { align: 'center' },
-    ...(isFixed && { fixed: 'left' as const }),
+    ...(fixed ? { fixed } : {}),
   });
 };

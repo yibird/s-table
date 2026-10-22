@@ -1,3 +1,4 @@
+export { decodeGroupingValue, encodeGroupingValue } from './groupingKey';
 export { resolveColumnId } from './columnId';
 export {
   moveColumnOrder,

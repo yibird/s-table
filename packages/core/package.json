@@ -2,18 +2,19 @@
   "name": "@zchengfeng/s-table-core",
   "version": "0.1.0",
   "description": "Framework-agnostic core types, state machines and utilities for STable",
+  "homepage": "https://github.com/zchengfeng/s-table#readme",
+  "license": "ISC",
+  "author": "zchengfeng <2684837849@qq.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zchengfeng/s-table.git",
     "directory": "packages/core"
   },
-  "homepage": "https://github.com/zchengfeng/s-table#readme",
-  "license": "ISC",
-  "author": "zchengfeng <2684837849@qq.com>",
   "files": [
     "dist"
   ],
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -31,7 +32,7 @@
   "scripts": {
     "build": "vite build",
     "prepack": "pnpm build",
-    "test": "vitest run",
+    "test": "vp test run",
     "typecheck": "tsc --noEmit -p tsconfig.build.json"
   },
   "dependencies": {

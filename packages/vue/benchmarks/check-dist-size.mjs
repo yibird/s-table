@@ -4,8 +4,11 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+// 预算随能力扩展同步调整：本轮新增 15 组功能后主入口 gzip ≈ 69KB。
+// 导出工具已拆到 ./export 子路径，主包只保留运行时必需的实现。
 const budgets = [
-  { file: 'dist/index.js', maxGzipBytes: 64 * 1024 },
+  { file: 'dist/index.js', maxGzipBytes: 72 * 1024 },
+  { file: 'dist/export.js', maxGzipBytes: 1 * 1024 },
   { file: 'dist/style.css', maxGzipBytes: 10 * 1024 },
 ];
 

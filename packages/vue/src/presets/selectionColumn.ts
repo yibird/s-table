@@ -1,7 +1,12 @@
 import { createCommentVNode, h } from 'vue';
 import type { ColumnDef, Row, RowData, TableFeatures } from '@tanstack/vue-table';
 import { SELECTION_COLUMN_ID } from '../constants';
-import type { STableCheckboxProps, STableRowKey, STableRowSelection } from '../types';
+import type {
+  STableCheckboxProps,
+  STableRowKey,
+  STableRowSelection,
+  STableSelectionHeaderContext,
+} from '../types';
 import { toColumnDef } from '../utils';
 import { getRowVisibleIndex } from '../adapter/tableDisplayOrder';
 import SelectionDropdown from '../components/header/SelectionDropdown.vue';
@@ -18,6 +23,8 @@ type SelectionRowPresentation<TData extends RowData> = {
 type CreateSelectionColumnOptions<TData extends RowData> = {
   config: STableRowSelection<TData>;
   getHeaderProps: () => STableCheckboxProps;
+  /** 自定义选择列表头所需的选择状态。 */
+  getSelectionState: () => STableSelectionHeaderContext<TData>;
   getRowPresentation: (row: Row<TableFeatures, TData>) => SelectionRowPresentation<TData>;
   onSelectAll: () => void;
   onClearAll: () => void;
@@ -37,6 +44,7 @@ type CreateSelectionColumnOptions<TData extends RowData> = {
 export const createSelectionColumn = <TData extends RowData>({
   config,
   getHeaderProps,
+  getSelectionState,
   getRowPresentation,
   onSelectAll,
   onClearAll,
@@ -55,8 +63,20 @@ export const createSelectionColumn = <TData extends RowData>({
   const renderCell = config.renderCell;
 
   const headerRenderer = () => {
+    if (config.columnTitle !== undefined) {
+      const state = getSelectionState();
+      const content =
+        typeof config.columnTitle === 'function' ? config.columnTitle(state) : config.columnTitle;
+      return h(
+        'div',
+        { class: 's-table-selection-header' },
+        content === undefined ? [] : [content]
+      );
+    }
     if (isRadio || config.hideSelectAll) return createCommentVNode('selection-header');
     const headerProps = getHeaderProps();
+    const customOptions = config.selections ?? [];
+    const showDropdown = !config.hideDefaultSelections || customOptions.length > 0;
     return h('div', { class: 's-table-selection-header' }, [
       h(Checkbox, {
         modelValue: headerProps.checked,
@@ -66,15 +86,18 @@ export const createSelectionColumn = <TData extends RowData>({
         style: headerProps.style,
         onChange: (checked: boolean) => (checked ? onSelectAll() : onClearAll()),
       }),
-      h(SelectionDropdown, {
-        onSelectAll,
-        onClearAll,
-        onSelectOdd,
-        onSelectEven,
-        onSelectCurrentPage,
-        customOptions: config.selections,
-        onCustomSelect,
-      }),
+      showDropdown
+        ? h(SelectionDropdown, {
+            onSelectAll,
+            onClearAll,
+            onSelectOdd,
+            onSelectEven,
+            onSelectCurrentPage,
+            customOptions: config.selections,
+            showDefaultActions: !config.hideDefaultSelections,
+            onCustomSelect,
+          })
+        : null,
     ]);
   };
 
@@ -94,6 +117,7 @@ export const createSelectionColumn = <TData extends RowData>({
             modelValue: (checkboxProps.checked ?? selected) ? key : undefined,
             value: key,
             disabled,
+            allowUncheck: config.allowCancelRadio === true,
             class: checkboxProps.class,
             style: checkboxProps.style,
             onChange: () => onRadioChange(key),

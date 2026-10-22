@@ -50,3 +50,32 @@ const pagination = computed<STablePaginationProps>(() => ({
 ## 服务端分页
 
 服务端分页设置 `manualPagination`，并提供 `pagination.total` 或 `pagination.pageCount`。组件只展示传入的当前页数据，不再切片。完整示例见[服务端数据](./server-side)。
+
+## 多位置、简洁模式与自定义条目
+
+```ts
+const pagination = {
+  simple: true,
+  showLessItems: true,
+  hideOnSinglePage: true,
+  itemRender: (page, type, element) => (type === 'page' && page === 2 ? '②' : element),
+};
+
+// 顶部和底部同时渲染，共享同一分页状态
+const paginationPlacement = ['topEnd', 'bottomStart'];
+```
+
+<demo vue="../../demos/s-table/pagination-advanced-modes.vue" />
+
+## 标题、页脚与固定汇总
+
+```ts
+const title = ({ currentPageData }) => `当前页 ${currentPageData.length} 人`;
+const footer = ({ currentPage, pageSize, total }) =>
+  `第 ${currentPage} 页 · ${pageSize} 条/页 · 共 ${total} 条`;
+const summaryFixed = true;
+```
+
+声明式汇总直接写在列上：`{ id: 'salary', header: '月薪', footer: '月薪合计' }`。
+
+<demo vue="../../demos/s-table/pagination-layout-advanced.vue" />

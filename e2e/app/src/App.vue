@@ -5,6 +5,9 @@ import InteractionFixture from './fixtures/InteractionFixture.vue';
 import VirtualFixture from './fixtures/VirtualFixture.vue';
 import AdvancedFixture from './fixtures/AdvancedFixture.vue';
 import LeakFixture from './fixtures/LeakFixture.vue';
+import RoundTwoFixture from './fixtures/RoundTwoFixture.vue';
+import RoundTwoPerfFixture from './fixtures/RoundTwoPerfFixture.vue';
+import RoundThreeFixture from './fixtures/RoundThreeFixture.vue';
 
 const fixture = computed(
   () => new URLSearchParams(window.location.search).get('fixture') ?? 'core'
@@ -18,6 +21,9 @@ const fixture = computed(
     <VirtualFixture v-else-if="fixture === 'virtual'" />
     <AdvancedFixture v-else-if="fixture === 'advanced'" />
     <LeakFixture v-else-if="fixture === 'leak'" />
+    <RoundTwoFixture v-else-if="fixture === 'round2'" />
+    <RoundTwoPerfFixture v-else-if="fixture === 'round2perf'" />
+    <RoundThreeFixture v-else-if="fixture === 'round3'" />
     <p v-else data-testid="unknown-fixture">Unknown fixture: {{ fixture }}</p>
   </main>
 </template>

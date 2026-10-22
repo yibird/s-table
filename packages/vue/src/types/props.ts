@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'vue';
+import type { CSSProperties, VNodeChild } from 'vue';
 import type { RowData } from '@tanstack/table-core';
 import type {
   STablePinnedRowKeys,
@@ -12,20 +12,24 @@ import type {
   PaginationPlacement,
   STableCellRangeCopyEvent,
   STableCellRangeSelection,
+  STableBreakpoint,
   STableClasses,
+  STableColumn,
   STableColumnDragConfig,
   STableColumnResizeMode,
   STableColumns,
   STableEditConfig,
   STableEditingState,
   STableExpandable,
+  STableFooterContext,
   STablePaginationProps,
-  STableRowDragConfig,
+  STableRowDrag,
   STableRowSelection,
   STableSeq,
   STableSize,
   STableSortItem,
   STableStyles,
+  STableTitleContext,
   STableVirtualProps,
 } from './features';
 
@@ -76,11 +80,6 @@ export interface STableProps<TData extends RowData = RowData> {
    * @default true
    */
   fixedHeader?: boolean;
-  /**
-   * @description 是否展示页脚。
-   * @default false
-   */
-  showFooter?: boolean;
   /**
    * @description 列宽调整行为。
    * `onChange` 拖拽过程中实时更新，`onEnd` 在拖拽结束后更新。
@@ -136,7 +135,44 @@ export interface STableProps<TData extends RowData = RowData> {
    * @description 分页位置。
    * @default 'bottomEnd'
    */
-  paginationPlacement?: PaginationPlacement;
+  paginationPlacement?: PaginationPlacement | PaginationPlacement[];
+  /**
+   * @description 表格标题；也可使用 `#title` 插槽。函数形式接收当前页数据。
+   */
+  title?: VNodeChild | ((context: STableTitleContext<TData>) => VNodeChild);
+  /**
+   * @description 表格页脚内容；也可使用 `#footer` 插槽。函数形式接收分页上下文。
+   */
+  footer?: VNodeChild | ((context: STableFooterContext<TData>) => VNodeChild);
+  /**
+   * @description 将汇总栏固定在滚动容器底部。
+   * @default false
+   */
+  summaryFixed?: boolean;
+  /**
+   * @description 响应式断点阈值（px）。
+   * @default { xs: 0, sm: 576, md: 768, lg: 992, xl: 1200, xxl: 1600 }
+   */
+  breakpoints?: Partial<Record<STableBreakpoint, number>>;
+  /**
+   * @description SSR / 首帧使用的断点。
+   * @default 'lg'
+   */
+  defaultBreakpoint?: STableBreakpoint;
+  /**
+   * @description 对 dataSource 做深度监听，原地修改嵌套字段也会触发更新。
+   * @default false
+   */
+  deepWatchDataSource?: boolean;
+  /**
+   * @description 对 columns 做深度监听，原地修改嵌套配置也会触发重新归一化。
+   * @default false
+   */
+  deepWatchColumns?: boolean;
+  /** 渲染缓存忽略行索引与列 token；适用于纯渲染函数。 */
+  ignoreCellKey?: boolean;
+  /** 虚拟滚动按 row.id 保留已测量行高，数据刷新/重排后减少跳动。 */
+  preserveRow?: boolean;
   /**
    * @description 服务端分页模式。为 `true` 时组件「不」对 `dataSource` 再做客户端分页切片，
    * 直接渲染传入的当前页数据；分页交互（翻页 / 改页大小）通过 `pageChange` 事件与
@@ -168,7 +204,7 @@ export interface STableProps<TData extends RowData = RowData> {
    * 可与客户端分页或 `manualPagination` 服务端分页组合使用，虚拟器消费当前页的最终行模型。
    * @default false
    */
-  virtual?: boolean | STableVirtualProps;
+  virtual?: boolean | STableVirtualProps<TData>;
   /**
    * @description 显式允许关闭分页和纵向虚拟化时渲染超过建议上限的完整 DOM。
    * 该选项只关闭开发态性能告警，不会改变渲染结果。
@@ -191,6 +227,16 @@ export interface STableProps<TData extends RowData = RowData> {
   rowClassName?: string | ((record: TData, rowIndex: number) => string | undefined);
   /** 每行 style。 */
   rowStyle?: CSSProperties | ((record: TData, rowIndex: number) => CSSProperties | undefined);
+  /** 注入到 `<tr>` 的任意属性；结构属性与事件由组件保留。 */
+  customRow?: (record: TData, rowIndex: number) => Record<string, unknown> | undefined;
+  /** 注入到 `<td>` 的任意属性；`onCell` 的合并结果优先。 */
+  customCell?: (
+    record: TData,
+    rowIndex: number,
+    column: STableColumn<TData>
+  ) => Record<string, unknown> | undefined;
+  /** 注入到 `<th>` 的任意属性。 */
+  customHeaderCell?: (column: STableColumn<TData>) => Record<string, unknown> | undefined;
   /**
    * @description 展开行配置。
    */
@@ -213,22 +259,27 @@ export interface STableProps<TData extends RowData = RowData> {
   /** 启用单元格焦点与方向键导航，并派发 `cellKeydown`。 */
   keyboardNavigation?: boolean;
   /** 行拖拽配置。`true` 使用默认配置；对象用于动画、多选和树形拖拽。 */
-  rowDrag?: boolean | STableRowDragConfig<TData>;
+  rowDrag?: STableRowDrag<TData>;
   /** 列拖拽配置。列是否可拖动仍由列定义的 `draggable` 决定。 */
   columnDrag?: STableColumnDragConfig<TData>;
+  /**
+   * @description 浮层挂载容器。用于筛选、搜索、选择、表头菜单、Tooltip 与右键菜单；
+   * 返回 null/无效节点时回退到 `ownerDocument.body`。
+   */
+  getPopupContainer?: (triggerNode: HTMLElement) => HTMLElement | null;
+  /**
+   * @description 受控的筛选面板打开列集合；提供后筛选面板只派发
+   * `filterDropdownOpenChange`，不再维护内部打开状态。
+   */
+  filterDropdownOpenKeys?: string[];
   /**
    * @description 表格样式。
    */
   styles?: STableStyles;
   /**
-   * @description 表格类名。
-   * @deprecated 使用 `classNames`（对齐 Ant Design v5 命名）；两者同时提供时 `classNames` 优先。
+   * @description 表格语义化类名。
    */
   classes?: STableClasses;
-  /**
-   * @description 表格类名（推荐入口，对齐 Ant Design v5）。
-   */
-  classNames?: STableClasses;
   /**
    * @description 多语言包。默认英文（en_US）。
    * @default en_US

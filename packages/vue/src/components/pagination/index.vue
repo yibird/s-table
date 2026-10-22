@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="total > 0"
+    v-if="visible"
     :class="['s-table-pagination-wrapper', `s-table-pagination-wrapper-${placement}`]"
   >
     <UIPagination
@@ -8,10 +8,16 @@
       :page-size="pageSize"
       :total="total"
       :disabled="disabled"
+      :size="size"
+      :compact="compact"
       :show-quick-jumper="showQuickJumper"
       :show-size-changer="showSizeChanger"
       :page-size-options="pageSizeOptions"
       :show-total="showTotal"
+      :simple="simple"
+      :show-less-items="showLessItems"
+      :hide-on-single-page="hideOnSinglePage"
+      :item-render="itemRender"
       :jump-to-text="locale.pagination.jumpTo"
       :page-text="locale.pagination.page"
       :items-per-page-text="locale.pagination.itemsPerPage"
@@ -25,7 +31,8 @@
 </template>
 
 <script lang="ts" setup>
-import { Pagination as UIPagination } from '../../ui/pagination';
+import { computed } from 'vue';
+import { Pagination as UIPagination, type STablePaginationItemRender } from '../../ui/pagination';
 import { useLocales } from '../../locales/useLocales';
 import type { PaginationPlacement } from '../../types';
 
@@ -37,11 +44,17 @@ const props = withDefaults(
     pageSize?: number;
     total?: number;
     disabled?: boolean;
+    size?: 'small' | 'middle' | 'large';
+    compact?: boolean;
     showQuickJumper?: boolean;
     showSizeChanger?: boolean;
     pageSizeOptions?: number[];
     showTotal?: (total: number, range: [number, number]) => string;
     placement?: PaginationPlacement;
+    simple?: boolean;
+    showLessItems?: boolean;
+    hideOnSinglePage?: boolean;
+    itemRender?: STablePaginationItemRender;
   }>(),
   {
     current: 1,
@@ -52,8 +65,19 @@ const props = withDefaults(
     showSizeChanger: false,
     pageSizeOptions: () => [10, 20, 50, 100],
     placement: 'bottomEnd',
+    simple: false,
+    showLessItems: false,
+    hideOnSinglePage: false,
+    itemRender: undefined,
   }
 );
+
+const visible = computed(() => {
+  if (props.total <= 0) return false;
+  if (!props.hideOnSinglePage) return true;
+  const totalPages = Math.max(1, Math.ceil(props.total / props.pageSize));
+  return totalPages > 1;
+});
 
 const emit = defineEmits<{
   'update:current': [page: number];

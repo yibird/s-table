@@ -21,6 +21,14 @@ export interface STableSelectionOption<TData extends RowData = RowData> {
 // 选择列对齐方式
 export type STableSelectionColumnAlign = 'left' | 'center' | 'right';
 
+/** 选择列表头渲染上下文。 */
+export interface STableSelectionHeaderContext<TData extends RowData = RowData> {
+  selectedRowKeys: STableRowKey[];
+  selectedRows: TData[];
+  allSelected: boolean;
+  someSelected: boolean;
+}
+
 // 选择变化信息
 export interface STableSelectionChangeInfo {
   /**
@@ -86,6 +94,25 @@ export interface STableRowSelection<TData extends RowData> {
    * @default false
    */
   hideSelectAll?: boolean;
+  /**
+   * @description 单选模式下是否允许再次点击已选中项取消选择。
+   * @default false
+   */
+  allowCancelRadio?: boolean;
+  /**
+   * @description 树形选择是否严格独立（父子不联动）；关闭后父子级联。
+   * @default true
+   */
+  checkStrictly?: boolean;
+  /**
+   * @description 隐藏批量选择菜单中的内置动作（全选/清空/奇偶行/当前页）。
+   * @default false
+   */
+  hideDefaultSelections?: boolean;
+  /**
+   * @description 自定义选择列表头内容；设置后替换内置 Checkbox 与下拉菜单。
+   */
+  columnTitle?: VNodeChild | ((context: STableSelectionHeaderContext<TData>) => VNodeChild);
   /**
    * @description 追加到表头批量选择菜单的自定义操作项。
    */

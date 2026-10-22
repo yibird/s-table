@@ -30,7 +30,7 @@
 
 ## 8. 为什么 Footer 插槽没有显示？
 
-`#footer` 依赖 `showFooter`。设置 `show-footer` 后才会渲染 Footer 容器。`#summary` 不需要该开关。
+Footer 容器在提供 `#footer` 插槽或 `footer` 属性时自动渲染，不需要额外开关。请确认插槽名是 `footer`（`#summary` 用于汇总栏，二者互不影响）。
 
 ## 9. Summary 和 Footer 有什么区别？
 

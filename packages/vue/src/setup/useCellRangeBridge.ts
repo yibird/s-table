@@ -1,9 +1,15 @@
 import { computed, toRef } from 'vue';
 import type { RowData } from '@tanstack/vue-table';
+import { serializeDelimitedRows } from '@zchengfeng/s-table-core';
 import { createCellRangeClipboard, decodeRowKey } from '../utils';
 import { useCellRange } from '../hooks';
 import { isInternalColumn } from '../utils/column';
-import type { STableCellRange, STableCellRangeCopyEvent, STableCopyOptions } from '../types';
+import type {
+  STableCellRange,
+  STableCellRangeCopyEvent,
+  STableCopyOptions,
+  STableRowKey,
+} from '../types';
 import type { useColumnState } from './useColumnState';
 import type { useDataState } from './useDataState';
 import type { useTableModel } from './useTableModel';
@@ -19,7 +25,7 @@ export const useCellRangeBridge = <TData extends RowData>(
   columnState: ReturnType<typeof useColumnState<TData>>
 ) => {
   const { props, cellRangeSelection, dataSource, rowKey, tree, rowSelection, emit } = context;
-  const { toggleRow } = dataState;
+  const { toggleRow, toggleRows } = dataState;
   const { table, rows, cellSelectionState } = tableModel;
   const { getColumnById } = columnState;
 
@@ -31,10 +37,20 @@ export const useCellRangeBridge = <TData extends RowData>(
     const minRow = Math.min(range.startRow, range.endRow);
     const maxRow = Math.max(range.startRow, range.endRow);
     const records: TData[] = [];
+    // cell 模式且存在 checkbox 选择列时，范围覆盖行的选择状态同步取反。
+    // radio 模式只能保留一个值，不参与批量切换。
+    const toggleSelection =
+      cellRangeSelection.value?.mode === 'cell' &&
+      rowSelection.value !== undefined &&
+      rowSelection.value.type !== 'radio';
+    const rowKeysToToggle: STableRowKey[] = [];
     for (let index = minRow; index <= maxRow; index++) {
       const row = rows.value[index];
-      if (row) records.push(row.original);
+      if (!row) continue;
+      records.push(row.original);
+      if (toggleSelection && row.getCanSelect()) rowKeysToToggle.push(decodeRowKey(row.id));
     }
+    if (rowKeysToToggle.length > 0) toggleRows(rowKeysToToggle);
     emit('cellRangeSelect', range, records);
   };
 
@@ -71,24 +87,146 @@ export const useCellRangeBridge = <TData extends RowData>(
   // 两个公开查询入口共享同一份不可变快照，避免调用方修改内部响应式对象。
   const getCellRangeSnapshot = () => (cellRange.value ? { ...cellRange.value } : null);
 
+  // ==================== 多区间 API ====================
+  /** 按固定列分组后的视觉顺序获取全部可见叶子列。 */
+  const getDisplayColumns = () => [
+    ...table.getStartVisibleLeafColumns(),
+    ...table.getCenterVisibleLeafColumns(),
+    ...table.getEndVisibleLeafColumns(),
+  ];
+  const getColumnIdByIndex = (columnIndex: number) => getDisplayColumns()[columnIndex]?.id;
+
+  const toPublicRange = (bounds: {
+    minRowIndex: number;
+    maxRowIndex: number;
+    minColumnIndex: number;
+    maxColumnIndex: number;
+  }): STableCellRange | null => {
+    const renderedRows = rows.value;
+    if (renderedRows.length === 0) return null;
+    const firstRenderedRowIndex = renderedRows[0]?.getDisplayIndex() ?? 0;
+    const startRow = bounds.minRowIndex - firstRenderedRowIndex;
+    const endRow = bounds.maxRowIndex - firstRenderedRowIndex;
+    if (
+      startRow < 0 ||
+      endRow < 0 ||
+      startRow >= renderedRows.length ||
+      endRow >= renderedRows.length
+    ) {
+      return null;
+    }
+    return {
+      startRow,
+      startCol: bounds.minColumnIndex,
+      endRow,
+      endCol: bounds.maxColumnIndex,
+    };
+  };
+
+  /** 获取全部公开区间快照。 */
+  const getCellRanges = (): STableCellRange[] =>
+    table
+      .getCellSelectionBounds()
+      .map(toPublicRange)
+      .filter((range): range is STableCellRange => range !== null);
+
+  const toSelectionRange = (range: STableCellRange) => {
+    const startRow = rows.value[Math.min(range.startRow, range.endRow)];
+    const endRow = rows.value[Math.max(range.startRow, range.endRow)];
+    const startColumnId = getColumnIdByIndex(Math.min(range.startCol, range.endCol));
+    const endColumnId = getColumnIdByIndex(Math.max(range.startCol, range.endCol));
+    if (!startRow || !endRow || !startColumnId || !endColumnId) return undefined;
+    return {
+      anchorRowId: startRow.id,
+      anchorColumnId: startColumnId,
+      focusRowId: endRow.id,
+      focusColumnId: endColumnId,
+    };
+  };
+
+  /** 设置区间；mode 支持 replace / include / exclude。 */
+  const setCellRange = (
+    range: STableCellRange | null,
+    options: { mode?: 'replace' | 'include' | 'exclude' } = {}
+  ): boolean => {
+    if (range === null) {
+      clearCellRange();
+      return true;
+    }
+    const selection = toSelectionRange(range);
+    if (!selection) return false;
+    table.selectCellRange(selection, { mode: options.mode ?? 'replace' });
+    emit('cellRangeChange', range);
+    return true;
+  };
+
+  const addCellRange = (
+    range: STableCellRange,
+    options: { mode?: 'include' | 'exclude' } = {}
+  ): boolean => setCellRange(range, { mode: options.mode ?? 'include' });
+
+  /** 清除全部区间，或按下标清除单个区间。 */
+  const clearCellRangeAt = (index?: number) => {
+    if (index === undefined) {
+      clearCellRange();
+      return;
+    }
+    table.setCellSelection((previous) => previous.filter((_, current) => current !== index));
+  };
+
+  /** 聚焦单个单元格（同时建立单格选区）。 */
+  const focusCell = (rowIndex: number, columnIndex: number): boolean =>
+    setCellRange({
+      startRow: rowIndex,
+      endRow: rowIndex,
+      startCol: columnIndex,
+      endCol: columnIndex,
+    });
+
+  /** 全选当前行模型中的可选单元格。 */
+  const selectAllCellRange = () => {
+    if (!cellRangeSelection.value) return;
+    table.selectAllCells();
+    const active = cellRange.value;
+    if (active) emit('cellRangeChange', active);
+  };
+
+  /** Shift+方向键：扩展当前区间，并同步公开的范围变化事件。 */
+  const extendCellRange = (direction: 'up' | 'down' | 'left' | 'right') => {
+    if (!cellRangeSelection.value) return;
+    table.extendCellSelection(direction);
+    const active = cellRange.value;
+    if (active) emit('cellRangeChange', active);
+  };
+
+  /** 活动区间的列 ID 切片；多区间时不能使用全局列并集，否则值矩阵会错位。 */
+  const getActiveRangeColumnIds = (): string[] => {
+    const bounds = table.getCellSelectionBounds().at(-1);
+    if (!bounds) return [];
+    return getDisplayColumns()
+      .slice(bounds.minColumnIndex, bounds.maxColumnIndex + 1)
+      .map((column) => column.id);
+  };
+
   /**
    * 剪贴板列 id 会过滤内部列；row 模式下值矩阵包含内部列，
    * 必须按同一组列索引过滤，避免复制结果错位。
    */
   const getCopySelectedValues = () => {
     const grid = table.getSelectedCellRangesData().at(-1);
-    if (!grid || cellRangeSelection.value?.mode !== 'row') return grid;
+    if (!grid) return grid;
+    const columnIds = getActiveRangeColumnIds();
     const keepIndexes: number[] = [];
-    const columnIds = table.getCellSelectionColumnIds();
     for (let index = 0; index < columnIds.length; index++) {
       if (!isInternalColumn(columnIds[index]!)) keepIndexes.push(index);
     }
+    if (keepIndexes.length === columnIds.length) return grid;
     return grid.map((row) => keepIndexes.map((index) => row[index]));
   };
 
   const { serialize: serializeCellRange } = createCellRangeClipboard({
     getRange: () => (cellRange.value ? { ...cellRange.value } : null),
-    getColumnIds: () => table.getCellSelectionColumnIds(),
+    getColumnIds: getActiveRangeColumnIds,
     getSelectedValues: getCopySelectedValues,
     getColumnHeader: (columnId) => getColumnById(columnId)?.header,
     isInternalColumn,
@@ -110,6 +248,47 @@ export const useCellRangeBridge = <TData extends RowData>(
 
   /** 将当前框选写入系统剪贴板，并返回生成的文本。 */
   const copyCellRange = async (options: STableCopyOptions = {}): Promise<string> => {
+    if (options.ranges === 'all') {
+      const grids = table.getSelectedCellRangesData();
+      const bounds = table.getCellSelectionBounds();
+      if (grids.length === 0) return '';
+      const displayColumns = getDisplayColumns();
+      const text = grids
+        .map((grid, rangeIndex) => {
+          const rangeBounds = bounds[rangeIndex];
+          if (!rangeBounds) return '';
+          const keepIndexes: number[] = [];
+          for (let index = 0; index < (grid[0]?.length ?? 0); index++) {
+            const column = displayColumns[rangeBounds.minColumnIndex + index];
+            if (column && !isInternalColumn(column.id)) keepIndexes.push(index);
+          }
+          return serializeDelimitedRows(
+            grid.map((row) => keepIndexes.map((index) => row[index])),
+            {
+              delimiter: options.delimiter ?? '\t',
+              preventFormulaInjection: options.preventFormulaInjection,
+            }
+          );
+        })
+        .filter(Boolean)
+        .join('\r\n\r\n');
+      if (!text) return '';
+      // 与单区间复制保持一致：监听器仍可拒绝写入剪贴板。
+      if (
+        !canCopyCellRange({
+          range: { ...cellRange.value! },
+          text,
+          columnIds: getActiveRangeColumnIds(),
+          source: 'api',
+        })
+      ) {
+        return '';
+      }
+      if (options.writeToClipboard !== false && typeof navigator !== 'undefined') {
+        await navigator.clipboard?.writeText?.(text);
+      }
+      return text;
+    }
     const payload = serializeCellRange(options, 'api');
     if (!payload) return '';
     if (!canCopyCellRange(payload)) return '';
@@ -179,6 +358,13 @@ export const useCellRangeBridge = <TData extends RowData>(
     clearCellRange,
     focusedCell,
     getCellRangeSnapshot,
+    getCellRanges,
+    setCellRange,
+    addCellRange,
+    clearCellRangeAt,
+    focusCell,
+    selectAllCellRange,
+    extendCellRange,
     copyCellRange,
     handleCellRangeCopy,
     handleCellRangeCopyShortcut,

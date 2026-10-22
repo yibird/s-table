@@ -2,6 +2,7 @@ export type * from './types';
 export * from './clipboard';
 export * from './columns';
 export * from './editing';
+export * from './export';
 export * from './interaction';
 export * from './scroll';
 export * from './state/pagination';

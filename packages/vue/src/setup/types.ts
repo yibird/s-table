@@ -26,9 +26,10 @@ type STableDefaultedPropKeys =
   | 'virtual'
   | 'showHeader'
   | 'fixedHeader'
-  | 'showFooter'
   | 'columnResizeMode'
   | 'paginationPlacement'
+  | 'summaryFixed'
+  | 'defaultBreakpoint'
   | 'keyboardNavigation'
   | 'locale';
 
@@ -60,8 +61,6 @@ export type STableSetupContext<TData extends RowData> = STablePropRefs<TData> & 
   dataSource: ComputedRef<TData[]>;
   /** 树形缩进宽度；未启用树形数据时为 undefined。 */
   treeIndentSize: ComputedRef<number | undefined>;
-  /** 当前尺寸下单元格原有行内起始 padding。 */
-  treeIndentBasePadding: ComputedRef<number>;
   /** 展开配置。 */
   expandable: ComputedRef<STableExpandable<TData> | undefined>;
   /** 行拖拽开关。 */
@@ -76,6 +75,6 @@ export type STableSetupContext<TData extends RowData> = STablePropRefs<TData> & 
   getTable: () => Table<TableFeatures, TData> | undefined;
   /** 组件根节点。 */
   rootRef: Readonly<Ref<HTMLElement | null>>;
-  /** 解析后的类名入口（classNames 优先，classes 兼容）。 */
-  classes: ComputedRef<STableClasses | undefined>;
+  /** 语义化类名入口。 */
+  classes: Ref<STableClasses | undefined>;
 };

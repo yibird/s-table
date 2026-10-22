@@ -84,6 +84,8 @@ export type STableEmits<TData extends RowData = RowData> = {
       searches: Record<string, string>;
     },
   ];
+  /** 筛选面板打开状态变化事件。 */
+  filterDropdownOpenChange: [columnId: string, open: boolean];
   /** 分页变化事件（服务端分页模式下用于请求后端分页数据）。 */
   pageChange: [payload: { page: number; pageSize: number }];
   /** 行/单元格原生交互事件。 */

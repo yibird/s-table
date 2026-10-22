@@ -65,6 +65,15 @@ type BodyEventDelegationOptions<TData extends RowData> = {
   getOnRangeRowClick: () => ((rowIndex: number) => void) | undefined;
   onCellRangeMousedown: (rowId: string, columnId: string, event: MouseEvent) => void;
   onCellRangeMouseenter: (rowId: string, columnId: string, event: MouseEvent) => void;
+  onCellRangeSelectAll?: () => void;
+  onCellRangeExtend?: (direction: 'up' | 'down' | 'left' | 'right') => void;
+  onCellRangeClear?: () => void;
+  /** 虚拟窗口边缘没有相邻 DOM 时的跨窗口导航。 */
+  onBoundaryNavigate?: (
+    rowIndex: number,
+    columnIndex: number,
+    direction: 'up' | 'down' | 'left' | 'right'
+  ) => boolean;
   onRowDragOver: (rowIndex: number, event: DragEvent) => void;
   emit: BodyEventEmitter<TData>;
 };
@@ -285,13 +294,71 @@ export const useBodyEventDelegation = <TData extends RowData>(
     if (!cell) return;
     options.emit('cellKeydown', cell.row, cell.columnId, cell.index, cell.columnIndex, event);
     if (event.defaultPrevented) return;
+    if (!options.getKeyboardNavigation()) return;
+    const isEditableTarget = Boolean(
+      (event.target as Element | null)?.matches?.('input,select,textarea,[contenteditable]')
+    );
+    if (isEditableTarget) return;
+
+    // Tab 从表格首格离开时先把焦点交给同表表头操作控件。
+    // 表头在 DOM 中位于 tbody 之前，正常正向 Tab 会跳过它们；仅对首格做一次衔接，
+    // 后续 Tab 继续按文档顺序离开表格，不改变网格内部的方向键导航。
     if (
-      !options.getKeyboardNavigation() ||
-      (event.target as Element | null)?.matches?.('input,select,textarea') ||
-      !ARROW_KEYS.has(event.key)
+      event.key === 'Tab' &&
+      !event.shiftKey &&
+      !event.ctrlKey &&
+      !event.altKey &&
+      !event.metaKey
     ) {
-      return;
+      const body = event.currentTarget as HTMLElement;
+      const firstCell = body.querySelector<HTMLElement>(
+        'td.s-table-cell[data-column-id][tabindex]'
+      );
+      const currentCell = findOwnedElement<HTMLTableCellElement>(
+        event.target,
+        'td[tabindex]',
+        event.currentTarget
+      );
+      if (firstCell && currentCell && firstCell === currentCell) {
+        const headerTarget = currentCell
+          .closest<HTMLElement>('.s-table')
+          ?.querySelector<HTMLElement>(
+            'thead .s-table-cell-title[tabindex], thead button:not([disabled]), thead [tabindex="0"]'
+          );
+        if (headerTarget) {
+          event.preventDefault();
+          headerTarget.focus();
+          return;
+        }
+      }
     }
+
+    // 框选快捷键：Ctrl/Cmd+A、Escape、Shift+方向键。
+    if (options.getCellRangeMode()) {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 'a') {
+        event.preventDefault();
+        options.onCellRangeSelectAll?.();
+        return;
+      }
+      if (event.key === 'Escape') {
+        options.onCellRangeClear?.();
+        return;
+      }
+      if (event.shiftKey && ARROW_KEYS.has(event.key)) {
+        event.preventDefault();
+        const direction =
+          event.key === 'ArrowUp'
+            ? 'up'
+            : event.key === 'ArrowDown'
+              ? 'down'
+              : event.key === 'ArrowLeft'
+                ? 'left'
+                : 'right';
+        options.onCellRangeExtend?.(direction);
+      }
+    }
+
+    if (!ARROW_KEYS.has(event.key)) return;
 
     const current = findOwnedElement<HTMLTableCellElement>(
       event.target,
@@ -300,6 +367,7 @@ export const useBodyEventDelegation = <TData extends RowData>(
     );
     const currentRow = current?.closest('tr.s-table-row');
     if (!current || !currentRow) return;
+    const currentColumnIndex = Number(current.dataset.colIndex);
     const horizontal = event.key === 'ArrowLeft' || event.key === 'ArrowRight';
     let candidate: Element | null = null;
     if (horizontal) {
@@ -310,6 +378,17 @@ export const useBodyEventDelegation = <TData extends RowData>(
           event.key === 'ArrowLeft'
             ? candidate.previousElementSibling
             : candidate.nextElementSibling;
+      }
+      // 横向虚拟化时窗口外列不在 DOM 中，DOM 相邻节点可能直接是左右固定列。
+      // 索引不连续说明中间还有未渲染列，应交给表格层滚动并重新聚焦，避免整段跳过。
+      if (candidate && Number.isFinite(currentColumnIndex)) {
+        const candidateColumnIndex = Number((candidate as HTMLElement).dataset.colIndex);
+        if (
+          Number.isFinite(candidateColumnIndex) &&
+          Math.abs(candidateColumnIndex - currentColumnIndex) > 1
+        ) {
+          candidate = null;
+        }
       }
     } else {
       let nextRow =
@@ -327,7 +406,29 @@ export const useBodyEventDelegation = <TData extends RowData>(
       }
     }
     const focusTarget = candidate?.matches('[tabindex]') ? (candidate as HTMLElement) : undefined;
-    if (!focusTarget) return;
+    if (!focusTarget) {
+      // 虚拟滚动下相邻行/列可能不在 DOM 中，交给表格层滚动并重新聚焦。
+      const rowIndex = Number(currentRow.getAttribute('data-row-index'));
+      const columnIndex = Number(current.dataset.colIndex);
+      if (
+        Number.isFinite(rowIndex) &&
+        Number.isFinite(columnIndex) &&
+        options.onBoundaryNavigate?.(
+          rowIndex,
+          columnIndex,
+          event.key === 'ArrowUp'
+            ? 'up'
+            : event.key === 'ArrowDown'
+              ? 'down'
+              : event.key === 'ArrowLeft'
+                ? 'left'
+                : 'right'
+        )
+      ) {
+        event.preventDefault();
+      }
+      return;
+    }
     event.preventDefault();
     focusTarget.focus();
   };

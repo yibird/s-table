@@ -376,10 +376,18 @@ export const useSTable = <TData extends RowData>({
     get enableMultiRowSelection() {
       return props.rowSelection?.type !== 'radio';
     },
+    // checkStrictly=true 时关闭 TanStack 自带的父子级联；
+    // checkStrictly=false 的级联由 useRowSelection 显式处理。
+    get enableSubRowSelection() {
+      return props.rowSelection?.checkStrictly === false;
+    },
     // 单元格范围只由 TanStack 管理；组件层仅把 ID 角点适配成公开的索引范围。
     enableCellSelection: canSelectCell,
     get enableCellRangeSelection() {
       return props.cellRangeSelection?.mode === 'cell';
+    },
+    get enableMultiCellRangeSelection() {
+      return props.cellRangeSelection ? props.cellRangeSelection.multi !== false : false;
     },
     get enableCellSelectionDrag() {
       return props.cellRangeSelection?.mode === 'cell';
@@ -387,8 +395,6 @@ export const useSTable = <TData extends RowData>({
     get enableCellSpanning() {
       return hasCellSpanning.value;
     },
-    // STable 当前公开 API 只表达一个矩形，关闭 Ctrl/Meta 多范围以保持契约一致。
-    enableMultiCellRangeSelection: false,
     getRowCanExpand: (row) => {
       // 分组行始终允许展开 / 折叠，不受业务 isRowExpandable 影响。
       if (row.getIsGrouped()) return true;

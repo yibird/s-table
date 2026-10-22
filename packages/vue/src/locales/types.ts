@@ -7,7 +7,6 @@ export interface STableLocale {
   /** 空状态。 */
   empty: {
     title: string;
-    description: string;
   };
   /** 过滤器。 */
   filter: {
@@ -51,6 +50,7 @@ export interface STableLocale {
     contextMenu: string;
     expandTrigger: string;
     selectionDropdown: string;
+    columnMenu: string;
     resizeColumn: string;
     loading: string;
   };

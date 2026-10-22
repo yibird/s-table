@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { createApp, h, nextTick, ref, type App } from 'vue';
 import { Select, type SelectValue } from '../../ui/select';
 
@@ -81,7 +81,10 @@ describe('Select 下拉交互', () => {
     trigger.click();
     await nextTick();
 
-    const dropdown = document.querySelector<HTMLElement>('.s-select-dropdown')!;
+    // 上一个用例关闭的面板可能仍在离场过渡中，排除离场节点。
+    const dropdown = document.querySelector<HTMLElement>(
+      '.s-select-dropdown:not(.scale-down-leave-active)'
+    )!;
     expect(dropdown.style.getPropertyValue('--s-primary-color')).toBe('#0f766e');
     expect(dropdown.style.getPropertyValue('--s-color-bg-cell')).toBe('#ecfdf5');
     expect(dropdown.style.getPropertyValue('--s-custom-demo-token')).toBe('custom-value');

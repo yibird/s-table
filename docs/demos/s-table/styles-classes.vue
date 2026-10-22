@@ -65,7 +65,6 @@ const styles: STableStyles = {
       row-key="id"
       bordered
       striped
-      show-footer
       :columns="columns"
       :data-source="dataSource"
       :classes="classes"

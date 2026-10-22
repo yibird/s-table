@@ -1,4 +1,4 @@
-import { describe, it, expect, expectTypeOf, afterEach } from 'vitest';
+import { describe, it, expect, expectTypeOf, afterEach } from 'vite-plus/test';
 import { h, nextTick, reactive, ref, type App } from 'vue';
 import { mountSTable } from '../helpers';
 import { createSTableColumnHelper } from '../../utils/column';
@@ -142,6 +142,40 @@ describe('解耦列 API + createSTableColumnHelper', () => {
     const cells = host.querySelectorAll('tbody td.s-table-cell');
     expect(cells).toHaveLength(1);
     expect(cells[0]?.getAttribute('rowspan')).toBe('2');
+  });
+
+  it('spanRows 函数接收稳定业务上下文而非 TanStack Row', async () => {
+    const contexts: Array<{
+      record: User;
+      previousRecord: User;
+      rowIndex: number;
+      columnId: string;
+    }> = [];
+    const columns: STableColumn<User>[] = [
+      {
+        accessorKey: 'name',
+        header: '姓名',
+        spanRows: (context) => {
+          contexts.push(context);
+          expect('row' in context).toBe(false);
+          return context.previousRecord.name === context.record.name;
+        },
+      },
+    ];
+    const repeatedData: User[] = [
+      { id: 1, name: 'Tom', score: 90 },
+      { id: 2, name: 'Tom', score: 80 },
+    ];
+
+    const mounted = mountSTable<User>({ columns, dataSource: repeatedData, rowKey: 'id' });
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    expect(contexts.length).toBeGreaterThan(0);
+    expect(contexts[0]!.record.name).toBe('Tom');
+    expect(contexts[0]!.columnId).toBe('name');
+    expect(host.querySelector('tbody td.s-table-cell')?.getAttribute('rowspan')).toBe('2');
   });
 
   it('响应式原地修改列配置后会重新归一TanStack 列定', async () => {

@@ -151,29 +151,20 @@
 
 // ── 下拉面板（Teleport 到 body，由 floating-ui 定位）──
 .s-select-dropdown {
+  .s-popover-surface();
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border: 1px solid var(--s-color-border);
-  background-color: var(--s-color-bg-cell, #fff);
-  border-radius: var(--s-radius-lg, 8px);
-  box-shadow: var(--s-shadow-elevated, var(--s-shadow-dropdown, 0 6px 16px rgba(0, 0, 0, 0.08)));
   padding: 4px;
   box-sizing: border-box;
   overflow-y: auto;
-  z-index: var(--s-z-index-dropdown, 1050);
-  transform-origin: top center;
-  --s-popover-shift: -4px;
-  animation: s-table-popover-in var(--s-duration-popover, 0.16s) var(--s-ease-emphasized);
+  z-index: var(--s-z-index-dropdown, 10);
 
   .s-select-item-option {
+    .s-menu-item();
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 5px 12px;
-    border-radius: var(--s-radius-sm, 4px);
-    cursor: pointer;
-    transition: background-color var(--s-duration-fast) var(--s-ease-out);
     font-size: 14px;
     line-height: 22px;
     color: var(--s-color-text, rgba(0, 0, 0, 0.88));

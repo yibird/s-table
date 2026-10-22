@@ -1,5 +1,5 @@
 <template>
-  <Teleport to="body">
+  <Teleport v-if="teleportTarget" :to="teleportTarget">
     <div
       v-if="isOpen && row"
       ref="floatingRef"
@@ -10,9 +10,11 @@
       :aria-label="ariaLabel"
       @keydown="handleKeydown"
     >
-      <div class="s-table-context-menu-inner">
-        <slot :row="row" :row-index="rowIndex" :close="close" />
-      </div>
+      <Transition name="scale-down" appear>
+        <div class="s-table-context-menu-inner">
+          <slot :row="row" :row-index="rowIndex" :close="close" />
+        </div>
+      </Transition>
     </div>
   </Teleport>
 </template>
@@ -23,6 +25,7 @@ import { useFloating, offset, flip, shift, autoUpdate } from '@floating-ui/vue';
 import type { RowData } from '@tanstack/vue-table';
 import type { STableThemeVariables } from '../../theme/useThemeVariables';
 import { getOwnerDocument } from '../../utils/dom';
+import type { STableContextMenuSlotContext } from '../../types';
 
 const props = withDefaults(
   defineProps<{
@@ -34,6 +37,10 @@ const props = withDefaults(
     close?: () => void;
     ariaLabel?: string;
     themeStyle?: STableThemeVariables;
+    /** 触发节点（表格根节点），用于解析浮层容器。 */
+    triggerNode?: HTMLElement | null;
+    /** 浮层容器解析器；无效节点回退 body。 */
+    getPopupContainer?: (triggerNode: HTMLElement) => HTMLElement | null;
   }>(),
   {
     isOpen: false,
@@ -44,8 +51,22 @@ const props = withDefaults(
     close: () => {},
     ariaLabel: 'Row actions',
     themeStyle: () => ({}),
+    triggerNode: null,
+    getPopupContainer: undefined,
   }
 );
+
+/** 默认插槽与表格公开的 `contextMenu` 共享同一套作用域类型。 */
+defineSlots<{
+  default?: (scope: STableContextMenuSlotContext<TData>) => unknown;
+}>();
+
+const teleportTarget = computed<HTMLElement | null>(() => {
+  const trigger = props.triggerNode;
+  if (!trigger) return null;
+  const resolved = props.getPopupContainer?.(trigger);
+  return resolved?.isConnected ? resolved : trigger.ownerDocument.body;
+});
 
 const floatingRef = useTemplateRef<HTMLElement>('floatingRef');
 
@@ -71,6 +92,8 @@ const { floatingStyles } = useFloating(virtualElement, floatingRef, {
   },
   placement: 'right-start',
   strategy: 'fixed',
+  // 使用 top/left 定位，把 transform 留给 scale-down 入场过渡。
+  transform: false,
   whileElementsMounted: autoUpdate,
   middleware: [offset(4), flip(), shift({ padding: 8 })],
 });

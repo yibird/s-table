@@ -1,4 +1,4 @@
-import { onBeforeUnmount, shallowRef, type ShallowRef } from 'vue';
+import { nextTick, onBeforeUnmount, shallowRef, type ShallowRef } from 'vue';
 import type { Row, RowData, TableFeatures } from '@tanstack/vue-table';
 import { getOwnerDocument, getOwnerWindow } from '../utils/dom';
 import { getRowVisibleIndex } from '../adapter/tableDisplayOrder';
@@ -12,6 +12,8 @@ export const useContextMenu = <TData extends RowData>() => {
   let listenerDocument: Document | undefined;
   let listenerWindow: Window | undefined;
   let registerRafId: number | null = null;
+  /** Esc 关闭时用于归还焦点的触发单元格。 */
+  let restoreTarget: HTMLElement | null = null;
 
   const removeGlobalListeners = () => {
     if (registerRafId !== null) {
@@ -47,6 +49,11 @@ export const useContextMenu = <TData extends RowData>() => {
     rowIndex = getRowVisibleIndex(row)
   ) => {
     event.preventDefault();
+    const origin = event.target as Element | null;
+    restoreTarget =
+      origin?.closest<HTMLElement>('td[data-column-id]') ??
+      origin?.closest<HTMLElement>('.s-table-row') ??
+      null;
     contextRow.value = row.original;
     contextRowIndex.value = rowIndex;
     posX.value = event.clientX;
@@ -55,11 +62,16 @@ export const useContextMenu = <TData extends RowData>() => {
     registerGlobalListeners(getOwnerDocument(event.currentTarget as Node | null));
   };
 
-  const closeMenu = () => {
+  const closeMenu = (restoreFocus = false) => {
+    const target = restoreTarget;
+    restoreTarget = null;
     isOpen.value = false;
     contextRow.value = null;
     contextRowIndex.value = -1;
     removeGlobalListeners();
+    if (restoreFocus && target?.isConnected) {
+      nextTick(() => target.focus());
+    }
   };
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -71,7 +83,7 @@ export const useContextMenu = <TData extends RowData>() => {
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && isOpen.value) closeMenu();
+    if (e.key === 'Escape' && isOpen.value) closeMenu(true);
   };
 
   const handleScroll = () => {

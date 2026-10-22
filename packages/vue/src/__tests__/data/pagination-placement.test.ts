@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { nextTick, type App } from 'vue';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+import { h, nextTick, type App } from 'vue';
 import { mountSTable } from '../helpers';
 import type { PaginationPlacement, STableColumn } from '../../types';
 
@@ -30,6 +30,69 @@ afterEach(() => {
 });
 
 describe('pagination placement', () => {
+  it('支持多个 placement 同时渲染顶部和底部分页', async () => {
+    const mounted = mountSTable<Row>({
+      columns,
+      dataSource,
+      pagination: true,
+      paginationPlacement: ['topEnd', 'bottomStart', 'topEnd'],
+    });
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    const wrappers = Array.from(host.querySelectorAll<HTMLElement>('.s-table-pagination-wrapper'));
+    expect(wrappers.map((wrapper) => wrapper.className)).toEqual([
+      's-table-pagination-wrapper s-table-pagination-wrapper-topEnd',
+      's-table-pagination-wrapper s-table-pagination-wrapper-bottomStart',
+    ]);
+  });
+
+  it('itemRender 替换分页条目内容', async () => {
+    const mounted = mountSTable<Row>({
+      columns,
+      dataSource,
+      pagination: {
+        itemRender: (page, type, fallback) =>
+          type === 'page' ? h('span', { class: 'custom-page' }, String(page)) : fallback,
+      },
+    });
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    expect(host.querySelector('.custom-page')?.textContent).toBe('1');
+  });
+
+  it('simple 模式只保留上一页/下一页与页码信息', async () => {
+    const mounted = mountSTable<Row>({
+      columns,
+      dataSource,
+      pagination: { simple: true },
+    });
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    expect(host.querySelector('.s-pagination-simple-pager')?.textContent?.replace(/\s/g, '')).toBe(
+      '1/2'
+    );
+    expect(host.querySelector('.s-pagination-jump-next')).toBeNull();
+  });
+
+  it('hideOnSinglePage 在只有一页时隐藏分页器', async () => {
+    const mounted = mountSTable<Row>({
+      columns,
+      dataSource: dataSource.slice(0, 5),
+      pagination: { hideOnSinglePage: true },
+    });
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    expect(host.querySelector('.s-table-pagination-wrapper')).toBeNull();
+  });
+
   it.each(placements)('uses semantic placement class for %s', async (placement) => {
     const mounted = mountSTable<Row>({
       columns,

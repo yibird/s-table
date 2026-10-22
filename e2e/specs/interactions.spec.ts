@@ -373,6 +373,63 @@ test.describe('拖拽与列宽', () => {
     );
   });
 
+  test('选择列下拉与右键菜单共用 scale-down 入场过渡', async ({ page }) => {
+    await page.evaluate(() => {
+      const names: string[] = [];
+      (window as unknown as { __menuTransitions: string[] }).__menuTransitions = names;
+      document.addEventListener(
+        'transitionrun',
+        (event) => names.push((event as TransitionEvent).propertyName),
+        true
+      );
+    });
+    const transitions = () =>
+      page.evaluate(() => (window as unknown as { __menuTransitions: string[] }).__menuTransitions);
+
+    const selectionTable = page.getByTestId('selection-expand-table');
+    await selectionTable.locator('.s-table-selection-dropdown-trigger').click();
+    const selectionMenu = page.locator('.s-table-selection-dropdown-menu');
+    await expect(selectionMenu).toBeVisible();
+    await expect.poll(transitions).toContain('transform');
+
+    const rangeTable = page.getByTestId('range-context-table');
+    await rangeTable.locator('.s-table-row').first().click({ button: 'right' });
+    const contextMenu = page.locator('.s-table-context-menu-inner');
+    await expect(contextMenu).toBeVisible();
+    await expect
+      .poll(async () => (await transitions()).filter((name) => name === 'transform').length)
+      .toBeGreaterThanOrEqual(2);
+  });
+
+  test('指针聚焦滚动容器时不会把焦点和页面滚动劫持到首行', async ({ page }) => {
+    const table = page.getByTestId('range-context-table');
+    const container = table.locator('.s-table-container');
+
+    await container.scrollIntoViewIfNeeded();
+    // 在真实指针事件中聚焦容器，等价于点击横向滚动条触发的聚焦。
+    await table.evaluate((element) => {
+      const trigger = document.createElement('button');
+      trigger.id = 'pointer-focus-trigger';
+      trigger.textContent = 'focus container';
+      // 固定定位，避免点击按钮本身触发页面滚动，干扰断言。
+      trigger.style.cssText = 'position: fixed; top: 8px; left: 8px; z-index: 99999';
+      trigger.addEventListener('click', () =>
+        element.querySelector<HTMLElement>('.s-table-container')?.focus()
+      );
+      element.prepend(trigger);
+    });
+    const before = await page.evaluate(() => window.scrollY);
+    await page.locator('#pointer-focus-trigger').click();
+    await page.waitForTimeout(100);
+
+    const result = await page.evaluate(() => ({
+      pageY: window.scrollY,
+      activeClass: document.activeElement?.className ?? '',
+    }));
+    expect(result.pageY).toBe(before);
+    expect(result.activeClass).toContain('s-table-container');
+  });
+
   test('拖动 separator 后提交列宽并派发 resizeEnd', async ({ page }) => {
     const scope = page.getByTestId('drag-resize-table');
     const idHeader = scope.locator('th[data-column-id="id"]');

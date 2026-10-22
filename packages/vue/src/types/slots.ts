@@ -1,7 +1,12 @@
 import type { VNodeChild } from 'vue';
 import type { RowData } from '@tanstack/table-core';
 import type { STableRowKey } from '@zchengfeng/s-table-core';
-import type { STableColumn, STableGroupRowSlotContext } from './features';
+import type {
+  STableColumn,
+  STableFooterContext,
+  STableGroupRowSlotContext,
+  STableTitleContext,
+} from './features';
 
 // 表格插槽
 export interface STableContextMenuSlotContext<TData extends RowData = RowData> {
@@ -37,9 +42,13 @@ export interface STableFilterPanelSlotContext<TData extends RowData = RowData> {
 
 export interface STableSlots<TData extends RowData = RowData> {
   /**
-   * @desc 表格页脚。
+   * @desc 表格标题。参数为 `{ currentPageData }`。
    */
-  footer?: () => VNodeChild;
+  title?: (scope: STableTitleContext<TData>) => VNodeChild;
+  /**
+   * @desc 表格页脚。参数为当前页数据与分页信息。
+   */
+  footer?: (scope: STableFooterContext<TData>) => VNodeChild;
   /**
    * @desc 表格汇总行（渲染为 tfoot，位于 body 之后、footer 之前）。
    */
