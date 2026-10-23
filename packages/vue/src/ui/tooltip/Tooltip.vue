@@ -66,7 +66,7 @@ const floatingStyles = computed(() => ({
 
 <style lang="less">
 .s-table-tooltip {
-  z-index: var(--s-z-index-dropdown, 10);
+  z-index: var(--s-z-index-dropdown, 30);
   max-width: 320px;
   padding: 4px 8px;
   border-radius: var(--s-radius-md, 6px);

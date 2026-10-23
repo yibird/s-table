@@ -26,6 +26,18 @@
 
 <demo vue="../../demos/s-table/size.vue" />
 
+### 内置组件的尺寸继承
+
+表格通过 Size Context 向下注入当前 `size`；`Button`、`Input`、`Checkbox`、`Radio`、`Select`、`Pagination` 等内置组件由内部 `useComponentSize` 解析最终尺寸，优先级为：
+
+```
+组件自身 size Prop > 表格 Size Context > 'middle'
+```
+
+- 未显式设置 `size` 时，内置组件跟随表格尺寸。
+- 需要局部覆盖时直接传入尺寸，例如过滤面板按钮使用 `size="small"`，即使表格是 `large` 也保持 24px 高。
+- 该逻辑只影响内置 UI 组件，不影响业务自定义单元格内容。
+
 ## 高度与固定表头
 
 表格本身不提供独立的 `height` Prop。通过 `style` 或外部 class 设置根节点高度；`fixedHeader` 默认为 `true`，在容器滚动时保持表头可见。不设置高度时，表格随内容自然撑开。

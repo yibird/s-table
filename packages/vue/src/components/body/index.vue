@@ -229,7 +229,6 @@
               :cell-render-state="getCellRenderState(entry, item)"
               :custom-attrs="getCustomCellAttrs(entry, item)"
               :ellipsis="isEllipsisColumn(entry.column.id)"
-              :ellipsis-title="getEllipsisTitle(entry)"
               :auto-height="isAutoHeightColumn(entry.column.id)"
             >
               <template v-if="$slots.cellEditor" #editor="scope">
@@ -532,18 +531,6 @@ const isAutoHeightColumn = (columnId: string) => {
   return Boolean(column?.autoHeight) && !column?.ellipsis;
 };
 
-/**
- * `ellipsis: { showTitle: true }` 时补充原生 title。
- * 直接使用 accessor 值，避免为每个单元格读取已渲染 DOM 产生额外布局开销。
- */
-const getEllipsisTitle = (entry: Cell<TableFeatures, TData>): string | undefined => {
-  const ellipsis = getRawColumn(entry.column.id)?.ellipsis;
-  if (typeof ellipsis !== 'object' || ellipsis?.showTitle !== true) return undefined;
-  const value = entry.getValue();
-  if (value == null || typeof value === 'object') return undefined;
-  return String(value);
-};
-
 // ==================== 单元格 Tooltip ====================
 const tooltipTarget = shallowRef<HTMLElement | null>(null);
 const tooltipContent = shallowRef<VNodeChild>(undefined);
@@ -650,15 +637,14 @@ const getCustomCellAttrs = (entry: Cell<TableFeatures, TData>, item: RenderItem<
   return attrs;
 };
 
-/** ellipsis.showTitle 优先；没有时保留 customCell 提供的 title。 */
+/** 原生 title 只来自 customCell。 */
 const getCellTitle = (
   entry: Cell<TableFeatures, TData>,
   item: RenderItem<TData>
 ): string | undefined =>
-  getEllipsisTitle(entry) ??
-  (props.customCell
+  props.customCell
     ? (getCustomCellAttrs(entry, item)?.attrs?.title as string | undefined)
-    : undefined);
+    : undefined;
 
 const getCellRenderer = (cell: Cell<TableFeatures, TData>) => {
   const columnDef = cell.column.columnDef;

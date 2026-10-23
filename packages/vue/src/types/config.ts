@@ -66,7 +66,14 @@ export interface STableFilterOption {
 }
 
 // 过滤器模式
-export type STableFilterMode = 'checkbox' | 'menu' | 'custom';
+export type STableFilterMode =
+  | 'checkbox'
+  /**
+   * @deprecated 与 `filterMode: 'checkbox'` + `filterMultiple: false` 的结构和行为一致，
+   * 请改用后者。
+   */
+  | 'menu'
+  | 'custom';
 export type STableFilterValue = string | number | boolean;
 
 /**

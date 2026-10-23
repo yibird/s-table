@@ -47,12 +47,12 @@ const menuFilterColumns: STableColumn<Order>[] = [
     id: 'department',
     accessorKey: 'department',
     header: 'Department',
-    filterMode: 'menu',
     filters: ['Engineering', 'Design', 'Sales'].map((department) => ({
       text: department,
       value: department,
     })),
     onFilter: (value, record) => record.department === value,
+    filterMultiple: false,
   },
 ];
 const menuFilterEvent = shallowRef('idle');

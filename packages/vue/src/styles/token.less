@@ -121,10 +121,10 @@
   --s-z-index-header: 10;
   /// 列宽拖拽手柄
   --s-z-index-resizer: 15;
-  /// 下拉面板（过滤、搜索、选择列菜单等）
-  --s-z-index-dropdown: 10;
-  /// 加载遮罩（与表头同级，靠 DOM 顺序覆盖表头；低于浮层）
-  --s-z-index-loading: 10;
+  /// 加载遮罩（高于表头与拖拽手柄）
+  --s-z-index-loading: 20;
+  /// 下拉面板（过滤、搜索、选择列菜单、Tooltip 等）
+  --s-z-index-dropdown: 30;
 }
 
 // ==================== Dark Mode ====================

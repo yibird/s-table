@@ -129,7 +129,7 @@ pnpm build               # 构建 core + vue
 pnpm check               # CI 全量检查
 ```
 
-测试规模：376 个单元测试（core 48 + vue 328）、151 个 E2E 场景、性能基准与 bundle 预算检查。
+测试规模：414 个单元测试（core 66 + vue 348）、151 个 E2E 场景、性能基准与 bundle 预算检查。
 
 ## 浏览器支持
 

@@ -247,7 +247,7 @@ function resetQueryState() {
 | `sortOrder`             | `STableSortOrder \| null`                   | -                       | 受控排序方向；`null` 表示受控且不排序   |
 | `filters`               | `STableFilterOption[]`                      | -                       | 过滤选项                                |
 | `onFilter`              | `(value, record) => boolean`                | -                       | 客户端过滤判断                          |
-| `filterMode`            | `'checkbox' \| 'menu' \| 'custom'`          | `'checkbox'`            | 过滤 UI 模式                            |
+| `filterMode`            | `'checkbox' \| 'menu' \| 'custom'`          | `'checkbox'`            | 过滤 UI 模式；`menu` 已废弃             |
 | `filterMultiple`        | `boolean`                                   | `true`                  | 是否多选过滤值                          |
 | `defaultFilteredValues` | `(string \| number \| boolean)[]`           | -                       | 默认过滤值                              |
 | `filteredValue`         | `(string \| number \| boolean)[]`           | -                       | 受控过滤值                              |

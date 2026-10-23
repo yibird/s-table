@@ -52,7 +52,8 @@
               :style="item.depth > 0 ? { paddingLeft: `${item.depth * 16 + 12}px` } : undefined"
               :model-value="effectiveMultiple ? isChecked(item.option.value) : selectedValue"
               :value="effectiveMultiple ? undefined : item.option.value"
-              @update:model-value="handleItemUpdate(item.option.value)"
+              :allow-uncheck="effectiveMultiple ? undefined : true"
+              @update:model-value="(next: unknown) => handleItemUpdate(item.option.value, next)"
             >
               {{ item.option.text }}
             </component>
@@ -196,6 +197,18 @@ const selectedValue = computed<FilterValue | undefined>(() => localValues.value[
 /** menu 模式固定单选；checkbox 模式由 `filterMultiple` 决定。 */
 const effectiveMultiple = computed(() => props.filterMode === 'checkbox' && props.filterMultiple);
 
+if (import.meta.env?.DEV && props.filterMode === 'menu') {
+  // 挂在 globalThis 上，同一会话只提示一次（每个 Filter 实例的 setup 都会执行）。
+  const warnedKey = '__sTableFilterMenuModeWarned__';
+  const globalState = globalThis as Record<string, unknown>;
+  if (!globalState[warnedKey]) {
+    globalState[warnedKey] = true;
+    console.warn(
+      '[STable] `filterMode: "menu"` 已废弃，请使用 `filterMode: "checkbox"` + `filterMultiple: false`。'
+    );
+  }
+}
+
 interface RenderFilterOption {
   key: string;
   option: STableFilterOption;
@@ -254,10 +267,16 @@ const closeDropdown = (restoreFocus = false) => {
   else closeWithoutFocus();
 };
 
-/** 多选切换 / 单选立即提交，两种模式的差异只保留在这里。 */
-const handleItemUpdate = (value: FilterValue) => {
+/** 多选切换 / 单选立即提交；单选再次点击已选项时清空该列过滤。 */
+const handleItemUpdate = (value: FilterValue, next?: unknown) => {
   if (effectiveMultiple.value) {
     toggleOption(value);
+    return;
+  }
+  if (next === undefined) {
+    localValues.value = [];
+    props.onReset?.();
+    closeDropdown(true);
     return;
   }
   localValues.value = [value];

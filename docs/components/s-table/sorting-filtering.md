@@ -22,7 +22,7 @@
 
 ## 过滤
 
-配置 `filters` 后表头显示过滤入口，`onFilter(value, record)` 决定行是否保留。`filterMode` 支持 `checkbox` 和 `menu`，`filterMultiple` 控制是否多选。
+配置 `filters` 后表头显示过滤入口，`onFilter(value, record)` 决定行是否保留。`filterMode` 支持 `checkbox` 和 `custom`；`filterMultiple` 控制是否多选。`menu` 模式已废弃，请使用 `filterMode: 'checkbox'` + `filterMultiple: false`。单选列表再次点击已选项会清空该列过滤。
 
 <demo vue="../../demos/s-table/filter.vue" />
 

@@ -160,7 +160,7 @@ const basicFilterColumns: STableColumn<Order>[] = [
 ];
 
 // ══════════════════════════════════════════════════
-// 示例 2：menu 单选模式 + 默认过滤值
+// 示例 2：单选过滤 + 默认过滤值
 // ══════════════════════════════════════════════════
 const menuFilterColumns: STableColumn<Order>[] = [
   { id: 'id', accessorKey: 'id', header: 'ID', width: 100 },
@@ -168,7 +168,7 @@ const menuFilterColumns: STableColumn<Order>[] = [
   {
     id: 'status',
     accessorKey: 'status',
-    header: '状态（menu 单选）',
+    header: '状态（单选）',
     width: 160,
     filters: [
       { text: '待发货', value: 'pending' },
@@ -177,7 +177,6 @@ const menuFilterColumns: STableColumn<Order>[] = [
       { text: '已取消', value: 'cancelled' },
     ],
     onFilter: (value, record) => record.status === value,
-    filterMode: 'menu',
     filterMultiple: false,
   },
   {
@@ -258,7 +257,6 @@ const combinedColumns: STableColumn<Order>[] = [
       { text: '图书', value: 'books' },
     ],
     onFilter: (value, record) => record.category === value,
-    filterMode: 'menu',
     filterMultiple: false,
   },
   {
@@ -288,7 +286,7 @@ const combinedPagination = ref<STablePaginationProps>({
   <div style="padding: 16px; border: 1px dashed #d9d9d9; border-radius: 12px; margin-bottom: 24px">
     <p style="margin: 0 0 12px; font-weight: 600">2. Menu 单选模式 & 默认过滤值</p>
     <p style="margin: 0 0 12px; font-size: 13px; color: #666">
-      状态列使用 menu 单选模式；区域列默认过滤「华东」和「华北」
+      状态列使用单选模式；区域列默认过滤「华东」和「华北」
     </p>
     <STable :columns="menuFilterColumns" :data-source="dataSource" style="height: 420px" />
   </div>
@@ -296,7 +294,7 @@ const combinedPagination = ref<STablePaginationProps>({
   <div style="padding: 16px; border: 1px dashed #d9d9d9; border-radius: 12px">
     <p style="margin: 0 0 12px; font-weight: 600">3. 过滤 + 排序 + 分页联合</p>
     <p style="margin: 0 0 12px; font-size: 13px; color: #666">
-      40 条数据：先过滤 → 再排序 → 最后分页，状态列多选、分类列 menu 单选
+      40 条数据：先过滤 → 再排序 → 最后分页，状态列多选、分类列单选
     </p>
     <STable
       :columns="combinedColumns"

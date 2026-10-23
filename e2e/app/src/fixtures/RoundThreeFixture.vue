@@ -66,7 +66,7 @@ const tooltipColumns: STableColumn<Row>[] = [
     accessorKey: 'notes',
     header: 'Notes',
     width: 110,
-    ellipsis: { showTitle: true },
+    ellipsis: true,
   },
   {
     id: 'department',

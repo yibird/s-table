@@ -146,7 +146,7 @@ const columns: STableColumn<Order>[] = [
 
 ## 省略与 Tooltip
 
-`ellipsis: true` 同时作用于表头与单元格；`tooltip: true` 仅在内容真实溢出时显示浮层，也支持字符串或返回 VNode 的函数。
+`ellipsis: true` 同时作用于表头与单元格；`tooltip: true` 仅在内容真实溢出时显示浮层，也支持字符串或返回 VNode 的函数。`ellipsis` 不会自动生成原生 `title`，需要时通过 `customCell` / `customHeaderCell` 返回 `title` 属性自行控制。
 
 ```ts
 const columns: STableColumn<User>[] = [

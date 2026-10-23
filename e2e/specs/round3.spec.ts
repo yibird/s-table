@@ -14,7 +14,7 @@ test.describe('第三轮：省略与 Tooltip', () => {
     await openFixture(page, 'round3');
   });
 
-  test('ellipsis 应用于表头/单元格，showTitle 补充原生 title', async ({ page }) => {
+  test('ellipsis 应用于表头/单元格，且不自动生成原生 title', async ({ page }) => {
     const scope = page.getByTestId('tooltip-table');
     const nameCell = scope.locator('.s-table-row[data-row-key="4"] td[data-column-id="name"]');
     await expect(nameCell).toHaveClass(/s-table-cell-ellipsis/);
@@ -23,11 +23,8 @@ test.describe('第三轮：省略与 Tooltip', () => {
     );
 
     const notesCell = scope.locator('.s-table-row[data-row-key="1"] td[data-column-id="notes"]');
-    await expect(notesCell).toHaveAttribute(
-      'title',
-      'A very long note that must be truncated inside the narrow column'
-    );
-    await expect(scope.locator('th[data-column-id="notes"]')).toHaveAttribute('title', 'Notes');
+    await expect(notesCell).not.toHaveAttribute('title');
+    await expect(scope.locator('th[data-column-id="notes"]')).not.toHaveAttribute('title');
   });
 
   test('仅在内容溢出时显示 Tooltip，支持自定义内容与移出隐藏', async ({ page }) => {

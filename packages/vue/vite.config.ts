@@ -95,6 +95,19 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     include: ['src/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,vue}'],
+      exclude: ['src/__tests__/**'],
+      reportsDirectory: 'coverage',
+      reporter: ['text-summary'],
+      thresholds: {
+        statements: 83,
+        branches: 67,
+        functions: 86,
+        lines: 87,
+      },
+    },
   },
   plugins: [
     vue(),

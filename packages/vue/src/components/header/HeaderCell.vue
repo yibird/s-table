@@ -178,18 +178,10 @@ const emit = defineEmits<{
 const rawCol = computed(() => props.header.column.columnDef as STableColumn<TData>);
 const alignStyle = computed(() => resolveColumnAlignStyle(rawCol.value));
 
-/** `ellipsis: { showTitle: true }` 时为表头补充原生 title。 */
-const ellipsisTitle = computed<string | undefined>(() => {
-  const ellipsis = rawCol.value?.ellipsis;
-  if (typeof ellipsis !== 'object' || ellipsis?.showTitle !== true) return undefined;
-  return typeof rawCol.value?.header === 'string' ? rawCol.value.header : undefined;
-});
 const customAttrs = computed(() => splitTableAttrs(getCustomHeaderCell?.(rawCol.value)));
 
-/** 合并 ellipsis.showTitle 与 customHeaderCell 提供的 title，后者不应被 undefined 覆盖。 */
-const headerTitle = computed(
-  () => ellipsisTitle.value ?? (customAttrs.value?.attrs?.title as string | undefined)
-);
+/** 原生 title 完全由 customHeaderCell 控制。 */
+const headerTitle = computed(() => customAttrs.value?.attrs?.title as string | undefined);
 
 // ==================== 排序 / 过滤 / 搜索状态 ====================
 

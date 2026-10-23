@@ -82,8 +82,8 @@
 | `--s-z-index-cell-fixed` | `2`                          | 固定列单元格           |
 | `--s-z-index-header`     | `10`                         | 固定表头               |
 | `--s-z-index-resizer`    | `15`                         | 列宽拖拽手柄           |
-| `--s-z-index-loading`    | `10`                         | 加载遮罩               |
-| `--s-z-index-dropdown`   | `10`                         | 过滤、搜索、选择下拉层 |
+| `--s-z-index-loading`    | `20`                         | 加载遮罩               |
+| `--s-z-index-dropdown`   | `30`                         | 过滤、搜索、选择下拉层 |
 
 ## 局部主题
 

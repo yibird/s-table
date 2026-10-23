@@ -33,7 +33,6 @@ const columns: STableColumn<Order>[] = [
       { text: '待处理', value: '待处理' },
       { text: '已完成', value: '已完成' },
     ],
-    filterMode: 'menu',
     filterMultiple: false,
     onFilter: (value, record) => record.status === value,
   },

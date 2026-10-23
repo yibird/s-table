@@ -341,10 +341,11 @@ interface STableColumnBase<TData extends RowData = RowData, TValue = unknown> {
   /** 受控筛选面板打开状态；提供后以该值为准（优先级高于表格级 `filterDropdownOpenKeys`）。 */
   filterDropdownOpen?: boolean;
   /**
-   * @description 单元格与表头超长省略；`showTitle` 控制是否补充原生 title。
+   * @description 对表头与单元格启用单行省略。原生 `title` 请通过
+   * `customCell` / `customHeaderCell` 返回，由使用方控制。
    * @default false
    */
-  ellipsis?: boolean | { showTitle?: boolean };
+  ellipsis?: boolean;
   /**
    * @description 单元格超长时显示 Tooltip；`true` 使用单元格文本，函数可返回自定义内容。
    * @default false

@@ -155,7 +155,7 @@ test.describe('第二轮：固定行滚动与菜单筛选', () => {
     expect(Math.abs(metrics.bottomRowBottom - metrics.containerBottom)).toBeLessThanOrEqual(1);
   });
 
-  test('菜单模式筛选可单点应用并关闭', async ({ page }) => {
+  test('单选筛选可单点应用并关闭', async ({ page }) => {
     const scope = page.getByTestId('menu-filter-table');
     const trigger = scope.locator('.s-table-filter-trigger');
 

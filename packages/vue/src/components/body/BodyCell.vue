@@ -109,8 +109,6 @@ const props = defineProps<{
   customAttrs?: SplitTableAttrs;
   /** 是否应用超长省略样式。 */
   ellipsis?: boolean;
-  /** `ellipsis.showTitle` 生成的原生 title。 */
-  ellipsisTitle?: string;
   /** 是否允许内容撑高单元格。 */
   autoHeight?: boolean;
 }>();
@@ -202,8 +200,6 @@ const mergedAttrs = computed<Record<string, unknown> | undefined>(() => {
   return { ...custom, ...spans };
 });
 
-/** ellipsis.showTitle 优先；没有时保留 customCell 提供的 title。 */
-const cellTitle = computed(
-  () => props.ellipsisTitle ?? (mergedAttrs.value?.title as string | undefined)
-);
+/** 原生 title 只来自 customCell。 */
+const cellTitle = computed(() => mergedAttrs.value?.title as string | undefined);
 </script>

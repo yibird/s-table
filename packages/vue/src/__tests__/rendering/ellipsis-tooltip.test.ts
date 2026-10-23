@@ -76,7 +76,7 @@ describe('ellipsis 与 Tooltip', () => {
     expect(document.querySelector('.s-table-tooltip')).toBeNull();
   });
 
-  it('ellipsis.showTitle 为表头和单元格补充原生 title', async () => {
+  it('ellipsis 不自动生成原生 title，title 由 customCell / customHeaderCell 控制', async () => {
     const mounted = mountSTable<Row>({
       columns: [
         { id: 'id', accessorKey: 'id', header: 'ID' },
@@ -84,22 +84,26 @@ describe('ellipsis 与 Tooltip', () => {
           id: 'name',
           accessorKey: 'name',
           header: 'Name',
-          ellipsis: { showTitle: true },
+          ellipsis: true,
         },
       ],
       dataSource: [{ id: 1, name: 'a very long value' }],
       rowKey: 'id',
-    });
+      customCell: (_record: Row, _index: number, column: STableColumn<Row>) =>
+        column.id === 'name' ? { title: '自定义单元格' } : undefined,
+      customHeaderCell: (column: STableColumn<Row>) =>
+        column.id === 'name' ? { title: '自定义表头' } : undefined,
+    } as never);
     app = mounted.app;
     host = mounted.host;
     await nextTick();
 
     expect(
       host.querySelector<HTMLElement>('td[data-column-id="name"]')!.getAttribute('title')
-    ).toBe('a very long value');
+    ).toBe('自定义单元格');
     expect(
       host.querySelector<HTMLElement>('th[data-column-id="name"]')!.getAttribute('title')
-    ).toBe('Name');
+    ).toBe('自定义表头');
   });
 
   it('滚动后立即隐藏 Tooltip，避免虚拟行复用后指向过期内容', async () => {

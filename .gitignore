@@ -31,3 +31,6 @@ docs/.vitepress/node_modules/
 # Playwright
 playwright-report/
 test-results/
+
+# Coverage
+coverage/

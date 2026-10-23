@@ -58,6 +58,19 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: ['src/__tests__/**'],
+      reportsDirectory: 'coverage',
+      reporter: ['text-summary'],
+      thresholds: {
+        statements: 85,
+        branches: 75,
+        functions: 85,
+        lines: 89,
+      },
+    },
   },
   plugins: [
     dts({

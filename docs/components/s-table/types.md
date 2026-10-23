@@ -125,7 +125,7 @@ const salaryColumn: STableAccessorFnColumn<Employee, number> = {
 | `STableColumnFixed`            | `'left' \| 'right'`                                            |
 | `STableSelectionType`          | `'checkbox' \| 'radio'`                                        |
 | `STableSortOrder`              | `'ascend' \| 'descend'`                                        |
-| `STableFilterMode`             | `'checkbox' \| 'menu' \| 'custom'`                             |
+| `STableFilterMode`             | `'checkbox' \| 'menu' \| 'custom'`（`menu` 已废弃）            |
 | `STableRowKey`                 | `string \| number`                                             |
 | `STableEditMode`               | `'cell' \| 'row'`                                              |
 | `STableDropPosition`           | `'before' \| 'after' \| 'inside'`                              |
