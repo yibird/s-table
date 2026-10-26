@@ -1,5 +1,12 @@
 <script setup lang="ts">
+import { shallowRef } from 'vue';
 import STable, { type STableColumn } from '../../../packages/vue/src';
+
+const actionText = shallowRef('尚未执行操作');
+
+const handleCreate = () => {
+  actionText.value = '已触发「新增数据」操作';
+};
 
 type UserRecord = {
   id: number;
@@ -56,6 +63,30 @@ const columns: STableColumn<UserRecord>[] = [
           </div>
         </template>
       </STable>
+    </div>
+
+    <div style="padding: 16px; border: 1px dashed #d9d9d9; border-radius: 12px">
+      <p style="margin: 0 0 12px; font-weight: 600">空状态 + 操作</p>
+      <STable :columns="columns" :data-source="[]">
+        <template #emptyAction>
+          <button
+            type="button"
+            style="
+              margin-top: 8px;
+              padding: 4px 12px;
+              border: 1px solid #1677ff;
+              border-radius: 4px;
+              background: #1677ff;
+              color: #fff;
+              cursor: pointer;
+            "
+            @click="handleCreate"
+          >
+            新增数据
+          </button>
+        </template>
+      </STable>
+      <p style="margin: 8px 0 0; color: #666; font-size: 12px">{{ actionText }}</p>
     </div>
   </div>
 </template>

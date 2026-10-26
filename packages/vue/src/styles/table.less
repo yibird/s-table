@@ -645,6 +645,37 @@
       }
     }
 
+    // 树形展开触发器：带边框的 +/− 方块，图标始终居中且不旋转
+    .@{prefix}-tree-expand-trigger {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      border: 1px solid var(--s-color-border-control);
+      box-sizing: border-box;
+
+      // 树形触发器悬浮时保持背景与图标颜色不变
+      &:hover {
+        color: var(--s-color-text-tertiary);
+        background-color: transparent;
+      }
+
+      &.@{prefix}-expand-trigger-expanded {
+        border-color: var(--s-primary-color, #1677ff);
+
+        svg {
+          transform: none;
+        }
+
+        &:hover {
+          color: var(--s-primary-color, #1677ff);
+        }
+      }
+    }
+
     // 虚拟滚动占位单元格
     .@{prefix}-virtual-spacer-cell {
       padding: 0 !important;

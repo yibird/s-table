@@ -6,9 +6,11 @@ import { getOwnerDocument, getOwnerWindow } from '../utils/dom';
  *
  * 交互激活（点击 / 键盘触发）时，从控件边缘向外扩散一圈渐隐的光晕，
  * 颜色取自控件当前的边框色（透明时回退背景色），与 antd WaveEffect 视觉一致。
- * 实现基于 Web Animations API：在 body 中插入一个按控件视口位置定位的临时节点，
+ * 实现基于 Web Animations API：在控件内部插入一个绝对定位的临时节点，
  * 播放 box-shadow 扩散动画后移除，不污染控件自身的样式与过渡。
- * 波纹独立于控件 DOM，因此按钮点击后即使菜单立即关闭、控件被卸载，动画仍可完整播放。
+ *
+ * 节点跟随控件布局而不是视口（固定定位），因此滚动容器、变换祖先和层叠上下文
+ * 都不会让波纹错位；控件卸载时波纹随子树一起移除，无需轮询检测。
  */
 
 /** 视为“无颜色”的计算样式值，需继续回退或放弃波纹（与 antd isValidWaveColor 一致）。 */
@@ -46,29 +48,21 @@ const resolveWaveColor = (node: HTMLElement, explicitColor?: string): string | n
 
 /**
  * 在指定控件上播放一次波纹扩散动画。
- * 动画节点固定定位到目标的视口矩形；目标一旦卸载（如点击后关闭面板），波纹立即清理。
+ * 波纹节点插入控件内部并铺满其内容盒；控件需具备定位上下文（position: relative）。
  */
 export const showWave = (node: HTMLElement, explicitColor?: string): void => {
   const ownerDocument = getOwnerDocument(node);
   const ownerWindow = getOwnerWindow(node);
-  if (!ownerDocument?.body || !ownerWindow) return;
+  if (!ownerDocument || !ownerWindow) return;
   // 尊重系统减弱动效设置（WCAG 2.3.3）
   if (ownerWindow.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
 
   const color = resolveWaveColor(node, explicitColor);
   if (!color) return;
 
-  const rect = node.getBoundingClientRect();
   const wave = ownerDocument.createElement('span');
   wave.className = 's-wave-effect';
-  Object.assign(wave.style, {
-    top: `${rect.top}px`,
-    left: `${rect.left}px`,
-    width: `${rect.width}px`,
-    height: `${rect.height}px`,
-    borderRadius: ownerWindow.getComputedStyle(node).borderRadius,
-  });
-  ownerDocument.body.appendChild(wave);
+  node.appendChild(wave);
 
   if (typeof wave.animate !== 'function') {
     wave.remove();
@@ -88,12 +82,8 @@ export const showWave = (node: HTMLElement, explicitColor?: string): void => {
     fill: 'forwards',
   });
 
-  let frame: number | null = null;
-
-  /** 清理临时节点：动画结束、卸载或目标失效时都会走到这里。 */
+  /** 清理临时节点：动画结束或控件卸载时都会走到这里。 */
   const cleanup = () => {
-    if (frame !== null) ownerWindow.cancelAnimationFrame?.(frame);
-    frame = null;
     // 直接移除节点即可停止绘制；不调用 Animation.cancel()，避免部分 DOM 实现
     // 将取消操作变成未处理的 AbortError。
     shadow.onfinish = null;
@@ -102,19 +92,6 @@ export const showWave = (node: HTMLElement, explicitColor?: string): void => {
     fade.oncancel = null;
     wave.remove();
   };
-
-  /**
-   * 目标控件被卸载（例如点击过滤/搜索面板的按钮后面板关闭）时，
-   * 波纹不能继续悬停在原位置，需在下一帧立即清理。
-   */
-  const watchTargetConnection = () => {
-    if (!node.isConnected) {
-      cleanup();
-      return;
-    }
-    frame = ownerWindow.requestAnimationFrame?.(watchTargetConnection) ?? null;
-  };
-  frame = ownerWindow.requestAnimationFrame?.(watchTargetConnection) ?? null;
 
   fade.onfinish = cleanup;
   fade.oncancel = cleanup;

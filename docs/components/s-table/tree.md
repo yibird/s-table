@@ -2,6 +2,8 @@
 
 传入 `tree` 即可启用树形行模型。树节点展开与详情展开共用 `expandedRowKeys`，因此受控状态、展开全部、滚动定位和拖拽不会维护两套互相冲突的状态。
 
+树形展开使用独立的内置列：收起时显示 `+`，展开时显示 `−`；它不与 `expandable` 的详情展开列复用，两者可以同时存在。
+
 <demo vue="../../demos/s-table/tree.vue" />
 
 ## 数据契约
@@ -15,6 +17,10 @@ const tree = {
   indentSize: 20,
 };
 ```
+
+下面示例把子节点字段命名为 `nodes`,通过 `childrenColumnName` 读取:
+
+<demo vue="../../demos/s-table/tree-custom-children.vue" />
 
 `defaultExpandAllRows` 负责初始全部展开，`expandRowByClick` 允许点击行展开；`expandable.isRowExpandable(record)` 可禁用特定节点。实例提供 `expandRow`、`collapseRow`、`toggleExpand`、`expandAll` 和 `collapseAll`。
 

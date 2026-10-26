@@ -10,7 +10,7 @@ import type {
 } from '@tanstack/vue-table';
 import type { STableExpandable, STableRowKey, STableRowKeyField, STableTree } from '../types';
 import { decodeRowKey, encodeRowKey, resolveRowStateEntries } from '../utils';
-import { createExpandColumn } from '../presets/expandColumn';
+import { createExpandColumn, createTreeExpandColumn } from '../presets/expandColumn';
 import { useModelState } from './useModelState';
 
 type STableInstance<TData extends RowData> = Table<TableFeatures, TData>;
@@ -58,6 +58,7 @@ export const useExpandable = <TData extends RowData>({
     // 切回非受控时继承最后一次受控值，避免意外恢复挂载时的默认展开项。
     toInternalValue: (keys) => [...keys],
   });
+  const treeEnabled = computed(() => Boolean(tree?.value));
   const expandableRowIds = shallowRef<ReadonlySet<string>>();
   const expandedRowKeys = computed(() => {
     const keys = rawExpandedKeys.value;
@@ -79,6 +80,7 @@ export const useExpandable = <TData extends RowData>({
       dataSource,
       rowKey,
       () => Boolean(expandable.value),
+      treeEnabled,
       () => expandable.value?.isRowExpandable,
       () => tree?.value?.getChildren,
       () => tree?.value?.childrenColumnName,
@@ -86,7 +88,7 @@ export const useExpandable = <TData extends RowData>({
     ],
     () => {
       const table = getTable();
-      if (!table || !expandable.value) {
+      if (!table || (!expandable.value && !treeEnabled.value)) {
         // 普通表格没有可展开节点；直接使用空集合，避免数据变化时无意义地扫描 Row Model。
         expandableRowIds.value = EMPTY_EXPANDABLE_ROW_IDS;
         return;
@@ -151,7 +153,7 @@ export const useExpandable = <TData extends RowData>({
     command: (table: STableInstance<TData>) => void
   ) => {
     const table = getTable();
-    if (!table || !expandable.value) return;
+    if (!table || (!expandable.value && !treeEnabled.value)) return;
     pendingRowChange = rowChange;
     try {
       command(table);
@@ -218,7 +220,15 @@ export const useExpandable = <TData extends RowData>({
     if (!config) return undefined;
     return createExpandColumn<TData>({
       config,
-      treeEnabled: Boolean(tree?.value),
+      getPublicKey,
+      onToggle: toggleExpand,
+      getAriaLabel: getExpandAriaLabel,
+    });
+  });
+
+  const treeColumn = computed<ColumnDef<TableFeatures, TData, unknown> | undefined>(() => {
+    if (!treeEnabled.value) return undefined;
+    return createTreeExpandColumn<TData>({
       getPublicKey,
       onToggle: toggleExpand,
       getAriaLabel: getExpandAriaLabel,
@@ -230,6 +240,7 @@ export const useExpandable = <TData extends RowData>({
     expandedState,
     onExpandedChange,
     expandColumn,
+    treeColumn,
     toggleExpand,
     expandRow,
     collapseRow,

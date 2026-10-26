@@ -22,11 +22,17 @@
 
 ## 过滤
 
-配置 `filters` 后表头显示过滤入口，`onFilter(value, record)` 决定行是否保留。`filterMode` 支持 `checkbox` 和 `custom`；`filterMultiple` 控制是否多选。`menu` 模式已废弃，请使用 `filterMode: 'checkbox'` + `filterMultiple: false`。单选列表再次点击已选项会清空该列过滤。
+配置 `filters` 后表头显示过滤入口，`onFilter(value, record)` 决定行是否保留。`filterMode` 支持 `checkbox` 和 `custom`；`filterMultiple` 控制是否多选。`menu` 模式已废弃，请使用 `filterMode: 'checkbox'` + `filterMultiple: false`。单选列表再次点击已选项或点击底部「重置」都会清空该列过滤。
 
 <demo vue="../../demos/s-table/filter.vue" />
 
 过滤值应使用可序列化的 `string | number | boolean`。默认值通过 `defaultFilteredValues` 提供；列级 `filteredValue` 可由外部完全控制。`filterMode: 'custom'` 配合 `#filterPanel` 可渲染业务筛选面板，插槽会收到 `selectedKeys`、`setSelectedKeys`、`confirm`、`reset` 和 `close`。
+
+### 自定义过滤面板
+
+`filterMode: 'custom'` 不要求提供 `filters` 选项：面板自行渲染输入控件，把草稿写入 `selectedKeys`，确定后由 `onFilter` 判断行是否保留。适合关键字搜索、价格区间、级联选择等无法用固定选项表达的条件。
+
+<demo vue="../../demos/s-table/filter-custom-panel.vue" />
 
 下面的示例同时受控 `sorting` 与列级 `filteredValue`，便于接入外部查询状态。
 

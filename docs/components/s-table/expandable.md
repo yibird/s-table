@@ -47,7 +47,7 @@ const expandable: STableExpandable<Order> = {
 
 ## 树形数据
 
-树形数据通过 `tree` 配置启用，并与详情展开复用同一套 TanStack 展开状态；完整用法参阅[树形数据](./tree)。
+树形数据通过 `tree` 配置启用，并与详情展开复用同一套 TanStack 展开状态；树形展开列与详情展开列相互独立，`expandIcon` 只作用于详情展开列。完整用法参阅[树形数据](./tree)。
 
 ## 自定义展开图标与位置
 

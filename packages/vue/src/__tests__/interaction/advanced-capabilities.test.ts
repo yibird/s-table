@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { h, nextTick, reactive, ref, type App, type VNodeChild } from 'vue';
 import { mountSTable } from '../helpers';
+import { EXPAND_COLUMN_ID, TREE_EXPAND_COLUMN_ID } from '../../constants';
 import type {
   STableColumn,
   STableEditingState,
@@ -417,6 +418,12 @@ describe('高级表格能力', () => {
     expect(triggers).toHaveLength(2);
     expect(triggers[0]!.disabled).toBe(false);
     expect(triggers[1]!.disabled).toBe(false);
+    // 树形展开使用独立列和 +/−，不复用详情展开列。
+    expect(host.querySelector(`th[data-column-id="${TREE_EXPAND_COLUMN_ID}"]`)).not.toBeNull();
+    expect(host.querySelector(`th[data-column-id="${EXPAND_COLUMN_ID}"]`)).toBeNull();
+    expect(triggers[0]!.querySelector('.s-table-tree-expand-icon-vertical')).toBeNull();
+    expect(triggers[1]!.querySelector('.s-table-tree-expand-icon-vertical')).toBeNull();
+    expect(triggers[0]!.querySelector('.s-table-tree-expand-icon-horizontal')).not.toBeNull();
     expect(rows[2]!.querySelector('.s-table-expand-trigger')).toBeNull();
     expect((rows[1]!.children[1] as HTMLElement).style.paddingInlineStart).toBe(
       'calc(var(--s-tree-indent-base) + 20px)'
@@ -434,6 +441,8 @@ describe('高级表格能力', () => {
 
     rows = host.querySelectorAll('tbody tr.s-table-row');
     triggers = host.querySelectorAll<HTMLButtonElement>('tbody .s-table-expand-trigger');
+    expect(triggers[1]!.querySelector('.s-table-tree-expand-icon-vertical')).not.toBeNull();
+    expect(triggers[1]!.querySelector('.s-table-tree-expand-icon-horizontal')).not.toBeNull();
     triggers[1]!.click();
     await nextTick();
     expect(host.querySelectorAll('tbody tr.s-table-row')).toHaveLength(3);

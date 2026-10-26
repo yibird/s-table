@@ -3,6 +3,8 @@ export { default as FilterIcon } from './FilterIcon.vue';
 export { default as CaretUpIcon } from './CaretUpIcon.vue';
 export { default as CaretDownIcon } from './CaretDownIcon.vue';
 export { default as ExpandIcon } from './ExpandIcon.vue';
+export { default as TreeExpandIcon } from './TreeExpandIcon.vue';
+export { default as DoubleArrowIcon } from './DoubleArrowIcon.vue';
 export { default as ArrowDownIcon } from './ArrowDownIcon.vue';
 export { default as DragHandleIcon } from './DragHandleIcon.vue';
 export { default as MoreIcon } from './MoreIcon.vue';

@@ -10,6 +10,9 @@ export const SELECTION_COLUMN_ID = `${INTERNAL_COLUMN_ID_PREFIX}SELECTION` as co
 /** 行展开列 id。 */
 export const EXPAND_COLUMN_ID = `${INTERNAL_COLUMN_ID_PREFIX}EXPAND` as const;
 
+/** 树形展开列 id（与详情展开列相互独立）。 */
+export const TREE_EXPAND_COLUMN_ID = `${INTERNAL_COLUMN_ID_PREFIX}TREE_EXPAND` as const;
+
 /** 内置序号列 id。 */
 export const SEQ_COLUMN_ID = `${INTERNAL_COLUMN_ID_PREFIX}SEQ` as const;
 
@@ -18,5 +21,6 @@ export const INTERNAL_COLUMN_IDS = new Set<string>([
   DRAG_COLUMN_ID,
   SELECTION_COLUMN_ID,
   EXPAND_COLUMN_ID,
+  TREE_EXPAND_COLUMN_ID,
   SEQ_COLUMN_ID,
 ]);

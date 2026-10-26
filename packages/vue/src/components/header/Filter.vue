@@ -57,7 +57,7 @@
             >
               {{ item.option.text }}
             </component>
-            <div v-if="effectiveMultiple" class="s-table-filter-dropdown-footer">
+            <div class="s-table-filter-dropdown-footer">
               <Button
                 size="small"
                 class="s-table-filter-dropdown-btn s-table-filter-dropdown-btn-reset"
@@ -66,6 +66,7 @@
                 {{ locale.filter.reset }}
               </Button>
               <Button
+                v-if="effectiveMultiple"
                 size="small"
                 type="primary"
                 class="s-table-filter-dropdown-btn s-table-filter-dropdown-btn-confirm"

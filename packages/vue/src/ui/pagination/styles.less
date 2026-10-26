@@ -55,7 +55,7 @@
     .s-pagination-prev,
     .s-pagination-next {
       svg {
-        font-size: 14px;
+        font-size: 12px;
       }
     }
   }
@@ -70,7 +70,7 @@
     .s-pagination-prev,
     .s-pagination-next {
       svg {
-        font-size: 14px;
+        font-size: 12px;
       }
     }
   }
@@ -92,7 +92,7 @@
     .s-pagination-prev,
     .s-pagination-next {
       svg {
-        font-size: 18px;
+        font-size: 16px;
       }
     }
   }
@@ -158,11 +158,26 @@
   .s-pagination-prev,
   .s-pagination-next {
     svg {
-      font-size: 14px;
+      font-size: 12px;
     }
   }
 
   // ── 快速跳转（省略号）──
+  .s-pagination-jump-content {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .s-pagination-jump-arrow {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
   .s-pagination-jump-prev,
   .s-pagination-jump-next {
     position: relative;
@@ -174,21 +189,10 @@
         visibility: hidden; // 隐藏但保留占位，防止布局抖动
       }
 
-      &::after {
-        content: '\00AB'; // « 左双箭头
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 14px;
-        letter-spacing: 0;
-        line-height: 1;
+      .s-pagination-jump-arrow {
+        display: block;
       }
     }
-  }
-
-  .s-pagination-jump-next:hover::after {
-    content: '\00BB'; // » 右双箭头
   }
 
   .s-pagination-jump-icon {

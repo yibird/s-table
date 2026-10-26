@@ -21,6 +21,12 @@ const columns: STableColumn<Order>[] = [
 
 `valueParser` 在值进入草稿时转换类型；`valueSetter` 用于 `accessorFn` 或特殊数据结构的不可变写回。行模式会一次收集该行所有可编辑列。
 
+## 自定义编辑器
+
+内置编辑器无法覆盖下拉选择、日期、富文本等场景时，使用 `#cellEditor` 插槽。插槽只替换编辑控件，草稿、校验和提交仍由表格管理；通过 `columnId` 区分列，调用 `setValue` 更新草稿、`commit` / `cancel` 结束编辑。
+
+<demo vue="../../demos/s-table/editing-custom-editor.vue" />
+
 ## 校验与生命周期
 
 `editConfig.validate(values, record, rowIndex)` 可返回布尔值、错误文本或 Promise。失败时草稿保留并触发 `editValidateError`。完整事件为 `editStart`、`editChange`、`editCommit`、`editCancel`、`editValidateError`。

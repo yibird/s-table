@@ -39,6 +39,7 @@ export const useColumnState = <TData extends RowData>(
     leafColumnIds,
     selectionColumn,
     expandColumn,
+    treeColumn,
     sortingState,
     groupingActive,
     rowPinningState,
@@ -113,13 +114,14 @@ export const useColumnState = <TData extends RowData>(
     defaultTitle: computed(() => resolvedLocale.value.table.sequence),
   });
 
-  // 将拖拽句柄列、选择列、展开列、序号列收集为注入列。
+  // 将拖拽句柄列、选择列、树展开列、详情展开列、序号列收集为注入列。
   // 与用户列分离传递：注入列随交互状态（如页码变化导致序号列重建）高频更新，
   // 不再连带重新归一化用户列树（见 useColumns.internalColumns）。
   const composedInternalColumns = computed<ColumnDef<TableFeatures, TData, unknown>[]>(() => {
     const extraCols: ColumnDef<TableFeatures, TData, unknown>[] = [];
     if (dragHandleColumn.value) extraCols.push(dragHandleColumn.value);
     if (selectionColumn.value) extraCols.push(selectionColumn.value);
+    if (treeColumn.value) extraCols.push(treeColumn.value);
     if (expandColumn.value) extraCols.push(expandColumn.value);
     if (seqColumn.value) extraCols.push(seqColumn.value);
     // row 模式需要整行高亮（含选择/展开/拖拽/序号），内部列必须参与框选；

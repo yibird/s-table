@@ -46,8 +46,11 @@
           :aria-label="`${jumpToText} ${Math.max(1, current - 5)} ${pageText}`"
           @click="handlePageClick($event, current - 5)"
         >
-          <RenderVNode v-if="itemRender" :value="resolveItem(current - 5, 'jump-prev', jumpIcon)" />
-          <RenderVNode v-else :value="jumpIcon" />
+          <RenderVNode
+            v-if="itemRender"
+            :value="resolveItem(current - 5, 'jump-prev', jumpPrevIcon)"
+          />
+          <RenderVNode v-else :value="jumpPrevIcon" />
         </button>
         <button
           v-else-if="page.type === 'jump-next'"
@@ -59,9 +62,9 @@
         >
           <RenderVNode
             v-if="itemRender"
-            :value="resolveItem(Math.min(totalPages, current + 5), 'jump-next', jumpIcon)"
+            :value="resolveItem(Math.min(totalPages, current + 5), 'jump-next', jumpNextIcon)"
           />
-          <RenderVNode v-else :value="jumpIcon" />
+          <RenderVNode v-else :value="jumpNextIcon" />
         </button>
         <button
           v-else
@@ -126,6 +129,7 @@ import { RenderVNode } from '../render-vnode';
 import { useComponentSize } from '../useComponentSize';
 import { Select } from '../select';
 import { showWave } from '../wave';
+import { DoubleArrowIcon } from '../../components/icon';
 import type { PaginationProps, STablePaginationItemType } from './types';
 import './styles.less';
 
@@ -189,7 +193,14 @@ const nextIcon = h(
     }),
   ]
 );
-const jumpIcon = h('span', { class: 's-pagination-jump-icon' }, '•••');
+/** 省略号项：默认显示 •••，悬浮时替换为双箭头图标。 */
+const createJumpIcon = (direction: 'left' | 'right') =>
+  h('span', { class: 's-pagination-jump-content' }, [
+    h('span', { class: 's-pagination-jump-icon' }, '•••'),
+    h(DoubleArrowIcon, { direction, class: 's-pagination-jump-arrow' }),
+  ]);
+const jumpPrevIcon = createJumpIcon('left');
+const jumpNextIcon = createJumpIcon('right');
 
 interface PageItem {
   key: string;

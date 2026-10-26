@@ -78,13 +78,15 @@ describe('过滤面板模式统一', () => {
     expect(bodyIds()).toEqual(['1', '3']);
   });
 
-  it('单选模式使用 Radio、无 footer，点击立即应用并关闭', async () => {
+  it('单选模式使用 Radio、底部只有重置，点击立即应用并关闭', async () => {
     vi.useFakeTimers();
     await mount([baseColumn({ filterMode: 'checkbox', filterMultiple: false })]);
     const panel = await openFilter();
     const items = panel.querySelectorAll('.s-table-filter-dropdown-menu-item');
     expect(items[0]!.querySelector('input[type=radio]')).not.toBeNull();
-    expect(panel.querySelector('.s-table-filter-dropdown-footer')).toBeNull();
+    expect(panel.querySelector('.s-table-filter-dropdown-footer')).not.toBeNull();
+    expect(panel.querySelector('.s-table-filter-dropdown-btn-reset')).not.toBeNull();
+    expect(panel.querySelector('.s-table-filter-dropdown-btn-confirm')).toBeNull();
 
     items[1]!.querySelector<HTMLInputElement>('input')!.click();
     await nextTick();
@@ -101,6 +103,18 @@ describe('过滤面板模式统一', () => {
     reopened.querySelector<HTMLInputElement>('input[type=radio]:checked')!.click();
     await nextTick();
     expect(bodyIds()).toEqual(['1', '2', '3']);
+
+    // 底部重置按钮同样清空过滤。
+    await vi.advanceTimersByTimeAsync(50);
+    const resetPanel = await openFilter();
+    resetPanel.querySelectorAll<HTMLInputElement>('input[type=radio]')[1]!.click();
+    await nextTick();
+    expect(bodyIds()).toEqual(['2']);
+    await vi.advanceTimersByTimeAsync(50);
+    const clearedPanel = await openFilter();
+    clearedPanel.querySelector<HTMLElement>('.s-table-filter-dropdown-btn-reset')!.click();
+    await nextTick();
+    expect(bodyIds()).toEqual(['1', '2', '3']);
   });
 
   it('menu 模式与单选 checkbox 保持同一结构', async () => {
@@ -109,7 +123,8 @@ describe('过滤面板模式统一', () => {
     const items = panel.querySelectorAll('.s-table-filter-dropdown-menu-item');
     expect(items).toHaveLength(2);
     expect(items[0]!.querySelector('input[type=radio]')).not.toBeNull();
-    expect(panel.querySelector('.s-table-filter-dropdown-footer')).toBeNull();
+    expect(panel.querySelector('.s-table-filter-dropdown-btn-reset')).not.toBeNull();
+    expect(panel.querySelector('.s-table-filter-dropdown-btn-confirm')).toBeNull();
     expect(panel.querySelector('.s-table-filter-dropdown-list')).toBeNull();
 
     items[0]!.querySelector<HTMLInputElement>('input')!.click();

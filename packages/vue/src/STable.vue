@@ -322,7 +322,7 @@ const treeIndentSize = computed(() => {
     ? indentSize
     : 16;
 });
-const expandable = computed(() => props.expandable ?? (tree.value ? {} : undefined));
+const expandable = computed(() => props.expandable);
 const rowDragEnabled = toRef(() => Boolean(props.rowDrag));
 const rowDragConfig = toRef(() => {
   const value = props.rowDrag;

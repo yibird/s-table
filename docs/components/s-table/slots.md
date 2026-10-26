@@ -48,6 +48,10 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
 </STable>
 ```
 
+完整示例(同时演示 `empty` 与 `emptyAction`):
+
+<demo vue="../../demos/s-table/empty.vue" />
+
 ## loading
 
 ```vue
@@ -111,7 +115,7 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
 
 ## cellEditor
 
-插槽收到 `record`、`rowKey`、`rowIndex`、`column`、`columnId`、`value`、`setValue`、`commit` 和 `cancel`。它只替换编辑控件，草稿、校验和提交仍由表格管理。
+插槽收到 `record`、`rowKey`、`rowIndex`、`column`、`columnId`、`value`、`setValue`、`commit` 和 `cancel`。它只替换编辑控件，草稿、校验和提交仍由表格管理。可运行示例见[自定义编辑器](./editing#自定义编辑器)。
 
 ```vue
 <template #cellEditor="{ value, setValue, commit, cancel }">
@@ -126,7 +130,7 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
 
 ## filterPanel
 
-列设置 `filterMode: 'custom'` 后使用该插槽。`setSelectedKeys` 更新面板草稿，`confirm` 应用过滤，`reset` 清空草稿，`close` 只关闭浮层。
+列设置 `filterMode: 'custom'` 后使用该插槽。`setSelectedKeys` 更新面板草稿，`confirm` 应用过滤，`reset` 清空草稿，`close` 只关闭浮层。可运行示例见[自定义过滤面板](./sorting-filtering#自定义过滤面板)。
 
 ```vue
 <template #filterPanel="{ selectedKeys, setSelectedKeys, confirm, reset }">

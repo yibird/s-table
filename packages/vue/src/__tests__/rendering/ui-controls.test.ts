@@ -182,7 +182,7 @@ describe('基础控件交互回归', () => {
     expect(clicks).toHaveLength(1);
   });
 
-  it('按钮点击后立即卸载时波纹同步清理', async () => {
+  it('波纹节点挂在控件内部，控件卸载时随之移除', async () => {
     const originalAnimate = HTMLElement.prototype.animate;
     const animation = { onfinish: null, oncancel: null } as unknown as Animation;
     Object.defineProperty(HTMLElement.prototype, 'animate', {
@@ -210,13 +210,15 @@ describe('基础控件交互回归', () => {
       document.body.appendChild(host);
       app.mount(host);
 
-      host.querySelector<HTMLButtonElement>('button')!.click();
-      await nextTick();
-      // 目标卸载后，波纹在下一帧检测到 isConnected=false 并移除。
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const button = host.querySelector<HTMLButtonElement>('button')!;
+      button.click();
+      // 波纹是控件的子节点，不再定位到 body。
+      expect(button.querySelector('.s-wave-effect')).not.toBeNull();
+      expect(document.body.querySelector(':scope > .s-wave-effect')).toBeNull();
 
+      await nextTick();
       expect(host.querySelector('button')).toBeNull();
-      expect(document.body.querySelector('.s-wave-effect')).toBeNull();
+      expect(document.querySelector('.s-wave-effect')).toBeNull();
     } finally {
       if (originalAnimate) {
         Object.defineProperty(HTMLElement.prototype, 'animate', {

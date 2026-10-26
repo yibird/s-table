@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { h, nextTick, type App } from 'vue';
 import { mountSTable } from '../helpers';
-import { EXPAND_COLUMN_ID } from '../../constants';
+import { EXPAND_COLUMN_ID, TREE_EXPAND_COLUMN_ID } from '../../constants';
 import type { STableColumn, STableExpandIconContext } from '../../types';
 
 interface Row {
@@ -65,6 +65,17 @@ describe('展开细节', () => {
       cell.getAttribute('data-column-id')
     );
     expect(ids).toEqual(['id', EXPAND_COLUMN_ID, 'name']);
+  });
+
+  it('树形展开列与详情展开列相互独立', async () => {
+    await mount({
+      dataSource: [{ id: 1, name: 'a', children: [{ id: 2, name: 'b' }] }],
+      tree: { childrenColumnName: 'children' },
+    });
+    const ids = Array.from(host!.querySelectorAll('thead th[data-column-id]')).map((cell) =>
+      cell.getAttribute('data-column-id')
+    );
+    expect(ids).toEqual([TREE_EXPAND_COLUMN_ID, EXPAND_COLUMN_ID, 'id', 'name']);
   });
 
   it('expandFixed 优先于 fixed 并支持右侧固定', async () => {
