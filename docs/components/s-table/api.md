@@ -19,8 +19,6 @@
 | `title`                  | `VNodeChild \| ((ctx) => VNodeChild)`                 | -             | 否   | 表格标题，作用域含 `currentPageData`                |
 | `footer`                 | `VNodeChild \| ((ctx) => VNodeChild)`                 | -             | 否   | 页脚，作用域含分页信息                              |
 | `summaryFixed`           | `boolean`                                             | `false`       | 否   | 汇总栏固定在滚动容器底部                            |
-| `breakpoints`            | `Partial<Record<STableBreakpoint, number>>`           | -             | 否   | 响应式断点阈值                                      |
-| `defaultBreakpoint`      | `STableBreakpoint`                                    | `'lg'`        | 否   | SSR / 首帧断点                                      |
 | `deepWatchDataSource`    | `boolean`                                             | `false`       | 否   | 深度监听数据源嵌套字段                              |
 | `deepWatchColumns`       | `boolean`                                             | `false`       | 否   | 深度监听列配置                                      |
 | `ignoreCellKey`          | `boolean`                                             | `false`       | 否   | 渲染缓存忽略行索引/列 token                         |
@@ -76,7 +74,7 @@ interface TableProps<TData> extends STableProps<TData> {}
 
 ## STable Events
 
-Vue 模板中使用 kebab-case 事件名，TypeScript 类型保留源码中的 camelCase 键。
+Vue 模板中使用 kebab-case 事件名，TypeScript 类型保留源码中的 camelCase 键。`onCellRangeCopy` 是需要返回取消结果的 prop callback，不在 `STableEmits` 中；包装组件须原样透传并保留返回值，不能改为 `$emit`，详见[事件合同](./events)。分页保留 `pagination.onChange` 与 `pageChange` 双通知：推荐前者请求/回填，后者观察，不要重复请求。
 
 | Event                               | 参数                                           | 触发时机                              |
 | ----------------------------------- | ---------------------------------------------- | ------------------------------------- |
@@ -135,9 +133,14 @@ import type { STableInstance } from '@zchengfeng/s-table-vue';
 const tableRef = useTemplateRef<STableInstance<User>>('table');
 
 function resetQueryState() {
-  tableRef.value?.clearSort();
-  tableRef.value?.clearFilter();
+  // 清除：全部清空，或只清指定列的排序 / 过滤 / 搜索。
+  tableRef.value?.clearSort('age');
+  tableRef.value?.clearFilter('status');
   tableRef.value?.clearSearch();
+  // 重置：恢复 defaultSorting / 列 defaultSortOrder 与列 defaultFilteredValues。
+  tableRef.value?.resetSort();
+  tableRef.value?.resetFilter();
+  tableRef.value?.resetSearch();
 }
 </script>
 
@@ -156,11 +159,17 @@ function resetQueryState() {
 | `selectAll`          | 无                           | `void`                        | 选择可选行                                       |
 | `clearSelection`     | 无                           | `void`                        | 清空选择                                         |
 | `toggleRowSelection` | `row, selected?`             | `void`                        | 切换或设置指定行选择状态                         |
-| `clearSort`          | 无                           | `void`                        | 清空排序                                         |
+| `clearSort`          | `columnId?`                  | `void`                        | 清空指定列排序；省略时清空全部排序               |
+| `clearSortAll`       | 无                           | `void`                        | 清空全部排序                                     |
+| `resetSort`          | 无                           | `void`                        | 恢复 `defaultSorting` 与列 `defaultSortOrder`    |
 | `getSorting`         | 无                           | `STableSortItem[]`            | 获取多列排序快照                                 |
 | `setSorting`         | `STableSortItem[]`           | `void`                        | 设置完整多列排序                                 |
-| `clearFilter`        | 无                           | `void`                        | 清空列过滤                                       |
-| `clearSearch`        | 无                           | `void`                        | 清空列搜索                                       |
+| `clearFilter`        | `columnId?`                  | `void`                        | 清空指定列过滤；省略时清空全部非受控过滤         |
+| `clearFilterAll`     | 无                           | `void`                        | 清空全部非受控列过滤                             |
+| `resetFilter`        | 无                           | `void`                        | 恢复各列 `defaultFilteredValues`                 |
+| `clearSearch`        | `columnId?`                  | `void`                        | 清空指定列搜索；省略时清空全部搜索               |
+| `clearSearchAll`     | 无                           | `void`                        | 清空全部列搜索                                   |
+| `resetSearch`        | 无                           | `void`                        | 重置搜索（搜索无默认值，等同清空全部）           |
 | `getEditing`         | 无                           | `STableEditingState \| null`  | 获取当前编辑草稿快照                             |
 | `startCellEdit`      | `rowKey, columnId`           | `boolean`                     | 打开单元格编辑                                   |
 | `startRowEdit`       | `rowKey`                     | `boolean`                     | 打开整行编辑                                     |
@@ -195,12 +204,21 @@ function resetQueryState() {
 | `swapColumns`        | `columnIdA, columnIdB`       | `void`                        | 交换两列                                         |
 | `moveColumn`         | `columnId, targetColumnId`   | `void`                        | 移动列到目标列位置                               |
 | `moveColumnByIndex`  | `fromIndex, toIndex`         | `void`                        | 按叶子列索引移动                                 |
+| `getAllData`         | 无                           | `TData[]`                     | 获取过滤排序后、分页前的数据快照                 |
+| `getCurrentPageData` | 无                           | `TData[]`                     | 获取当前页数据快照                               |
+
+排序 / 过滤 / 搜索方法分两类：
+
+- `clearXxx(columnId?)`：**清除**当前状态；传入 `columnId` 只清除该列，省略则清除全部。`clearXxxAll()` 是省略参数的显式别名。受控列（`sortOrder` / `filteredValue`）由父层状态决定，清理请求不会改写受控值。
+- `resetXxx()`：**重置**为默认状态，即 `defaultSorting`、列 `defaultSortOrder` 与列 `defaultFilteredValues`。搜索没有默认值，`resetSearch()` 等同清空全部搜索。
 
 `rowSelection.strategy = 'intent'` 时请使用 `v-model:selection-intent` / `getSelectionIntent()`。`getSelectedRowKeys()` 在 `mode: 'all'` 时返回空数组，且不会触发 `selectChange` 或 `update:selectedRowKeys`。
 
 `scrollToRow` 在需要翻页时会先切页再滚动，此时立即返回 `true` 表示已发起定位，不保证虚拟窗口已经滚到目标行。
 
 行分组与树形数据互斥（`tree` 优先，分组被忽略）。分组展开占用独立 id 空间，`expandedRowKeys` 不能控制分组行。
+
+`getTanStackTable()` 返回原始 TanStack Table **9.3.1** 实例，是与该依赖版本耦合的高级入口。普通业务优先调用 STable 自有方法，升级时需重新验证底层 API 的类型和行为。
 
 ## Slots
 
@@ -219,7 +237,10 @@ function resetQueryState() {
 | `filterPanel`       | `STableFilterPanelSlotContext` | 自定义列过滤面板     |
 | `groupRow`          | `STableGroupRowSlotContext`    | 自定义整行分组内容   |
 | `summary`           | 无                             | `<tfoot>` 汇总       |
-| `footer`            | 无                             | 表格下方页脚         |
+| `title`             | `STableTitleContext<TData>`    | 表格上方标题         |
+| `footer`            | `STableFooterContext<TData>`   | 表格下方页脚         |
+
+`title` / `footer` 插槽优先于同名 prop；`currentPageData` 和分页字段语义详见[插槽](./slots)。
 
 ## Column API
 
@@ -342,15 +363,15 @@ function resetQueryState() {
 
 ### STableRowDragConfig
 
-| 属性                | 类型                                          | 默认值     | 描述                                      |
-| ------------------- | --------------------------------------------- | ---------- | ----------------------------------------- |
-| `trigger`           | `'handle' \| 'row'`                           | `'handle'` | 拖拽触发区域（手柄或整行）                |
-| `ghost`             | `({ record, index }) => VNode \| HTMLElement` | -          | 自定义拖拽预览                            |
-| `animation`         | `boolean`                                     | `false`    | 启用行 FLIP 动画                          |
-| `multiple`          | `boolean`                                     | `false`    | 拖动选中行有序块                          |
-| `allowTreeReparent` | `boolean`                                     | `false`    | 允许投放到树节点内部                      |
-| `canDrag`           | `({ record, index }) => boolean`              | -          | 拖拽开始前判定，返回 `false` 阻止该行拖拽 |
-| `beforeDrop`        | `(payload) => boolean \| Promise<boolean>`    | -          | 提交移动前拦截                            |
+| 属性                | 类型                                          | 默认值     | 描述                                  |
+| ------------------- | --------------------------------------------- | ---------- | ------------------------------------- |
+| `trigger`           | `'handle' \| 'row'`                           | `'handle'` | 拖拽触发区域（手柄或整行）            |
+| `ghost`             | `({ record, index }) => VNode \| HTMLElement` | -          | 自定义拖拽预览                        |
+| `animation`         | `boolean`                                     | `false`    | 启用行 FLIP 动画                      |
+| `multiple`          | `boolean`                                     | `false`    | 拖动选中行有序块                      |
+| `allowTreeReparent` | `boolean`                                     | `false`    | 允许投放到树节点内部                  |
+| `canDrag`           | `({ record, index }) => boolean`              | -          | 返回 `false` 阻止该行拖拽并展示禁用态 |
+| `beforeDrop`        | `(payload) => boolean \| Promise<boolean>`    | -          | 提交移动前拦截                        |
 
 ### STableColumnDragConfig
 

@@ -885,6 +885,95 @@ describe('审查回归：展开与滚动实例 API', () => {
 });
 
 describe('审查回归：TanStack 列排', () => {
+  for (const path of ['native', 'mouse'] as const) {
+    it.each([
+      '.s-table-filter-trigger svg',
+      '.s-table-search-trigger svg',
+      '.s-table-header-menu-trigger',
+      '.s-table-column-sorter svg',
+      '.s-table-header-resizer',
+      'button.custom-control span',
+      'input.custom-control',
+      'select.custom-control',
+      'textarea.custom-control',
+      'a.custom-control',
+      '[contenteditable="true"] span',
+      '[role="button"].custom-control span',
+    ])(`${path} 列拖拽排除控件 %s，但普通可排序标题仍可拖到不可拖列`, async (selector) => {
+      const events: Array<{ columnOrder: string[] }> = [];
+      const canDrag = vi.fn(() => true);
+      const mounted = mountSTable<Row>({
+        columns: [
+          {
+            id: 'name',
+            accessorKey: 'name',
+            draggable: true,
+            sorter: true,
+            search: true,
+            resizable: true,
+            filters: [{ text: 'B', value: 'b' }],
+            showMenu: true,
+            menuPopup: () => h('span', 'Menu'),
+            header: () =>
+              h('span', [
+                'Name',
+                h('button', { class: 'custom-control' }, h('span', 'Action')),
+                h('input', { class: 'custom-control' }),
+                h('select', { class: 'custom-control' }),
+                h('textarea', { class: 'custom-control' }),
+                h('a', { class: 'custom-control', href: '#' }, 'Link'),
+                h('span', { contenteditable: 'true' }, h('span', 'Edit')),
+                h('span', { role: 'button', class: 'custom-control' }, h('span', 'Custom')),
+              ]),
+          },
+          { id: 'score', accessorKey: 'score', header: 'Score', draggable: false },
+        ],
+        dataSource: [{ id: 1, name: 'b', score: 1 }],
+        rowKey: 'id',
+        columnDrag: { canDrag },
+        onColumnOrderChange: (payload: { columnOrder: string[] }) => events.push(payload),
+      } as never);
+      app = mounted.app;
+      host = mounted.host;
+      await nextTick();
+      const source = host.querySelector<HTMLElement>('th[data-column-id="name"]')!;
+      const target = host.querySelector<HTMLElement>('th[data-column-id="score"]')!;
+      const control = source.querySelector<HTMLElement>(selector)!;
+      expect(control).not.toBeNull();
+      control.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+      if (path === 'native') {
+        // Native DnD may report the draggable ancestor instead of the pressed control.
+        const drag = new Event('dragstart', { bubbles: true, cancelable: true });
+        source.dispatchEvent(drag);
+        expect(drag.defaultPrevented).toBe(true);
+        target.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+        target.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+      } else {
+        target.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 30 }));
+      }
+      target.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 30 }));
+      await nextTick();
+      expect(canDrag).not.toHaveBeenCalled();
+      expect(events).toHaveLength(0);
+
+      source
+        .querySelector<HTMLElement>('.s-table-cell-title')!
+        .dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+      if (path === 'native') {
+        const drag = new Event('dragstart', { bubbles: true, cancelable: true });
+        source.dispatchEvent(drag);
+        expect(drag.defaultPrevented).toBe(false);
+        target.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+        target.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+      } else {
+        target.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 30 }));
+      }
+      target.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 30 }));
+      await nextTick();
+      expect(events.at(-1)?.columnOrder).toEqual(['score', 'name']);
+    });
+  }
+
   it('draggable=false 只限制拖拽源，仍可作为合法落点', async () => {
     const events: Array<{ columnOrder: string[] }> = [];
     const mounted = mountSTable<Row>({
@@ -1035,6 +1124,122 @@ describe('审查回归：TanStack 列排', () => {
 
     expect(instance!.getColumnOrder()).toEqual(['id', 'name', 'score']);
     expect(events).toEqual([]);
+  });
+
+  it('鼠标桥接尊重 canDrag 拒绝且卸载后不遗留文档监听器', async () => {
+    const canDrag = vi.fn(() => false);
+    const onColumnOrderChange = vi.fn();
+    const mounted = mountSTable<Row>({
+      columns: [
+        { id: 'name', accessorKey: 'name', header: 'Name', draggable: true },
+        { id: 'score', accessorKey: 'score', header: 'Score' },
+      ],
+      dataSource: [{ id: 1, name: 'b', score: 1 }],
+      columnDrag: { canDrag },
+      onColumnOrderChange,
+    } as never);
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+    const source = host.querySelector<HTMLElement>('th[data-column-id="name"]')!;
+    const target = host.querySelector<HTMLElement>('th[data-column-id="score"]')!;
+    source.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 0 }));
+    const move = new MouseEvent('mousemove', { bubbles: true, cancelable: true, clientX: 30 });
+    target.dispatchEvent(move);
+    expect(canDrag).toHaveBeenCalledTimes(1);
+    expect(move.defaultPrevented).toBe(false);
+    target.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    expect(onColumnOrderChange).not.toHaveBeenCalled();
+
+    source.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    app.unmount();
+    app = null;
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 30 }));
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(canDrag).toHaveBeenCalledTimes(1);
+    expect(onColumnOrderChange).not.toHaveBeenCalled();
+  });
+
+  it.each(['Escape', 'blur', 'pointercancel', 'unmount', 'native'] as const)(
+    '桥接预览在 %s 时清理且不提交',
+    async (reason) => {
+      const onColumnOrderChange = vi.fn();
+      const mounted = mountSTable<Row>({
+        columns: [
+          { id: 'name', accessorKey: 'name', header: 'Name', draggable: true },
+          { id: 'score', accessorKey: 'score', header: 'Score' },
+        ],
+        dataSource: [{ id: 1, name: 'b', score: 1 }],
+        onColumnOrderChange,
+      });
+      app = mounted.app;
+      host = mounted.host;
+      await nextTick();
+      const source = host.querySelector<HTMLElement>('th[data-column-id="name"]')!;
+      const target = host.querySelector<HTMLElement>('th[data-column-id="score"]')!;
+      source.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      target.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 30 }));
+      expect(document.querySelector('.s-table-drag-preview')?.textContent).toContain('Name');
+      if (reason === 'Escape')
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      if (reason === 'blur') window.dispatchEvent(new Event('blur'));
+      if (reason === 'pointercancel') document.dispatchEvent(new Event('pointercancel'));
+      if (reason === 'native')
+        source.dispatchEvent(new Event('dragstart', { bubbles: true, cancelable: true }));
+      if (reason === 'unmount') {
+        app.unmount();
+        app = null;
+      }
+      target.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      await nextTick();
+      expect(document.querySelector('.s-table-drag-preview')).toBeNull();
+      expect(onColumnOrderChange).not.toHaveBeenCalled();
+    }
+  );
+
+  it('桥接预览支持自定义 ghost，拖后不排序，普通点击与键盘仍排序', async () => {
+    const onSortChange = vi.fn();
+    const ghost = document.createElement('span');
+    ghost.textContent = 'Custom preview';
+    const mounted = mountSTable<Row>({
+      columns: [
+        { id: 'name', accessorKey: 'name', header: 'Name', draggable: true, sorter: true },
+        { id: 'score', accessorKey: 'score', header: 'Score', sorter: true },
+      ],
+      dataSource: [{ id: 1, name: 'b', score: 1 }],
+      columnDrag: { ghost: () => ghost },
+      onSortChange,
+    });
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+    const source = host.querySelector<HTMLElement>(
+      'th[data-column-id="name"] .s-table-cell-title'
+    )!;
+    const target = host.querySelector<HTMLElement>(
+      'th[data-column-id="score"] .s-table-cell-title'
+    )!;
+    source.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    source.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 2 }));
+    expect(document.querySelector('.s-table-drag-preview')).toBeNull();
+    target.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 30 }));
+    expect(document.querySelector('.s-table-drag-preview')?.textContent).toBe('Custom preview');
+    expect(ghost.parentNode).toBeNull();
+    await nextTick();
+    expect(target.closest('th')!.classList).toContain('s-table-header-cell-drag-over-after');
+    target.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 30 }));
+    target.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    await nextTick();
+    expect(onSortChange).not.toHaveBeenCalled();
+    expect(document.querySelector('.s-table-drag-preview')).toBeNull();
+    target.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    target.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    target.click();
+    await nextTick();
+    expect(onSortChange).toHaveBeenCalledTimes(1);
+    target.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await nextTick();
+    expect(onSortChange).toHaveBeenCalledTimes(2);
   });
 
   it('表头原生 DnD 未启动时通过鼠标桥接提交列顺序', async () => {

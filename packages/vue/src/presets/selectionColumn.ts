@@ -64,9 +64,10 @@ export const createSelectionColumn = <TData extends RowData>({
 
   const headerRenderer = () => {
     if (config.columnTitle !== undefined) {
-      const state = getSelectionState();
       const content =
-        typeof config.columnTitle === 'function' ? config.columnTitle(state) : config.columnTitle;
+        typeof config.columnTitle === 'function'
+          ? config.columnTitle(getSelectionState())
+          : config.columnTitle;
       return h(
         'div',
         { class: 's-table-selection-header' },

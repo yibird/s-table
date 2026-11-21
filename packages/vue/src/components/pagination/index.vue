@@ -17,7 +17,6 @@
       :simple="simple"
       :show-less-items="showLessItems"
       :hide-on-single-page="hideOnSinglePage"
-      :item-render="itemRender"
       :jump-to-text="locale.pagination.jumpTo"
       :page-text="locale.pagination.page"
       :items-per-page-text="locale.pagination.itemsPerPage"
@@ -32,7 +31,7 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { Pagination as UIPagination, type STablePaginationItemRender } from '../../ui/pagination';
+import { Pagination as UIPagination } from '../../ui/pagination';
 import { useLocales } from '../../locales/useLocales';
 import type { PaginationPlacement } from '../../types';
 
@@ -54,7 +53,6 @@ const props = withDefaults(
     simple?: boolean;
     showLessItems?: boolean;
     hideOnSinglePage?: boolean;
-    itemRender?: STablePaginationItemRender;
   }>(),
   {
     current: 1,
@@ -68,7 +66,6 @@ const props = withDefaults(
     simple: false,
     showLessItems: false,
     hideOnSinglePage: false,
-    itemRender: undefined,
   }
 );
 

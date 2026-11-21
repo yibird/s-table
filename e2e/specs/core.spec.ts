@@ -161,7 +161,7 @@ test.describe('核心数据管道', () => {
       confirmBackground: 'rgb(22, 104, 220)',
       checkboxBackground: 'rgb(20, 20, 20)',
       checkboxBorder: 'rgb(66, 66, 66)',
-      footerBorder: 'rgb(66, 66, 66)',
+      footerBorder: 'rgb(48, 48, 48)',
     });
 
     await filterDropdown.locator('.s-table-filter-dropdown-btn-reset').click();
@@ -188,7 +188,7 @@ test.describe('核心数据管道', () => {
       inputColor: 'rgba(255, 255, 255, 0.85)',
       resetBackground: 'rgb(20, 20, 20)',
       resetBorder: 'rgb(66, 66, 66)',
-      footerBorder: 'rgb(66, 66, 66)',
+      footerBorder: 'rgb(48, 48, 48)',
     });
   });
 });
@@ -212,8 +212,7 @@ test.describe('分页和动态状态', () => {
       .toEqual({
         backgroundColor: 'rgb(20, 20, 20)',
         borderColor: 'rgb(22, 104, 220)',
-        // 激活页码文字使用暗色主色文本 token，保证对比度 ≥ 4.5:1。
-        color: 'rgb(60, 137, 232)',
+        color: 'rgb(22, 104, 220)',
       });
 
     const inputStyles = await pagination
@@ -242,6 +241,49 @@ test.describe('分页和动态状态', () => {
     });
   });
 
+  test('UI 与 loading 优先跟随表格实例主色', async ({ page }) => {
+    const paginationTable = page.getByTestId('pagination-table');
+    const state = page.getByTestId('state-table');
+    for (const scope of [paginationTable, state, page.getByTestId('loading-demo')]) {
+      await scope.locator('.s-table').evaluate((element) => {
+        (element as HTMLElement).style.setProperty('--s-primary-color', '#7c3aed');
+      });
+    }
+    const activePage = paginationTable.locator('.s-pagination-item-active');
+    await expect(activePage).toHaveCSS('color', 'rgb(124, 58, 237)');
+    await expect(activePage).toHaveCSS('border-color', 'rgb(124, 58, 237)');
+    await paginationTable.locator('.s-select-selector').click();
+    const selectedOption = page.locator('.s-select-item-option-selected');
+    await expect(selectedOption).toHaveCSS('color', 'rgb(124, 58, 237)');
+    const background = await selectedOption.evaluate((element) => {
+      const expected = document.createElement('span');
+      expected.style.backgroundColor = 'color-mix(in srgb, rgb(124, 58, 237) 8%, transparent)';
+      element.appendChild(expected);
+      const colors = [
+        getComputedStyle(element).backgroundColor,
+        getComputedStyle(expected).backgroundColor,
+      ];
+      expected.remove();
+      return colors;
+    });
+    expect(background[0]).toBe(background[1]);
+    await page.keyboard.press('Escape');
+    await page.getByTestId('toggle-loading').click();
+    await page.getByTestId('toggle-loading-content').click();
+    await expect
+      .poll(() =>
+        state
+          .locator('.s-table-loading-dot')
+          .first()
+          .evaluate((element) => getComputedStyle(element, '::after').backgroundColor)
+      )
+      .toBe('rgb(124, 58, 237)');
+    await expect(page.getByTestId('loading-demo').locator('.sync-loading-icon')).toHaveCSS(
+      'color',
+      'rgb(124, 58, 237)'
+    );
+  });
+
   test('翻页、快速跳页和 page size 切换保持正确边界', async ({ page }) => {
     const paginationTable = page.getByTestId('pagination-table');
     const pagination = paginationTable.locator('.s-pagination');
@@ -265,6 +307,85 @@ test.describe('分页和动态状态', () => {
     await expect(renderedRows(paginationTable)).toHaveCount(12);
     await expect(pagination.locator('.s-pagination-item-active')).toHaveText('2');
     await expect(pagination.locator('.s-pagination-total-text')).toHaveText('21-32 / 32');
+  });
+
+  test('内置 loading 适配尺寸、主题和减少动态效果设置', async ({ page }, testInfo) => {
+    const state = page.getByTestId('state-table');
+    await page.getByTestId('toggle-loading').click();
+    await page.getByTestId('toggle-loading-content').click();
+    const spin = state.locator('.s-table-loading-spin');
+    await expect(spin).toBeVisible();
+    await expect(state.locator('.s-table-loading-dot')).toHaveCount(4);
+    await expect(state.getByRole('status')).toHaveAttribute('aria-label', '加载中');
+    for (const [size, width] of [
+      ['small', 22],
+      ['middle', 28],
+      ['large', 34],
+    ] as const) {
+      await page.getByTestId('loading-size').selectOption(size);
+      await expect(spin).toHaveCSS('width', `${width}px`);
+    }
+    await page.getByTestId('loading-size').selectOption('middle');
+    const dot = state.locator('.s-table-loading-dot').first();
+    expect(
+      await dot.evaluate((element) => getComputedStyle(element, '::after').animationName)
+    ).toContain('s-table-loading-dot-pulse');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect
+      .poll(() => dot.evaluate((element) => getComputedStyle(element, '::after').animationName))
+      .toBe('none');
+    await expect(state.locator('.s-table-loading')).toHaveCSS('animation-name', 'none');
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(
+        (value) => document.documentElement.setAttribute('data-theme', value),
+        theme
+      );
+      await expect(state.locator('.s-table-loading')).toHaveCSS(
+        'background-color',
+        theme === 'dark' ? 'rgba(20, 20, 20, 0.7)' : 'rgba(255, 255, 255, 0.72)'
+      );
+      await testInfo.attach(`loading-${theme}`, {
+        body: await state.locator('.s-table').screenshot(),
+        contentType: 'image/png',
+      });
+    }
+    await page.getByTestId('toggle-loading-content').click();
+    await expect(page.getByTestId('custom-loading')).toBeVisible();
+    await expect(spin).toHaveCount(0);
+    await page.getByTestId('toggle-loading').click();
+    await expect(state.locator('.s-table-loading')).toHaveCount(0);
+    await expect(renderedRows(state)).toHaveCount(3);
+  });
+
+  test('自定义加载示例适配明暗主题和窄屏', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const demo = page.getByTestId('loading-demo');
+    const panel = demo.locator('.sync-loading');
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(
+        (value) => document.documentElement.setAttribute('data-theme', value),
+        theme
+      );
+      await expect(panel).toBeVisible();
+      await expect(panel).toHaveCSS(
+        'background-color',
+        theme === 'dark' ? 'rgb(20, 20, 20)' : 'rgb(255, 255, 255)'
+      );
+      const panelBox = await panel.boundingBox();
+      const overlayBox = await demo.locator('.s-table-loading').boundingBox();
+      expect(panelBox!.x).toBeGreaterThanOrEqual(overlayBox!.x);
+      expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(overlayBox!.x + overlayBox!.width);
+      expect(
+        await demo
+          .locator('.sync-loading-progress')
+          .evaluate((element) => getComputedStyle(element, '::after').animationName)
+      ).toBe('none');
+      await testInfo.attach(`custom-loading-${theme}`, {
+        body: await demo.locator('.s-table').screenshot(),
+        contentType: 'image/png',
+      });
+    }
   });
 
   test('loading、空状态、不可变数据更新和动态 renderer 都会刷新', async ({ page }) => {

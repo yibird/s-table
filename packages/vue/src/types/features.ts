@@ -1,6 +1,9 @@
 export type { STableColumnFilterValue } from './config';
 export type * from './config';
 export type {
+  STableAggregation,
+  STableAggregationFn,
+  STableBuiltInAggregation,
   STableAccessorColumn,
   STableAccessorFnColumn,
   STableAccessorKey,

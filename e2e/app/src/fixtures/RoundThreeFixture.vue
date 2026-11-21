@@ -238,25 +238,6 @@ const footerColumns: STableColumn<Row>[] = [
   { id: 'score', accessorKey: 'score', header: 'Score', width: 90, footer: '---' },
 ];
 
-// ── Responsive ─────────────────────────────────────────────────────
-const responsiveColumns: STableColumn<Row>[] = [
-  { id: 'id', accessorKey: 'id', header: 'ID', width: 60 },
-  {
-    id: 'name',
-    accessorKey: 'name',
-    header: 'Name (lg+)',
-    responsive: ['lg', 'xl', 'xxl'],
-  },
-  {
-    id: 'department',
-    accessorKey: 'department',
-    header: 'Department (xl+)',
-    responsive: ['xl', 'xxl'],
-  },
-  { id: 'score', accessorKey: 'score', header: 'Score', width: 90 },
-];
-const responsiveBreakpoints = { lg: 700, xl: 1100 };
-
 const titleRender = (context: { currentPageData: Row[] }) =>
   `Rows ${context.currentPageData.length}`;
 const footerRender = (context: {
@@ -453,17 +434,6 @@ const customHeaderCell = (column: STableColumn<Row>) =>
       :custom-row="customRow"
       :custom-cell="customCell"
       :custom-header-cell="customHeaderCell"
-    />
-  </section>
-
-  <section class="fixture-section" data-testid="responsive-table">
-    <h2>Responsive columns</h2>
-    <STable
-      bordered
-      row-key="id"
-      :columns="responsiveColumns"
-      :data-source="rows.slice(0, 3)"
-      :breakpoints="responsiveBreakpoints"
     />
   </section>
 </template>

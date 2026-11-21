@@ -8,7 +8,7 @@ import type {
   Updater,
 } from '@tanstack/vue-table';
 import type { STableColumn, STableTree } from '../../types';
-import { useModelState } from '../../hooks/useModelState';
+import { useModelState } from '../../hooks/common';
 
 type STableTanStackTable<TData extends RowData> = Table<TableFeatures, TData>;
 

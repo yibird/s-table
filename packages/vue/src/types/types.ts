@@ -10,9 +10,9 @@ export type * from './props';
 export type * from './emits';
 export type * from './slots';
 export type * from './instance';
-export type { STablePaginationItemRender, STablePaginationItemType } from '../ui/pagination/types';
 export type {
   STableCsvOptions,
+  STableCsvRowSource,
   STableExcelAdapter,
   STableExcelOptions,
   STableExcelSheet,

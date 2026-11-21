@@ -90,6 +90,7 @@
             :custom-cell="props.customCell"
             :ignore-cell-key="props.ignoreCellKey"
             :row-drag-trigger="rowDragTrigger"
+            :can-row-drag="canDragRow"
             :on-row-drag-start="handleRowDragStart"
             :on-navigate-cell="navigateCell"
             :is-row-selected="isRowSelected"
@@ -213,7 +214,6 @@ import {
   useSlots,
   useTemplateRef,
   watch,
-  type VNodeChild,
 } from 'vue';
 import { RenderVNode } from './ui/render-vnode';
 import type { RowData, Table, TableFeatures } from '@tanstack/vue-table';
@@ -233,8 +233,7 @@ import {
   Loading,
   ContextMenu,
 } from './components';
-import { walkColumnTree } from './utils/columnTree';
-import { useBreakpoints } from './hooks/useBreakpoints';
+import { useTableContent } from './setup/useTableContent';
 import {
   useApi,
   useCellRangeBridge,
@@ -266,7 +265,6 @@ const props = withDefaults(defineProps<STableProps<TData>>(), {
   paginationPlacement: 'bottomEnd',
   keyboardNavigation: true,
   summaryFixed: false,
-  defaultBreakpoint: 'lg',
   locale: () => defaultLocale,
 });
 defineSlots<STableSlots<TData>>();
@@ -281,21 +279,7 @@ const resolvePopupContainer = (trigger: HTMLElement): HTMLElement => {
 };
 // props 的纯引用统一从一次 toRefs 获取；context 直接展开 propRefs，避免字段写两遍。
 const propRefs = toRefs(props);
-const { tree, columnDrag, size, styles, classes, breakpoints, defaultBreakpoint } = propRefs;
-/** 没有任何 responsive 列时不需要订阅 resize。 */
-const hasResponsiveColumns = computed(() => {
-  let found = false;
-  walkColumnTree(props.columns ?? [], (column) => {
-    if (column.responsive !== undefined) found = true;
-  });
-  return found;
-});
-const { activeBreakpoint } = useBreakpoints(
-  rootRef,
-  breakpoints,
-  defaultBreakpoint,
-  hasResponsiveColumns
-);
+const { tree, columnDrag, size, styles, classes } = propRefs;
 
 // 可选深度监听：默认继续要求不可变更新，避免大数组上的全量遍历开销。
 const dataSourceRevision = shallowRef(0);
@@ -381,7 +365,6 @@ const dataState = useDataState<TData>(context);
 let tableModel!: ReturnType<typeof useTableModel<TData>>;
 const columnState = useColumnState<TData>(context, dataState, {
   getRows: () => tableModel.rows.value,
-  activeBreakpoint,
   columnRevision,
 });
 // TanStack Table 实例与派生行模型。
@@ -424,36 +407,11 @@ const navigateCell = (
   return true;
 };
 
-/** 供标题 / 页脚渲染的当前页数据；manualPagination 直接使用外部数据源。 */
-const currentPageData = computed<TData[]>(() => {
-  if (props.manualPagination) return [...dataSource.value];
-  const model = dataState.paginationEnabled.value
-    ? tableModel.table.getPaginatedRowModel()
-    : tableModel.table.getPrePaginatedRowModel();
-  return model.flatRows.filter((row) => !row.getIsGrouped?.()).map((row) => row.original);
+const { currentPageData, footerScope, titleContent, footerContent } = useTableContent({
+  context,
+  dataState,
+  tableModel,
 });
-
-const footerScope = computed(() => ({
-  currentPageData: currentPageData.value,
-  currentPage: dataState.currentPage.value,
-  pageSize: dataState.currentPageSize.value,
-  total: dataState.paginationState.value.total,
-}));
-
-/** 标题 / 页脚共用：函数形式按当前作用域求值，其余按 VNode 原样返回。 */
-const resolveSlotContent = <TScope>(
-  value: VNodeChild | ((scope: TScope) => VNodeChild) | undefined,
-  scope: TScope
-): VNodeChild =>
-  typeof value === 'function' ? (value as (scope: TScope) => VNodeChild)(scope) : value;
-
-const titleContent = computed<VNodeChild>(() =>
-  resolveSlotContent(props.title, { currentPageData: currentPageData.value })
-);
-
-const footerContent = computed<VNodeChild>(() =>
-  resolveSlotContent(props.footer, footerScope.value)
-);
 
 const columnFooterGroups = computed(() => tableModel.table.getFooterGroups());
 const hasColumnFooter = computed(() =>
@@ -520,6 +478,7 @@ const {
   dragRowSourceIds,
   dragRowDropPosition,
   rowDragTrigger,
+  canDragRow,
   handleRowDragStart,
   handleRowDragOver,
   handleRowDragEnd,

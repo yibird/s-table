@@ -1,6 +1,6 @@
 import type { RowData } from '@tanstack/table-core';
 import type { STableColumn } from './column';
-import type { PaginationProps, STablePaginationItemRender } from '../ui/pagination';
+import type { PaginationProps } from '../ui/pagination';
 import type { STableRowKey } from '@zchengfeng/s-table-core';
 
 /**
@@ -32,8 +32,6 @@ export interface STablePaginationProps extends PaginationProps {
   showLessItems?: boolean;
   /** 只有一页时隐藏整个分页器。 */
   hideOnSinglePage?: boolean;
-  /** 自定义分页条目渲染。 */
-  itemRender?: STablePaginationItemRender;
 }
 
 // 表格大小

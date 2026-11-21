@@ -86,7 +86,7 @@ describe('列宽 <col> 输出策略', () => {
     host = mounted.host;
     await nextTick();
 
-    expect(getColWidths()).toEqual(['40px', '62px', '40px', null]);
+    expect(getColWidths()).toEqual(['48px', '62px', '40px', null]);
   });
 
   it('分组列固定配置向叶子列继承，并锁定对应宽', async () => {

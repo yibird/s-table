@@ -18,7 +18,7 @@
 
 <demo vue="../../demos/s-table/sort-filter-advanced.vue" />
 
-需要命令式控制时使用 `getSorting()`、`setSorting()` 和 `clearSort()`；服务端模式监听 `sortChange`，其中 `sorting` 包含完整的多列状态。
+需要命令式控制时使用 `getSorting()`、`setSorting()` 和 `clearSort(columnId?)`；服务端模式监听 `sortChange`，其中 `sorting` 包含完整的多列状态。
 
 ## 过滤
 
@@ -44,11 +44,16 @@
 
 <demo vue="../../demos/s-table/search.vue" />
 
-搜索与过滤会同时作用于行模型。清空搜索调用 `clearSearch()`，不会清除过滤条件。
+搜索与过滤会同时作用于行模型。清空搜索调用 `clearSearch(columnId?)`，不会清除过滤条件。
 
-## 命令式清理状态
+## 命令式清理与重置状态
 
-查询工具栏需要提供“重置”操作时，可通过 `STableInstance` 调用 `clearSort()`、`clearFilter()` 和 `clearSearch()`。三种状态相互独立，业务可以按需清理或一次全部恢复。
+通过 `STableInstance` 可以按列或整体操作查询状态：
+
+- `clearSort(columnId?)` / `clearFilter(columnId?)` / `clearSearch(columnId?)`：省略 `columnId` 时清空全部；显式全量入口为 `clearSortAll()`、`clearFilterAll()`、`clearSearchAll()`。
+- `resetSort()` / `resetFilter()` / `resetSearch()`：恢复默认值（`defaultSorting`、列 `defaultSortOrder`、列 `defaultFilteredValues`）。搜索无默认值，重置等同清空全部搜索。
+
+三种状态相互独立，业务可以按需清理或一次全部恢复。
 
 <demo vue="../../demos/s-table/instance-actions.vue" />
 

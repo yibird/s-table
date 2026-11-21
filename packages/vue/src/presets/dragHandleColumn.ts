@@ -24,7 +24,8 @@ export const createDragHandleColumn = <TData extends RowData>({
   const cell = (context: { row: Row<TableFeatures, TData> }) => {
     const record = context.row.original;
     const index = getRowVisibleIndex(context.row);
-    const reorderingEnabled = getCanReorder();
+    // 渲染阶段同步求值权限，让禁用行在视觉上直接呈现不可拖拽状态。
+    const draggable = getCanReorder() && index >= 0 && (getCanDrag?.({ record, index }) ?? true);
     const handleContent = renderDragHandle
       ? renderDragHandle({ record, index })
       : createVNode(DragHandleIcon);
@@ -32,12 +33,12 @@ export const createDragHandleColumn = <TData extends RowData>({
     return createVNode(
       'div',
       {
-        class: ['s-table-drag-handle', { 's-table-drag-handle-disabled': !reorderingEnabled }],
-        draggable: reorderingEnabled ? 'true' : 'false',
-        'aria-disabled': reorderingEnabled ? undefined : 'true',
+        class: ['s-table-drag-handle', { 's-table-drag-handle-disabled': !draggable }],
+        draggable: draggable ? 'true' : 'false',
+        'aria-disabled': draggable ? undefined : 'true',
         onDragstart: (event: DragEvent) => {
           event.stopPropagation();
-          if (!reorderingEnabled || index < 0 || (getCanDrag && !getCanDrag({ record, index }))) {
+          if (!draggable) {
             event.preventDefault();
             return;
           }
@@ -52,10 +53,9 @@ export const createDragHandleColumn = <TData extends RowData>({
     id: DRAG_COLUMN_ID,
     header: () => '',
     cell,
-    // 收窄默认列宽：拖拽句柄仅需容纳一个图标。
-    size: 40,
-    minSize: 40,
-    maxSize: 40,
+    size: 48,
+    minSize: 48,
+    maxSize: 48,
     enableResizing: false,
     meta: { align: 'center' },
     fixed: 'left',

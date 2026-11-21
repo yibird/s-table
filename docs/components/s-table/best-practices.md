@@ -29,7 +29,9 @@ async function refresh() {
 }
 ```
 
-如果依赖 `push` / `splice` 触发更新，则使用普通 `ref` 或在修改后替换数组引用。
+如果依赖 `push` / `splice` 触发更新，则使用普通 `ref` / `reactive` 数组，或在修改后替换数组引用。响应式数组更新时组件会建立浅快照，使 TanStack 能检测数组内容变化；这是 O(n) 的兼容成本，不是每次滚动都重建快照。大数据优先 `shallowRef` + 不可变替换。
+
+`deepWatchDataSource` / `deepWatchColumns` 用于已响应式对象的嵌套原地修改，会增加深层遍历和缓存失效成本。它们不会把普通原始数组自动变成响应式；`shallowRef` 内的原始行对象修改仍需替换引用。不要仅为 `reactive` 数组的 `push` / `splice` 开启深度监听。
 
 ### 不可变更新行数据
 
@@ -40,6 +42,8 @@ dataSource.value = dataSource.value.map((row) =>
   row.id === changedId ? { ...row, status: 'done' } : row
 );
 ```
+
+单元格渲染上下文缓存按行使用有界 LRU（默认最多 1000 行）。虚拟滚动完整浏览大表后，缓存不会随“曾经渲染过的记录”无限增长；数据或列代际变化时整代失效。该上限属于内部实现，不需要业务配置。
 
 ### 提供稳定 rowKey
 
@@ -79,7 +83,7 @@ watch(dataSource, saveDraft, { deep: true });
 // 不推荐：pagination.onChange 和 @page-change 都调用 fetchData
 ```
 
-两者会对应同一次交互。选择一个作为请求入口。
+两者会对应同一次交互且都会触发。推荐 `pagination.onChange` 负责请求和受控状态回填，`@page-change` 仅用于观察、日志或埋点；不要两处重复请求。
 
 ### 无条件一次创建十万条完整对象
 
@@ -118,7 +122,7 @@ watch(dataSource, saveDraft, { deep: true });
 - 排序、过滤和分页会建立派生行模型；服务端已有结果时打开对应 `manual*`，避免重复计算。
 - 纯 `search: true` 列直接使用 TanStack 的 `includesString` 过滤器；只有业务语义不同或需要多字段匹配时才提供自定义 `filterFn`。
 - 默认排序、过滤、分页、选择、展开、列显隐、列固定和列宽状态均由 TanStack Table 管理；组件只负责把配置映射为 UI 和事件，不要在业务层再次遍历行模型实现同一套规则。
-- `getTanStackTable()` 是高级逃生口，不应在每次渲染中反复改写底层状态。
+- `getTanStackTable()` 是与当前 TanStack Table **9.3.1** 类型和行为耦合的高级入口，不属于与 TanStack 解耦的稳定业务 API。普通业务优先使用 STable 自有实例方法；升级依赖时需重新验证底层调用，不应在每次渲染中反复改写底层状态。
 - 不要重复创建表格组件实例来“刷新”数据；替换行对象或 `dataSource` 引用即可。
 
 ## 导出

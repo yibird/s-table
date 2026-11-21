@@ -49,22 +49,28 @@ export interface STableInstance<TData extends RowData = RowData> {
   toggleRowSelection(row: TData, selected?: boolean): void;
 
   // ============ 排序/过滤/搜索 ============
-  /**
-   * @desc 清除排序
-   */
-  clearSort(): void;
+  /** 清除指定列的排序；不传 columnId 时清除全部排序。 */
+  clearSort(columnId?: string): void;
+  /** 清除全部排序列。 */
+  clearSortAll(): void;
+  /** 重置排序为 `defaultSorting` / 列 `defaultSortOrder`。 */
+  resetSort(): void;
   /** 获取完整有序排序状态。 */
   getSorting(): STableSortItem[];
   /** 设置完整有序排序状态。 */
   setSorting(sorting: STableSortItem[]): void;
-  /**
-   * @desc 清除筛选
-   */
-  clearFilter(): void;
-  /**
-   * @desc 清除搜索
-   */
-  clearSearch(): void;
+  /** 清除指定列的筛选；不传 columnId 时清除全部非受控列筛选。 */
+  clearFilter(columnId?: string): void;
+  /** 清除全部非受控列的筛选。 */
+  clearFilterAll(): void;
+  /** 重置筛选为各列 `defaultFilteredValues`。 */
+  resetFilter(): void;
+  /** 清除指定列的搜索词；不传 columnId 时清除全部搜索。 */
+  clearSearch(columnId?: string): void;
+  /** 清除全部列的搜索词。 */
+  clearSearchAll(): void;
+  /** 重置搜索（搜索没有默认值，等同于清空全部搜索）。 */
+  resetSearch(): void;
 
   // ============ 编辑方法 ============
   getEditing(): STableEditingState | null;
@@ -75,6 +81,12 @@ export interface STableInstance<TData extends RowData = RowData> {
   cancelEdit(): void;
   /** 复制当前框选范围。监听器拒绝或没有范围时返回空串。 */
   copyCellRange(options?: STableCopyOptions): Promise<string>;
+
+  // ============ 数据快照 ============
+  /** 获取过滤、排序后且分页前的全部数据快照（手动分页时返回 dataSource）。 */
+  getAllData(): TData[];
+  /** 获取当前页数据快照（手动分页时返回 dataSource）。 */
+  getCurrentPageData(): TData[];
 
   // ============ 导出方法 ============
   /** 导出 CSV 文本；`download: true` 时同时触发下载。 */

@@ -49,7 +49,7 @@ const rowSelection = {
       v-model:selected-row-keys="selectedKeys"
       v-model:expanded-row-keys="expandedKeys"
       :expandable="{
-        expandIcon: ({ expanded }) => h('span', { style: 'font-size:12px' }, expanded ? '▾' : '▸'),
+        expandIcon: ({ expanded }) => h('span', { style: 'font-size:16px' }, expanded ? '▾' : '▸'),
         expandFixed: false,
       }"
       :pagination="false"

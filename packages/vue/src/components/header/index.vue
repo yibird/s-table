@@ -3,8 +3,13 @@
     ref="theadRef"
     :class="['s-table-header', presentation.classes?.header]"
     :style="presentation.styles?.header"
-    @mousedown="handleMouseDragCandidate"
-    @dragstart="clearMouseDrag"
+    @pointerdown.capture="rememberDragOrigin"
+    @mousedown.capture="handleMouseDown"
+    @pointerup.capture="clearDragOrigin"
+    @mouseup.capture="clearDragOrigin"
+    @pointercancel.capture="clearDragOrigin"
+    @dragstart.capture="handleNativeDragStart"
+    @dragend="clearDragOrigin"
   >
     <tr v-for="(row, rowIndex) in renderRows" :key="rowIndex">
       <template v-for="cell in row" :key="cell.key">
@@ -46,6 +51,7 @@ import { createFixedColumnStyleAccessors } from '../../utils/columnMetrics';
 import { useFlipDropAnimation } from '../../interaction/useFlipAnimation';
 import HeaderCell from './HeaderCell.vue';
 import { useMouseColumnDragBridge } from './useMouseColumnDragBridge';
+import { isColumnDragExcludedTarget } from '../../utils/dom';
 import type { STableSlots } from '../../types';
 import type { STableRenderedColumn } from '../../types';
 
@@ -97,8 +103,34 @@ const { handleMouseDragCandidate, clearMouseDrag } = useMouseColumnDragBridge({
   },
   onDragOver: (columnId, event) => handleCellDragOver(columnId, event),
   onDragEnd: () => ctx.onColumnDragEnd(),
+  getGhost: (columnId) => {
+    const column = presentation.getColumnById(columnId);
+    return column
+      ? presentation.getColumnDragGhost?.(column, getUserColumnIndex(columnId))
+      : undefined;
+  },
   onDrop: (target) => target.dispatchEvent(new Event('drop', { cancelable: true })),
 });
+
+// 原生 dragstart 的 target 可能是 th；在委托层捕获控件起点，避免逐列表头监听。
+let dragOrigin: EventTarget | null = null;
+const rememberDragOrigin = (event: PointerEvent | MouseEvent) => {
+  dragOrigin = event.target;
+};
+const handleMouseDown = (event: MouseEvent) => {
+  rememberDragOrigin(event);
+  handleMouseDragCandidate(event);
+};
+const clearDragOrigin = () => {
+  dragOrigin = null;
+};
+const handleNativeDragStart = (event: DragEvent) => {
+  clearMouseDrag();
+  if (isColumnDragExcludedTarget(dragOrigin) || isColumnDragExcludedTarget(event.target)) {
+    event.preventDefault();
+  }
+  clearDragOrigin();
+};
 
 const { getFixedClassName, getFixedStyle } = createFixedColumnStyleAccessors(
   presentationContext.fixedColumnStyles,
@@ -172,7 +204,7 @@ const renderRows = computed<Array<Array<HeaderRenderCell | HeaderSpacerCell>>>((
         }
         virtualCells.push({
           type: 'header',
-          key: `${group.id}:${header.id}:${virtualCells.length}`,
+          key: `${group.id}:${header.id}:${entry.id}`,
           header,
           colSpan: 1,
           rowSpan: header.rowSpan,

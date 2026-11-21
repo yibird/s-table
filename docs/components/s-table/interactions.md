@@ -13,7 +13,7 @@ STable 提供面向数据工作台的框选和右键菜单能力。两者都依�
 
 `cellRangeChange` 在范围变化时触发，也可能返回 `null`；`cellRangeSelect` 在一次框选完成后触发，并返回范围覆盖的行记录。
 
-框选的范围、边界和单元格值直接由 TanStack Table 的 `cellSelectionFeature` 提供。选择列、展开列、序号列和拖拽句柄等组件内部列会显式关闭 `enableCellSelection`，因此不会成为业务框选范围的一部分；复制时的 `columnIds` 也只包含可参与框选的业务列。
+框选的范围、边界和单元格值直接由 TanStack Table 的 `cellSelectionFeature` 提供。选择列、展开列、序号列和拖拽句柄等组件内部列会显式关闭 `enableCellSelection`，因此不会成为业务框选范围的一部分；单区间复制时的 `columnIds` 也只包含可参与框选的业务列，多区间 API 的元数据差异见下文。
 
 `selectRowOnClick: true` 只在 `mode: 'row'` 下生效，并要求同时配置 `rowSelection`。它用于把范围选择同步为行选择；普通业务点击请监听 `rowClick`。
 
@@ -31,7 +31,9 @@ STable 提供面向数据工作台的框选和右键菜单能力。两者都依�
 
 <demo vue="../../demos/s-table/cell-range-copy.vue" />
 
-`@cell-range-copy` 在写入剪贴板前触发，载荷包含 `range`、`text`、`columnIds`、`source` 和原生 `nativeEvent`。`source` 为 `keyboard`、`clipboard` 或 `api`。监听器返回 `false` 会跳过框选写入；原生 `copy` 事件此时不会 `preventDefault()`，浏览器仍可复制用户在单元格内选中的文本。未监听或返回其他值时默认允许，并接管剪贴板。
+`onCellRangeCopy` 在写入剪贴板前同步调用，它是可取消 **prop callback**，不是 `STableEmits` 中的普通通知。载荷包含 `range`、`text`、`columnIds`、`source` 和原生 `nativeEvent`。`source` 为 `keyboard`、`clipboard` 或 `api`。返回 `false` 会跳过框选写入；原生 `copy` 事件此时不会 `preventDefault()`，浏览器仍可复制用户在单元格内选中的文本。未提供或返回其他值时默认允许，并接管剪贴板。包装组件须直接透传此 prop，或返回回调结果；不要通过 emit 转发。
+
+实例 API 复制多个范围时，`text` 包含所有参与范围，`range` 与 `columnIds` 仍是活动范围的元数据，不是完整文本的边界或全局列映射。当前 `ranges: 'all'` 的 `columnIds` 可能包含内部列 ID，但文本已排除内部列，不应直接按下标配对。
 
 复制文本默认会给以 `= + - @`、制表符或回车开头的字段加上单引号前缀，避免粘贴到 Excel 时触发公式。可通过 `copyCellRange({ preventFormulaInjection: false })` 关闭。翻页后若框选行已不在当前页，范围会被清空。
 
@@ -40,7 +42,7 @@ STable 提供面向数据工作台的框选和右键菜单能力。两者都依�
   :columns="columns"
   :data-source="data"
   :cell-range-selection="{ mode: 'cell' }"
-  @cell-range-copy="({ text }) => canCopy(text)"
+  :on-cell-range-copy="({ text }) => canCopy(text)"
 />
 ```
 

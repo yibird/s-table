@@ -4,6 +4,14 @@
 
 <demo vue="../../demos/s-table/events.vue" />
 
+## 可取消回调与通知事件
+
+普通通知使用 `STableEmits`。`onCellRangeCopy` 则是 `STableProps` 上需要返回值的同步回调，**不是普通 emit**：返回 `false` 会取消 STable 写入且不阻止浏览器原生复制；实例 `copyCellRange()` 返回空串。包装组件应原样透传 `:on-cell-range-copy="props.onCellRangeCopy"`，或 `return props.onCellRangeCopy?.(payload)`；不要用 `$emit('cellRangeCopy', payload)` 转发，emit 不会传回取消结果。编辑 `commit` / `cancel` 等需要返回值的操作同样保留 callback 合同。
+
+通过实例 API 复制多个范围时，`range` 和 `columnIds` 描述活动范围，`text` 是所有参与范围的完整序列化文本；不能把活动范围元数据当成整个文本的边界或全局列映射。内部选择/序号列不进入文本；当前 `ranges: 'all'` 载荷的活动 `columnIds` 仍可能含内部列 ID，因此也不能把它直接与文本逐列配对。
+
+分页的 `pagination.onChange` 和 `pageChange` 都会触发：前者推荐用于请求与回填，后者用于观察，详见[分页](./pagination)。
+
 ## 事件清单
 
 | 模板事件                              | 载荷                                    | 说明                                   |

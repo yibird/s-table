@@ -97,6 +97,41 @@ describe('实例 API 集成', () => {
     expect(instance.getTanStackTable()).toBeTruthy();
   });
 
+  it('排序按列清理与全量清理/重置', async () => {
+    const instance = await mount();
+
+    instance.setSorting([
+      { columnId: 'id', order: 'ascend' },
+      { columnId: 'dept', order: 'descend' },
+    ]);
+    await nextTick();
+    expect(instance.getSorting()).toEqual([
+      { columnId: 'id', order: 'ascend' },
+      { columnId: 'dept', order: 'descend' },
+    ]);
+
+    // 按列清理只移除目标列。
+    instance.clearSort('id');
+    expect(instance.getSorting()).toEqual([{ columnId: 'dept', order: 'descend' }]);
+
+    instance.clearSortAll();
+    expect(instance.getSorting()).toEqual([]);
+
+    instance.setSorting([{ columnId: 'dept', order: 'ascend' }]);
+    instance.resetSort();
+    expect(instance.getSorting()).toEqual([]);
+
+    // 过滤 / 搜索的无参清理、按列清理与重置语义均安全可调用。
+    instance.clearFilter();
+    instance.clearFilter('dept');
+    instance.clearFilterAll();
+    instance.resetFilter();
+    instance.clearSearch();
+    instance.clearSearch('name');
+    instance.clearSearchAll();
+    instance.resetSearch();
+  });
+
   it('导出、展开、编辑与框选 API 安全可调用', async () => {
     const instance = await mount({ editConfig: { mode: 'cell', trigger: 'manual' } });
 

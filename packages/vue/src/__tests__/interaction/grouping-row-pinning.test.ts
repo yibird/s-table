@@ -46,6 +46,54 @@ afterEach(() => {
 });
 
 describe('分组与行固定集成', () => {
+  it('过滤后同组首条 record 不变时更新聚合值和事件中的 Row context', async () => {
+    const tableRef = ref<STableInstance<Row>>();
+    const clickedRows: unknown[] = [];
+    const mounted = mountSTable<Row>({
+      columns: columns.map((column) =>
+        column.id === 'amount'
+          ? {
+              ...column,
+              aggregatedCell: ({ row, cell }) =>
+                h(
+                  'button',
+                  { class: 'aggregate', onClick: () => clickedRows.push(row) },
+                  String(cell.getValue())
+                ),
+            }
+          : column.id === 'name'
+            ? { ...column, onFilter: (value, record) => record.name !== value }
+            : column
+      ),
+      dataSource,
+      rowKey: 'id',
+      defaultGroupBy: ['department'],
+      ref: tableRef,
+    });
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+    const table = tableRef.value!.getTanStackTable();
+    const before = table.getGroupedRowModel().rows[0]!;
+    expect(host.querySelector('.aggregate')?.textContent).toBe('30');
+
+    table.getColumn('name')!.setFilterValue(['Grace']);
+    await nextTick();
+    const after = table.getGroupedRowModel().rows[0]!;
+    expect(after).not.toBe(before);
+    expect(after.original).toBe(before.original);
+    expect(host.querySelector('.s-table-group-cell-count')?.textContent).toBe('(1)');
+    expect(host.querySelector('.aggregate')?.textContent).toBe('10');
+    host.querySelector<HTMLButtonElement>('.aggregate')!.click();
+    expect(clickedRows).toEqual([after]);
+
+    table.getColumn('name')!.setFilterValue(undefined);
+    await nextTick();
+    expect(host.querySelector('.aggregate')?.textContent).toBe('30');
+    host.querySelector<HTMLButtonElement>('.aggregate')!.click();
+    expect(clickedRows[1]).toBe(table.getGroupedRowModel().rows[0]);
+  });
+
   it('最小表格与默认分组均可挂载，聚合单元格和展开状态可用', async () => {
     const tableRef = ref<STableInstance<Row>>();
     const mounted = mountSTable<Row>({

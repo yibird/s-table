@@ -1,8 +1,10 @@
 import STable from './STable.vue';
 
 export { STable };
-export { SummaryRow, SummaryCell } from './components';
-export { DragHandleIcon } from './components/icon';
+// 直接指向具体文件，避免公共入口依赖聚合 barrel 而把无关组件/图标带入消费端。
+export { default as SummaryRow } from './components/summary/SummaryRow.vue';
+export { default as SummaryCell } from './components/summary/SummaryCell.vue';
+export { default as DragHandleIcon } from './components/icon/DragHandleIcon.vue';
 export { en_US, zh_CN, type STableLocale, type STableLocaleOverrides } from './locales';
 export { createSTableColumnHelper } from './utils/column';
 export default STable;
@@ -18,6 +20,9 @@ export type {
   STableSortItem,
   // 列类型
   STableColumn,
+  STableAggregation,
+  STableAggregationFn,
+  STableBuiltInAggregation,
   STableColumns,
   STableAccessorColumn,
   STableAccessorKeyColumn,
@@ -56,7 +61,6 @@ export type {
   STableRowDragStartContext,
   STableColumnDragConfig,
   STableColumnDragStartContext,
-  STableBreakpoint,
   STableCellTooltipContext,
   STableHeaderMenuContext,
   STableRowOrderChangeEvent,
@@ -86,7 +90,10 @@ export type {
   STableEditMode,
   STableDropPosition,
   STableFilterMode,
+  STableFilterValue,
+  STableColumnFilterValue,
   STableRowKey,
+  STableRowKeyField,
   STableColumnResizeMode,
   STableColumnResizeEvent,
   STableFilterOption,
@@ -96,11 +103,10 @@ export type {
   STableFooterContext,
   STableExpandIconContext,
   STableSelectionHeaderContext,
-  STablePaginationItemRender,
-  STablePaginationItemType,
   PaginationPlacement,
   // 导出类型
   STableCsvOptions,
+  STableCsvRowSource,
   STableExcelAdapter,
   STableExcelOptions,
   STableExcelSheet,

@@ -140,7 +140,7 @@ const columns: STableColumn<Order>[] = [
 
 ## 隐藏列
 
-`hidden: true` 用于隐藏列。运行时列显示控制可以通过响应式列定义更新 `hidden`，也可以通过 `getTanStackTable()` 使用底层列可见性 API。组件当前不内置列设置面板，工具栏由业务页面自行组织。
+`hidden: true` 用于隐藏列。运行时列显示控制可以通过响应式地更新 `hidden`，也可以通过 `getTanStackTable()` 使用底层列可见性 API。组件当前不内置列设置面板，工具栏由业务页面自行组织。
 
 <demo vue="../../demos/s-table/column-visibility.vue" />
 
@@ -182,23 +182,6 @@ const columns = [
 菜单触发器排在排序、筛选、搜索之后，点击不会触发表头排序；`menuPopup` 缺失时不渲染入口。
 
 <demo vue="../../demos/s-table/columns-header-menu.vue" />
-
-## 响应式列
-
-```ts
-const columns = [
-  { id: 'name', accessorKey: 'name', header: '姓名' },
-  { id: 'email', accessorKey: 'email', header: '邮箱', responsive: ['md', 'lg', 'xl', 'xxl'] },
-];
-
-// 表格级阈值与 SSR 首帧断点
-const breakpoints = { md: 768, lg: 992 };
-const defaultBreakpoint = 'lg';
-```
-
-命中规则为「阈值 <= 视口宽度的最大断点」；`hidden` 的优先级高于 `responsive`。
-
-<demo vue="../../demos/s-table/columns-responsive.vue" />
 
 ## 自定义行 / 单元格 / 表头属性
 

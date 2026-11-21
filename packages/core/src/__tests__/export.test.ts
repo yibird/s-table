@@ -36,6 +36,73 @@ describe('CSV 导出', () => {
     expect(chunks.join('')).toBe('1\r\n2');
   });
 
+  it('惰性行源逐块读取，保留编码和进度，并在取消后停止读取', async () => {
+    const rows = [['header'], ['a,b'], ['=1+1'], [-5], ['quote "x"']];
+    const reads: number[] = [];
+    const source = {
+      length: rows.length,
+      getRow: (index: number) => {
+        reads.push(index);
+        return rows[index]!;
+      },
+    };
+    const progress: number[][] = [];
+    const chunks = await buildCsvChunksAsync(source, {
+      chunkSize: 2,
+      onProgress: (processed, total) => progress.push([processed, total]),
+    });
+    expect(chunks.join('')).toBe(buildCsvContent(rows));
+    expect(reads).toEqual([0, 1, 2, 3, 4]);
+    expect(progress).toEqual([
+      [2, 5],
+      [4, 5],
+      [5, 5],
+    ]);
+
+    reads.length = 0;
+    const controller = new AbortController();
+    await expect(
+      buildCsvChunksAsync(source, {
+        chunkSize: 2,
+        signal: controller.signal,
+        onProgress: () => controller.abort(),
+      })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(reads).toEqual([0, 1]);
+    expect(await buildCsvChunksAsync({ length: 0, getRow: () => [] })).toEqual(['\uFEFF']);
+    expect(await buildCsvChunksAsync({ length: 0, getRow: () => [] }, { bom: false })).toEqual([
+      '',
+    ]);
+  });
+
+  it('惰性行源保留 getRow 方法的 this 接收者', async () => {
+    const source = {
+      length: 2,
+      values: [['first'], ['second']],
+      getRow(index: number) {
+        return this.values[index]!;
+      },
+    };
+    expect((await buildCsvChunksAsync(source, { chunkSize: 1 })).join('')).toBe(
+      buildCsvContent(source.values)
+    );
+  });
+
+  it('空数据预取消和最后一个进度回调取消也拒绝导出', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await expect(buildCsvChunksAsync([], { signal: controller.signal })).rejects.toMatchObject({
+      name: 'AbortError',
+    });
+    const finalController = new AbortController();
+    await expect(
+      buildCsvChunksAsync([[1]], {
+        signal: finalController.signal,
+        onProgress: () => finalController.abort(),
+      })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
   it('分块结果拼接后与单块输出一致，并支持取消', async () => {
     const rows = Array.from({ length: 5 }, (_, index) => [index, `row-${index}`]);
     const chunks = await buildCsvChunksAsync(rows, { chunkSize: 2 });

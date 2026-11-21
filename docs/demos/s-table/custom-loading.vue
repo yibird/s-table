@@ -22,40 +22,117 @@ const dataSource: UserRecord[] = [
 <template>
   <STable :columns="columns" :data-source="dataSource" loading>
     <template #loading>
-      <div
-        style="
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-          padding: 20px 24px;
-          background: rgba(255, 255, 255, 0.94);
-          border: 1px solid rgba(22, 119, 255, 0.14);
-          border-radius: 16px;
-          box-shadow: 0 8px 24px rgba(22, 119, 255, 0.12);
-        "
-      >
-        <div
-          style="
-            width: 32px;
-            height: 32px;
-            border: 3px solid rgba(22, 119, 255, 0.18);
-            border-top-color: #1677ff;
-            border-radius: 50%;
-            animation: s-table-demo-spin 0.8s linear infinite;
-          "
-        ></div>
-        <div style="color: rgba(0, 0, 0, 0.75); font-weight: 600">正在同步表格数据</div>
-        <div style="color: rgba(0, 0, 0, 0.45); font-size: 12px">请稍候，系统正在准备最新结果</div>
+      <div class="sync-loading">
+        <div class="sync-loading-icon" aria-hidden="true">
+          <span v-for="row in 3" :key="row" class="sync-loading-row"></span>
+        </div>
+        <div class="sync-loading-content">
+          <div class="sync-loading-title">正在同步表格数据</div>
+          <div class="sync-loading-description">请稍候，正在准备最新结果</div>
+        </div>
+        <div class="sync-loading-progress" aria-hidden="true"></div>
       </div>
     </template>
   </STable>
 </template>
 
 <style scoped>
-@keyframes s-table-demo-spin {
+.sync-loading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100% - 32px);
+  padding: 20px 24px;
+  overflow: hidden;
+  background: var(--s-color-bg-cell);
+  border: 1px solid var(--s-color-border);
+  border-radius: var(--s-radius-lg);
+  box-shadow: var(--s-shadow-elevated);
+}
+
+.sync-loading-icon {
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  padding: 10px;
+  box-sizing: border-box;
+  color: var(--s-primary-color);
+  background: color-mix(in srgb, var(--s-primary-color) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--s-primary-color) 16%, transparent);
+  border-radius: var(--s-radius-md);
+}
+
+.sync-loading-row {
+  height: 3px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.65;
+}
+
+.sync-loading-row:nth-child(2) {
+  width: 75%;
+  opacity: 0.4;
+}
+
+.sync-loading-row:nth-child(3) {
+  width: 90%;
+  opacity: 0.25;
+}
+
+.sync-loading-content {
+  min-width: 0;
+}
+
+.sync-loading-title {
+  color: var(--s-color-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.sync-loading-description {
+  margin-top: 3px;
+  color: var(--s-color-text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.sync-loading-progress {
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--s-primary-color) 10%, transparent);
+}
+
+.sync-loading-progress::after {
+  content: '';
+  display: block;
+  width: 45%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--s-primary-color), transparent);
+  animation: sync-loading-progress 1.8s ease-in-out infinite;
+}
+
+@keyframes sync-loading-progress {
+  from {
+    transform: translateX(-100%);
+  }
   to {
-    transform: rotate(360deg);
+    transform: translateX(325%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sync-loading-progress::after {
+    width: 100%;
+    animation: none;
+    opacity: 0.6;
   }
 }
 </style>

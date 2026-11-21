@@ -17,12 +17,6 @@ const pagination = ref<STablePaginationProps>({
   showSizeChanger: true,
   simple: false,
   showLessItems: true,
-  itemRender: (page, type, element) => {
-    if (type === 'page' && page === 2) {
-      return '②';
-    }
-    return element;
-  },
 });
 </script>
 

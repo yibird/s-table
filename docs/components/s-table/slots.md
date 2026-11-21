@@ -4,20 +4,32 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
 
 ## 插槽总览
 
-| Slot                | 参数                          | 类型                                                  | 描述                       |
-| ------------------- | ----------------------------- | ----------------------------------------------------- | -------------------------- |
-| `empty`             | 无                            | `() => VNodeChild`                                    | 替换整个空状态             |
-| `emptyAction`       | 无                            | `() => VNodeChild`                                    | 在默认空状态说明后追加操作 |
-| `loading`           | 无                            | `() => VNodeChild`                                    | 替换加载指示器             |
-| `expandedRowRender` | `record`, `index`, `expanded` | `{ record: TData; index: number; expanded: boolean }` | 展开行内容                 |
-| `contextMenu`       | `row`, `rowIndex`, `close`    | `STableContextMenuSlotContext<TData>`                 | 行右键菜单                 |
-| `scrollToBottom`    | 无                            | `() => VNodeChild`                                    | 触底状态内容               |
-| `rowDragHandle`     | `record`, `index`             | `{ record: TData; index: number }`                    | 替换行拖拽句柄内容         |
-| `cellEditor`        | 编辑目标、草稿值和提交操作    | `STableCellEditorSlotContext<TData>`                  | 自定义单元格编辑器         |
-| `filterPanel`       | 列、选择值和面板操作          | `STableFilterPanelSlotContext<TData>`                 | 自定义列过滤面板           |
-| `groupRow`          | 分组值、数量和展开操作        | `STableGroupRowSlotContext<TData>`                    | 自定义整行分组内容         |
-| `summary`           | 无                            | `() => VNodeChild`                                    | 表格 `<tfoot>` 汇总区域    |
-| `footer`            | 无                            | `() => VNodeChild`                                    | 表格下方通用页脚           |
+| Slot                | 参数                                                  | 类型                                                  | 描述                       |
+| ------------------- | ----------------------------------------------------- | ----------------------------------------------------- | -------------------------- |
+| `empty`             | 无                                                    | `() => VNodeChild`                                    | 替换整个空状态             |
+| `emptyAction`       | 无                                                    | `() => VNodeChild`                                    | 在默认空状态说明后追加操作 |
+| `loading`           | 无                                                    | `() => VNodeChild`                                    | 替换加载指示器             |
+| `expandedRowRender` | `record`, `index`, `expanded`                         | `{ record: TData; index: number; expanded: boolean }` | 展开行内容                 |
+| `contextMenu`       | `row`, `rowIndex`, `close`                            | `STableContextMenuSlotContext<TData>`                 | 行右键菜单                 |
+| `scrollToBottom`    | 无                                                    | `() => VNodeChild`                                    | 触底状态内容               |
+| `rowDragHandle`     | `record`, `index`                                     | `{ record: TData; index: number }`                    | 替换行拖拽句柄内容         |
+| `cellEditor`        | 编辑目标、草稿值和提交操作                            | `STableCellEditorSlotContext<TData>`                  | 自定义单元格编辑器         |
+| `filterPanel`       | 列、选择值和面板操作                                  | `STableFilterPanelSlotContext<TData>`                 | 自定义列过滤面板           |
+| `groupRow`          | 分组值、数量和展开操作                                | `STableGroupRowSlotContext<TData>`                    | 自定义整行分组内容         |
+| `summary`           | 无                                                    | `() => VNodeChild`                                    | 表格 `<tfoot>` 汇总区域    |
+| `title`             | `currentPageData`                                     | `STableTitleContext<TData>`                           | 表格上方标题               |
+| `footer`            | `currentPageData`, `currentPage`, `pageSize`, `total` | `STableFooterContext<TData>`                          | 表格下方通用页脚           |
+
+`title` / `footer` 插槽优先于对应 prop，作用域与函数 prop 一致。`currentPageData` 为当前最终行模型的原始记录快照：客户端分页时是过滤/排序后的当前页；不分页时是过滤/排序后的全部数据；`manualPagination` 时是传入的服务端当前页（不再次切片），不是仅虚拟窗口内的可见行。静态 title/footer 不需要创建此快照。
+
+```vue
+<STable :columns="columns" :data-source="dataSource">
+  <template #title="{ currentPageData }">本页 {{ currentPageData.length }} 条</template>
+  <template #footer="{ currentPage, pageSize, total }">
+    第 {{ currentPage }} 页 · {{ pageSize }} 条/页 · 共 {{ total }} 条
+  </template>
+</STable>
+```
 
 ## 类型安全
 

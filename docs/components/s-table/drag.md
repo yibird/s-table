@@ -40,7 +40,7 @@ function handleRowOrderChange(payload: { dataSource: User[]; fromIndex: number; 
 
 ## 拖拽权限
 
-`columnDrag.canDrag` 与 `rowDrag.canDrag` 在每次拖拽开始时同步求值，返回 `false` 会取消本次拖拽，不会进入拖拽态，也不会触发顺序变化。适合根据业务状态动态限制拖拽源。
+`columnDrag.canDrag` 与 `rowDrag.canDrag` 返回 `false` 时会取消拖拽，不会进入拖拽态，也不会触发顺序变化。`rowDrag.canDrag` 还会在行渲染时求值：拒绝拖拽的行，其句柄或整行会直接显示禁用态（`cursor: not-allowed`、不可拖拽）；列拖拽权限在每次拖拽开始时校验。适合根据业务状态动态限制拖拽源。
 
 ```ts
 const columnDrag = {

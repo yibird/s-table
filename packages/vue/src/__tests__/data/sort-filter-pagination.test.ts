@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vite-plus/test';
-import { computed, nextTick, reactive, shallowRef, watch, type App } from 'vue';
+import { computed, nextTick, reactive, ref, shallowRef, watch, type App } from 'vue';
 import { mountSTable } from '../helpers';
-import { useSortFilter } from '../../hooks/useSortFilter';
+import { useSortFilter } from '../../hooks/data';
 import type { STableColumn } from '../../types';
 
 /**
@@ -114,6 +114,68 @@ describe('内置排序/过滤/分页迁移', () => {
     expect([sortUpdates, filterUpdates, searchUpdates]).toEqual([1, 1, 1]);
 
     stops.forEach((stop) => stop());
+  });
+
+  it('clear* 按列清理，reset* 恢复默认值', () => {
+    const columns = computed<STableColumn<Row>[]>(() => [
+      { id: 'id', accessorKey: 'id', sorter: true, defaultSortOrder: 'ascend' },
+      { id: 'name', accessorKey: 'name', sorter: true, search: true },
+      {
+        id: 'dept',
+        accessorKey: 'dept',
+        filters: [
+          { text: 'A', value: 'A' },
+          { text: 'B', value: 'B' },
+        ],
+        onFilter: (value, record) => record.dept === value,
+        defaultFilteredValues: ['A'],
+      },
+    ]);
+    const state = useSortFilter<Row>({
+      columns,
+      defaultSorting: ref([{ columnId: 'name', order: 'descend' as const }]),
+      multiSort: ref(true),
+    });
+
+    // 初始化：defaultSorting 在前，列 defaultSortOrder 追加在后。
+    expect(state.sorting.value).toEqual([
+      { columnId: 'name', order: 'descend' },
+      { columnId: 'id', order: 'ascend' },
+    ]);
+    expect(state.filterState.value.get('dept')).toEqual(['A']);
+
+    // 只清指定列，其余排序保持不变。
+    state.clearSort('id');
+    expect(state.sorting.value).toEqual([{ columnId: 'name', order: 'descend' }]);
+
+    state.clearSort();
+    expect(state.sorting.value).toEqual([]);
+
+    state.resetSort();
+    expect(state.sorting.value).toEqual([
+      { columnId: 'name', order: 'descend' },
+      { columnId: 'id', order: 'ascend' },
+    ]);
+
+    state.setFilter('dept', ['B']);
+    state.setFilter('name', ['x']);
+    expect(state.filterState.value.get('dept')).toEqual(['B']);
+    state.clearFilter('dept');
+    expect(state.filterState.value.has('dept')).toBe(false);
+    expect(state.filterState.value.get('name')).toEqual(['x']);
+
+    state.resetFilter();
+    expect(state.filterState.value.get('dept')).toEqual(['A']);
+    expect(state.filterState.value.has('name')).toBe(false);
+
+    state.setSearch('name', 'alice');
+    expect(state.searchState.value.get('name')).toBe('alice');
+    state.clearSearch('name');
+    expect(state.searchState.value.has('name')).toBe(false);
+
+    state.setSearch('name', 'alice');
+    state.resetSearch();
+    expect(state.searchState.value.size).toBe(0);
   });
 
   it('排序回调原地修改事件参数不会污染内部状态', () => {

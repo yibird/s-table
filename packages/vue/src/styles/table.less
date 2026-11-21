@@ -91,57 +91,73 @@
     }
   }
 
-  &-header-cell-drag-source {
-    position: relative;
-    // 使用不透明高亮标识被拖拽列，避免与浏览器原生 drag image 的半透明效果叠加。
-    opacity: 1 !important;
-    --s-table-cell-bg: var(--s-color-bg-column-drag-source);
-    background-color: var(--s-color-bg-column-drag-source);
-    // 仅保留背景高亮，不再额外描边，避免拖拽列出现边框高亮。
-    box-shadow: var(--s-shadow-menu);
-    z-index: calc(var(--s-z-index-header) + 1);
-  }
-
-  &-header-cell-drag-over {
-    box-shadow: inset 2px 0 0 0 var(--s-primary-color, #1677ff);
-  }
-
   // 行拖拽中
   &-row-dragging {
     user-select: none;
+    // 拖拽期间指针始终悬停在落点行上，hover 底色（#f7f7f7）与 1px 分隔线（#f0f0f0）
+    // 几乎同色，会让边框看起来消失。拖拽期间冻结 hover 底色，保持与普通行一致。
+    --s-color-bg-row-hover: var(--s-color-bg-cell);
+    --s-color-bg-row-striped-hover: var(--s-color-bg-row-striped);
+    --s-color-bg-row-selected-hover: var(--s-color-bg-row-selected);
+  }
+
+  // 整行拖拽权限拒绝：保持数据可交互，仅提示该行不可作为拖拽源。
+  &-body .@{prefix}-row-drag-disabled {
+    cursor: not-allowed;
+
+    > .@{prefix}-cell {
+      cursor: not-allowed;
+    }
   }
 
   &-drag-handle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex: 0 0 24px;
     width: 24px;
     height: 24px;
+    box-sizing: border-box;
     border-radius: var(--s-radius-sm, 4px);
     cursor: grab;
-    color: var(--s-color-text-quaternary);
+    color: var(--s-color-text-tertiary);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
     transition:
       color var(--s-duration-normal) var(--s-ease-out),
-      background-color var(--s-duration-normal) var(--s-ease-out);
+      background-color var(--s-duration-normal) var(--s-ease-out),
+      box-shadow var(--s-duration-normal) var(--s-ease-out);
 
     &:hover {
-      color: var(--s-color-text-secondary);
+      color: var(--s-primary-color, #1677ff);
       background-color: var(--s-color-bg-hover);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--s-primary-color, #1677ff) 12%, transparent);
     }
 
     &:active {
       cursor: grabbing;
       background-color: var(--s-color-bg-active);
     }
+
+    svg {
+      display: block;
+      flex: none;
+    }
   }
 
   &-drag-handle-disabled {
-    cursor: not-allowed;
+    // 禁用态完全退出指针交互：不响应 hover，也不会成为 dragstart 起点。
+    pointer-events: none;
     opacity: 0.45;
+  }
+
+  // 句柄让出指针事件后，由所属单元格承载禁用光标与 hover 反馈。
+  &-body .@{prefix}-row .@{prefix}-cell:has(> .@{prefix}-drag-handle-disabled) {
+    cursor: not-allowed;
 
     &:hover {
-      color: var(--s-color-text-quaternary);
-      background-color: transparent;
+      background-color: var(--s-color-bg-disabled);
     }
   }
 
@@ -152,56 +168,8 @@
     background-color: var(--s-color-bg-header);
   }
 
-  // 拖拽列单元格居中对齐
-  &-header .@{prefix}-cell:has(> .s-table-cell-inner > .s-table-drag-handle) > .s-table-cell-inner,
-  &-body .@{prefix}-cell:has(> .s-table-drag-handle) {
+  &-header .@{prefix}-cell:has(> .s-table-cell-inner > .s-table-drag-handle) > .s-table-cell-inner {
     justify-content: center;
-    text-align: center;
-  }
-
-  &-row-drag-source {
-    .@{prefix}-cell {
-      // 不降低整行 opacity：浏览器已会为原生 drag image 降低透明度，再叠加会让表内行几乎不可见。
-      --s-table-cell-bg: var(--s-color-bg-drag-source);
-      background-color: var(--s-table-cell-bg);
-    }
-  }
-
-  &-row-drag-over {
-    .@{prefix}-cell {
-      box-shadow: inset 0 2px 0 0 var(--s-primary-color, #1677ff);
-    }
-  }
-
-  &-row-drag-over-after {
-    .@{prefix}-cell {
-      box-shadow: inset 0 -2px 0 0 var(--s-primary-color, #1677ff);
-    }
-  }
-
-  &-row-drag-over-inside {
-    .@{prefix}-cell {
-      --s-table-cell-bg: var(--s-color-bg-row-selected);
-      background-color: var(--s-table-cell-bg);
-      // 只画整行的上下边，左右边交给首尾单元格，避免每个单元格都被框成独立高亮。
-      box-shadow:
-        inset 0 2px 0 0 var(--s-primary-color, #1677ff),
-        inset 0 -2px 0 0 var(--s-primary-color, #1677ff);
-    }
-
-    .@{prefix}-cell:first-child {
-      box-shadow:
-        inset 2px 0 0 0 var(--s-primary-color, #1677ff),
-        inset 0 2px 0 0 var(--s-primary-color, #1677ff),
-        inset 0 -2px 0 0 var(--s-primary-color, #1677ff);
-    }
-
-    .@{prefix}-cell:last-child {
-      box-shadow:
-        inset -2px 0 0 0 var(--s-primary-color, #1677ff),
-        inset 0 2px 0 0 var(--s-primary-color, #1677ff),
-        inset 0 -2px 0 0 var(--s-primary-color, #1677ff);
-    }
   }
 
   // 行拖拽排序动画
@@ -563,15 +531,21 @@
       color: var(--s-color-text);
     }
 
+    // 分组单元格：图标、分组值、数量统一按 flex 垂直居中，避免 baseline 对齐偏差。
+    .@{prefix}-group-cell-inner {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
     .@{prefix}-group-cell-value {
-      vertical-align: middle;
+      min-width: 0;
     }
 
     .@{prefix}-group-cell-count {
-      margin-inline-start: 6px;
       color: var(--s-color-text-tertiary);
       font-weight: 400;
-      vertical-align: middle;
     }
 
     // 框选拖动期间：关闭单元格背景 / 边框过渡。拖动时范围每帧变化，逐格 transition 会
@@ -687,7 +661,10 @@
     // 单元格框选高亮：使用稳定的半透明填充，和行选择保持清晰层级。
     // 同时匹配行和单元格以提高选区层级，避免通用单元格及行选择背景覆盖框选填充。
     .@{prefix}-row .@{prefix}-cell.@{prefix}-cell-range-selected {
-      --s-table-cell-bg: var(--s-color-bg-cell-range);
+      --s-table-cell-bg: var(
+        --s-color-bg-cell-range,
+        color-mix(in srgb, var(--s-primary-color) 8%, transparent)
+      );
       background-color: var(--s-table-cell-bg);
       position: relative;
       z-index: 1;
@@ -712,7 +689,10 @@
 
     // 选中行与框选交集使用更深的填充，避免两种状态叠加后难以区分。
     .@{prefix}-row.@{prefix}-row-selected .@{prefix}-cell.@{prefix}-cell-range-selected {
-      --s-table-cell-bg: var(--s-color-bg-cell-range-active);
+      --s-table-cell-bg: var(
+        --s-color-bg-cell-range-active,
+        color-mix(in srgb, var(--s-primary-color) 14%, transparent)
+      );
       background-color: var(--s-table-cell-bg);
     }
 
@@ -766,9 +746,102 @@
     }
   }
 
-  // 标题（表格上方通用内容区域）
+  // 窄句柄列保留 table-cell 布局，消除行内基线和 size padding 对居中的影响。
+  & .@{prefix}-body .@{prefix}-cell:has(> .@{prefix}-drag-handle) {
+    padding-inline: 4px;
+    text-align: center;
+    line-height: 0;
+
+    > .@{prefix}-drag-handle {
+      vertical-align: middle;
+      line-height: 1;
+    }
+  }
+
+  &-body .@{prefix}-row[draggable='true'],
+  &-drag-handle * {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  // 拖拽反馈置于普通/展开/选择/斑马纹状态之上，但保留选区伪元素与固定列阴影。
+  &.@{prefix}-row-dragging
+    .@{prefix}-body
+    .@{prefix}-row.@{prefix}-row-drag-source
+    > .@{prefix}-cell {
+    --s-table-cell-bg: var(--s-color-bg-drag-source);
+    background-color: var(--s-table-cell-bg);
+    transition: none;
+
+    .@{prefix}-drag-handle {
+      color: var(--s-primary-color);
+      background: color-mix(in srgb, var(--s-primary-color) 14%, transparent);
+      cursor: grabbing;
+    }
+  }
+
+  // 行拖拽指示线：滚动容器上的独立浮层，不修改单元格 position / border。
+  &-row-drop-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 5;
+    height: 3px;
+    border-radius: 999px;
+    background-color: var(--s-primary-color);
+    pointer-events: none;
+  }
+
+  &.@{prefix}-row-dragging .@{prefix}-body .@{prefix}-row-drag-over-inside > .@{prefix}-cell {
+    --s-table-cell-bg: color-mix(in srgb, var(--s-primary-color) 7%, var(--s-color-bg-cell));
+    background-color: var(--s-table-cell-bg);
+    background-image:
+      repeating-linear-gradient(90deg, var(--s-primary-color) 0 5px, transparent 5px 9px),
+      repeating-linear-gradient(90deg, var(--s-primary-color) 0 5px, transparent 5px 9px),
+      repeating-linear-gradient(0deg, var(--s-primary-color) 0 5px, transparent 5px 9px),
+      repeating-linear-gradient(0deg, var(--s-primary-color) 0 5px, transparent 5px 9px);
+    background-position:
+      left top,
+      left bottom,
+      left top,
+      right top;
+    background-size:
+      100% 2px,
+      100% 2px,
+      var(--s-drag-inside-start, 0px) 100%,
+      var(--s-drag-inside-end, 0px) 100%;
+
+    &:first-child {
+      --s-drag-inside-start: 2px;
+    }
+
+    &:last-child {
+      --s-drag-inside-end: 2px;
+    }
+  }
+
+  // 拖拽源表头不做高亮，保持原始外观；仅由浮层预览反馈拖拽状态。
+
+  // 列落点指示器：独立节点绘制在 th 内，z-index 高于列分割线（::before）。
+  .@{prefix}-column-drop-indicator {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 3;
+    width: 3px;
+    border-radius: 999px;
+    background-color: var(--s-primary-color);
+    pointer-events: none;
+  }
+
+  .@{prefix}-column-drop-indicator-after {
+    inset-inline-start: auto;
+    inset-inline-end: 0;
+  }
+
+  // 标题（表格上方通用内容区域）：只保留与表格之间的下间距，左右与表头对齐。
   &-title {
-    padding: 12px 16px;
+    padding-bottom: 12px;
     color: var(--s-color-text);
     font-size: 16px;
     font-weight: 600;

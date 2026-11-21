@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, ref } from 'vue';
+import { h } from 'vue';
 import STable, { type STableColumn } from '../../../packages/vue/src';
 import { generateEmployees, type Employee } from '../shared';
 
@@ -20,7 +20,6 @@ const columns: STableColumn<Employee>[] = [
     width: 220,
     ellipsis: true,
     tooltip: ({ record }) => `联系 ${record.name}：${record.email}`,
-    responsive: ['md', 'lg', 'xl', 'xxl'],
   },
   {
     id: 'department',
@@ -46,18 +45,14 @@ const dataSource = generateEmployees(12).map((row) => ({
   ...row,
   address: `${row.city} ${row.address} 很长的地址内容会换行显示，用于演示 autoHeight。`,
 }));
-
-const breakpointHint = ref('窗口宽度变化时，邮箱列会在 md 以下隐藏（defaultBreakpoint: lg）');
 </script>
 
 <template>
   <div style="padding: 16px; border: 1px dashed #d9d9d9; border-radius: 12px">
-    <p style="margin: 0 0 12px; color: #666">{{ breakpointHint }}</p>
     <STable
       :columns="columns"
       :data-source="dataSource"
       row-key="id"
-      :default-breakpoint="'lg'"
       :pagination="false"
       :virtual="{ rowHeight: (record) => (record.address.length > 40 ? 64 : 48) }"
       style="max-height: 420px"

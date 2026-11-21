@@ -16,7 +16,6 @@ export const useColumnState = <TData extends RowData>(
   dataState: ReturnType<typeof useDataState<TData>>,
   options: {
     getRows: () => Row<TableFeatures, TData>[];
-    activeBreakpoint?: Readonly<import('vue').Ref<import('../types').STableBreakpoint | undefined>>;
     /** deepWatchColumns 的失效版本号。 */
     columnRevision?: Readonly<import('vue').Ref<number>>;
   }
@@ -82,6 +81,7 @@ export const useColumnState = <TData extends RowData>(
     dropPosition: dragRowDropPosition,
     dragColumn: dragHandleColumn,
     rowDragTrigger,
+    canDragRow,
     handleRowDragStart,
     handleRowDragOver,
     handleRowDragEnd,
@@ -189,7 +189,6 @@ export const useColumnState = <TData extends RowData>(
   } = useColumns<TData>({
     columns,
     columnMap,
-    activeBreakpoint: options.activeBreakpoint,
     revision: options.columnRevision,
     internalColumns: composedInternalColumns,
   });
@@ -219,6 +218,7 @@ export const useColumnState = <TData extends RowData>(
     dragRowDropPosition,
     dragHandleColumn,
     rowDragTrigger,
+    canDragRow,
     handleRowDragStart,
     handleRowDragOver,
     handleRowDragEnd,

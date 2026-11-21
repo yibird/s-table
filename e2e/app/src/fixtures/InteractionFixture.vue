@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, shallowRef } from 'vue';
+import { h, ref, shallowRef } from 'vue';
 import STable, {
   zh_CN,
   type STableCellRange,
@@ -144,6 +144,30 @@ const multiDragColumns: STableColumn<Person>[] = [
   { id: 'score', accessorKey: 'score', header: 'Score', width: 100 },
 ];
 
+const contractOrder = shallowRef('idle');
+const contractColumns: STableColumn<Person>[] = [
+  { id: 'id', accessorKey: 'id', header: 'ID', width: 70, fixed: 'left' },
+  {
+    id: 'name',
+    accessorKey: 'name',
+    width: 280,
+    draggable: true,
+    sorter: true,
+    search: true,
+    resizable: true,
+    filters: [{ text: 'Person 1', value: 'Person 1' }],
+    showMenu: true,
+    menuPopup: () => h('span', 'Column actions'),
+    header: () =>
+      h('span', [
+        'Name ',
+        h('button', { type: 'button', 'data-testid': 'header-action' }, 'Action'),
+      ]),
+  },
+  { id: 'department', accessorKey: 'department', header: 'Department', width: 220 },
+  { id: 'score', accessorKey: 'score', header: 'Score', width: 100, fixed: 'right' },
+];
+
 const handleMultiDragOrderChange = (payload: {
   dataSource: Person[];
   fromIndices: number[];
@@ -153,9 +177,44 @@ const handleMultiDragOrderChange = (payload: {
   multiDragRows.value = payload.dataSource;
   multiDragEvent.value = `${payload.fromIndices.join(',')}->${payload.toIndex}:${payload.position}`;
 };
+interface TreeRow {
+  id: number;
+  name: string;
+  owner: string;
+  children?: TreeRow[];
+}
+const treeDragRows = ref<TreeRow[]>([
+  { id: 1, name: 'Release', owner: 'Ada', children: [{ id: 11, name: 'API', owner: 'Grace' }] },
+  { id: 2, name: 'Documentation', owner: 'Lin' },
+  { id: 3, name: 'Deploy', owner: 'Mia' },
+]);
+const treeDragColumns: STableColumn<TreeRow>[] = [
+  { accessorKey: 'name', header: 'Task', width: 280, draggable: true },
+  { accessorKey: 'owner', header: 'Owner', width: 180, draggable: true },
+];
+const dragSize = ref<'small' | 'middle' | 'large'>('middle');
+const dragRangeMode = ref<'off' | 'cell' | 'row'>('off');
+const treeDragRange = ref<STableCellRange | null>(null);
+const treeDrop = ref('idle');
+const treeDragRef = ref<STableInstance<TreeRow> | null>(null);
 </script>
 
 <template>
+  <section class="fixture-section" data-testid="contract-table" style="max-width: 640px">
+    <h2>Header controls and pinned selection</h2>
+    <output data-testid="contract-order">{{ contractOrder }}</output>
+    <STable
+      bordered
+      row-key="id"
+      :columns="contractColumns"
+      :data-source="baseRows"
+      :row-selection="{ type: 'checkbox' }"
+      :default-selected-row-keys="[2]"
+      :default-pinned-row-keys="{ top: [1], bottom: [5] }"
+      @column-order-change="contractOrder = $event.columnOrder.join(',')"
+    />
+  </section>
+
   <section class="fixture-section" data-testid="selection-expand-table">
     <h2>Selection and expansion</h2>
     <div class="fixture-controls">
@@ -267,6 +326,53 @@ const handleMultiDragOrderChange = (payload: {
         <span :data-testid="`row-drag-${record.id}`">drag</span>
       </template>
     </STable>
+  </section>
+
+  <section class="fixture-section" data-testid="tree-drag-table">
+    <h2>Tree drag feedback</h2>
+    <label
+      >Size
+      <select v-model="dragSize" data-testid="drag-size">
+        <option>small</option>
+        <option>middle</option>
+        <option>large</option>
+      </select></label
+    >
+    <label
+      >Range
+      <select v-model="dragRangeMode" data-testid="drag-range-mode">
+        <option>off</option>
+        <option>cell</option>
+        <option>row</option>
+      </select></label
+    >
+    <button
+      data-testid="read-drag-range"
+      @click="treeDragRange = treeDragRef?.getCellRange() ?? null"
+    >
+      Read range
+    </button>
+    <output data-testid="tree-drag-range">{{
+      treeDragRange ? JSON.stringify(treeDragRange) : 'none'
+    }}</output>
+    <output data-testid="tree-drop">{{ treeDrop }}</output>
+    <STable
+      ref="treeDragRef"
+      v-model:data-source="treeDragRows"
+      bordered
+      striped
+      row-key="id"
+      default-expand-all-rows
+      :size="dragSize"
+      :tree="{}"
+      :columns="treeDragColumns"
+      :row-drag="{ allowTreeReparent: true }"
+      :cell-range-selection="dragRangeMode === 'off' ? undefined : { mode: dragRangeMode }"
+      @cell-range-change="treeDragRange = $event"
+      @row-order-change="
+        treeDrop = `${$event.rowKeys.join(',')}:${$event.position}:${$event.targetRowKey}`
+      "
+    />
   </section>
 
   <section class="fixture-section" data-testid="multi-drag-table">

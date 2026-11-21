@@ -183,11 +183,11 @@
 
     &-selected {
       font-weight: 600;
-      background-color: var(--s-color-bg-row-selected, rgba(22, 119, 255, 0.04));
+      background-color: color-mix(in srgb, var(--s-primary-color, #1677ff) 8%, transparent);
       color: var(--s-primary-color, #1677ff);
 
       &:hover {
-        background-color: var(--s-color-bg-row-selected-hover, rgba(22, 119, 255, 0.08));
+        background-color: color-mix(in srgb, var(--s-primary-color, #1677ff) 14%, transparent);
       }
     }
 

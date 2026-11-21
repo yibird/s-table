@@ -67,9 +67,15 @@ export const buildCsvChunks = (
   return chunks;
 };
 
+/** 惰性行源：在当前分块内取值，不预先物化完整二维矩阵。 */
+export type STableCsvRowSource = {
+  readonly length: number;
+  getRow: (index: number) => readonly unknown[];
+};
+
 /** 异步分块编码，按块让出主线程，并支持取消与进度回调。 */
 export const buildCsvChunksAsync = async (
-  rows: readonly (readonly unknown[])[],
+  rows: readonly (readonly unknown[])[] | STableCsvRowSource,
   options: CsvEncodingOptions & {
     chunkSize?: number;
     onProgress?: (processed: number, total: number) => void;
@@ -82,12 +88,19 @@ export const buildCsvChunksAsync = async (
       : DEFAULT_CHUNK_SIZE;
   const total = rows.length;
   const chunks: string[] = [];
+  const getRow = (index: number) => ('getRow' in rows ? rows.getRow(index) : rows[index]!);
+  const checkAborted = () => {
+    if (options.signal?.aborted) throw new DOMException('Export aborted', 'AbortError');
+  };
 
+  checkAborted();
   for (let start = 0; start < total; start += chunkSize) {
-    if (options.signal?.aborted) {
-      throw new DOMException('Export aborted', 'AbortError');
+    checkAborted();
+    const slice: (readonly unknown[])[] = [];
+    for (let index = start; index < Math.min(start + chunkSize, total); index++) {
+      checkAborted();
+      slice.push(getRow(index));
     }
-    const slice = rows.slice(start, start + chunkSize);
     chunks.push(
       start === 0 ? buildCsvContent(slice, options) : `\r\n${serializeExportRows(slice, options)}`
     );
@@ -100,6 +113,7 @@ export const buildCsvChunksAsync = async (
     });
   }
 
+  checkAborted();
   if (total === 0) chunks.push(options.bom === false ? '' : BOM);
   return chunks;
 };

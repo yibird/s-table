@@ -29,7 +29,6 @@ type STableDefaultedPropKeys =
   | 'columnResizeMode'
   | 'paginationPlacement'
   | 'summaryFixed'
-  | 'defaultBreakpoint'
   | 'keyboardNavigation'
   | 'locale';
 

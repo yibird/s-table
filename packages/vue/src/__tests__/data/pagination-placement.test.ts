@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vite-plus/test';
-import { h, nextTick, type App } from 'vue';
+import { nextTick, type App } from 'vue';
 import { mountSTable } from '../helpers';
 import type { PaginationPlacement, STableColumn } from '../../types';
 
@@ -48,20 +48,49 @@ describe('pagination placement', () => {
     ]);
   });
 
-  it('itemRender 替换分页条目内容', async () => {
+  it('默认页码、前后页和快速翻页内容与交互保持一致', async () => {
     const mounted = mountSTable<Row>({
       columns,
-      dataSource,
-      pagination: {
-        itemRender: (page, type, fallback) =>
-          type === 'page' ? h('span', { class: 'custom-page' }, String(page)) : fallback,
-      },
+      dataSource: Array.from({ length: 100 }, (_, index) => ({ id: index + 1 })),
+      pagination: { defaultCurrent: 5, defaultPageSize: 10 },
     });
     app = mounted.app;
     host = mounted.host;
     await nextTick();
 
-    expect(host.querySelector('.custom-page')?.textContent).toBe('1');
+    const activePage = () => host!.querySelector('.s-pagination-item-active')?.textContent?.trim();
+    expect(activePage()).toBe('5');
+    for (const selector of ['prev', 'next', 'jump-prev', 'jump-next']) {
+      expect(host.querySelector(`.s-pagination-${selector} svg`)).not.toBeNull();
+    }
+    expect(host.querySelector('.s-pagination-jump-prev .s-pagination-jump-icon')?.textContent).toBe(
+      '•••'
+    );
+    expect(host.querySelector('.s-pagination-jump-next .s-pagination-jump-icon')?.textContent).toBe(
+      '•••'
+    );
+
+    host.querySelector<HTMLButtonElement>('.s-pagination-next')!.click();
+    await nextTick();
+    expect(activePage()).toBe('6');
+    host.querySelector<HTMLButtonElement>('.s-pagination-prev')!.click();
+    await nextTick();
+    expect(activePage()).toBe('5');
+    host.querySelector<HTMLButtonElement>('.s-pagination-jump-next')!.click();
+    await nextTick();
+    expect(activePage()).toBe('10');
+    expect(host.querySelector<HTMLButtonElement>('.s-pagination-next')!.disabled).toBe(true);
+    host.querySelector<HTMLButtonElement>('.s-pagination-jump-prev')!.click();
+    await nextTick();
+    expect(activePage()).toBe('5');
+    const firstPage = Array.from(
+      host.querySelectorAll<HTMLButtonElement>('.s-pagination-item')
+    ).find((button) => button.textContent?.trim() === '1')!;
+    firstPage.click();
+    await nextTick();
+    expect(activePage()).toBe('1');
+    expect(host.querySelector<HTMLButtonElement>('.s-pagination-prev')!.disabled).toBe(true);
+    expect(host.querySelector('tbody .s-table-row td')?.textContent?.trim()).toBe('1');
   });
 
   it('simple 模式只保留上一页/下一页与页码信息', async () => {

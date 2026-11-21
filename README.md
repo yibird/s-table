@@ -126,7 +126,7 @@ pnpm build               # build core + vue
 pnpm check               # full CI check
 ```
 
-Test suite: 414 unit tests (66 core + 348 vue) and 151 E2E scenarios, plus performance benchmarks and bundle-size budgets.
+Test suite: 483 unit tests (69 core + 414 vue) and 151 E2E scenarios, plus performance benchmarks and bundle-size budgets.
 
 ## Browser support
 

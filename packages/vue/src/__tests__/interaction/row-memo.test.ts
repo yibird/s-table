@@ -10,11 +10,9 @@ import type {
 } from '../../types';
 
 /**
- * 行级 v-memo 正确性回归测试 *
- * body/index.vue 给每个主`<tr>` 加了 v-memo，只有当行的 memo key（数据身/ 位置 /
- * 选中 / 展开 / 拖拽状/ 固定列样/ 框/ 语义class-style）变化时才重建其单元格子树 *
- * 风险：memo key 漏项会导致行渲染滞后。此处验证最容易受影响的两类交互— * 选中状态切换、展开状态切换、以及数据变更——行 class 与内容都能正确更新，
- * 证明 memo key 覆盖完整、没有把该更新的行错误跳过 */
+ * 行呈现与单元格内容缓存回归：Body 保持完整响应式更新，
+ * CachedCellContent 仍跳过不读取变更状态的业务 renderer。
+ */
 
 interface Row {
   id: number;
@@ -40,7 +38,117 @@ afterEach(() => {
   host = null;
 });
 
-describe('行级 v-memo 正确', () => {
+describe('行响应式与单元格渲染缓存', () => {
+  it('单行表格 keyboardNavigation 切换更新 tabindex', async () => {
+    const keyboardNavigation = ref(true);
+    const dataSource = [{ id: 1, name: 'a' }];
+    const mounted = mountSTable<Row>(() => ({
+      columns,
+      dataSource,
+      rowKey: 'id',
+      keyboardNavigation: keyboardNavigation.value,
+    }));
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+    const cell = () => host!.querySelector('tbody td')!;
+    expect(cell().getAttribute('tabindex')).toBe('-1');
+    keyboardNavigation.value = false;
+    await nextTick();
+    expect(cell().hasAttribute('tabindex')).toBe(false);
+    keyboardNavigation.value = true;
+    await nextTick();
+    expect(cell().getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('单行表格横向虚拟窗口切换不复用旧单元格子树', async () => {
+    const virtualX = ref(false);
+    const dataSource = [{ id: 1, name: 'a' }];
+    const wideColumns: STableColumn<Row>[] = Array.from({ length: 100 }, (_, index) => ({
+      id: `name-${index}`,
+      accessorKey: 'name',
+      header: String(index),
+      width: 120,
+    }));
+    const mounted = mountSTable<Row>(() => ({
+      columns: wideColumns,
+      dataSource,
+      rowKey: 'id',
+      virtual: { y: false, x: virtualX.value, columnOverscan: 1 },
+    }));
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+    const cells = () => host!.querySelectorAll('tbody td[data-column-id]');
+    expect(cells()).toHaveLength(100);
+    virtualX.value = true;
+    await nextTick();
+    expect(cells().length).toBeGreaterThan(0);
+    expect(cells().length).toBeLessThan(20);
+    expect(host.querySelector('.s-table-column-virtual-spacer')).not.toBeNull();
+    virtualX.value = false;
+    await nextTick();
+    expect(cells()).toHaveLength(100);
+    expect(host.querySelector('.s-table-column-virtual-spacer')).toBeNull();
+  });
+
+  it('单行编辑中 commitOnBlur 配置更新传到现有编辑器', async () => {
+    const tableRef = ref<STableInstance<Row>>();
+    const commitOnBlur = ref(false);
+    const dataSource = [{ id: 1, name: 'a' }];
+    const editColumns: STableColumn<Row>[] = [{ id: 'name', accessorKey: 'name', editable: true }];
+    const mounted = mountSTable<Row>(() => ({
+      columns: editColumns,
+      dataSource,
+      rowKey: 'id',
+      editConfig: { trigger: 'manual', commitOnBlur: commitOnBlur.value },
+      ref: tableRef,
+    }));
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+    expect(tableRef.value!.startCellEdit(1, 'name')).toBe(true);
+    await nextTick();
+    const input = host.querySelector<HTMLInputElement>('.s-table-cell-editor')!;
+    input.dispatchEvent(new FocusEvent('blur'));
+    await nextTick();
+    expect(host.querySelector('.s-table-cell-editor')).toBe(input);
+    commitOnBlur.value = true;
+    await nextTick();
+    input.dispatchEvent(new FocusEvent('blur'));
+    await nextTick();
+    await nextTick();
+    expect(host.querySelector('.s-table-cell-editor')).toBeNull();
+  });
+
+  it('单个折叠分组的 locale 变化更新展开按钮文案', async () => {
+    const tableRef = ref<STableInstance<Row>>();
+    const label = ref('Expand first');
+    const dataSource = [{ id: 1, name: 'a' }];
+    const groupedColumns: STableColumn<Row>[] = [
+      { id: 'name', accessorKey: 'name', groupable: true },
+    ];
+    const mounted = mountSTable<Row>(() => ({
+      columns: groupedColumns,
+      dataSource,
+      rowKey: 'id',
+      defaultGroupBy: ['name'],
+      locale: { accessibility: { expandTrigger: label.value } },
+      ref: tableRef,
+    }));
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+    tableRef.value!.collapseAllGroups();
+    await nextTick();
+    expect(host.querySelectorAll('tbody tr.s-table-row')).toHaveLength(1);
+    const trigger = () => host!.querySelector('.s-table-expand-trigger')!;
+    expect(trigger().getAttribute('aria-label')).toBe('Expand first');
+    label.value = 'Expand second';
+    await nextTick();
+    expect(trigger().getAttribute('aria-label')).toBe('Expand second');
+  });
+
   it('切换选中状态：未读取选择状态的 cell 渲染器不会重复执行', async () => {
     const state = reactive<{ keys: STableRowKey[] }>({ keys: [] });
     const renderCounts = new Map<number, number>();
@@ -282,7 +390,7 @@ describe('行级 v-memo 正确', () => {
     expect(classes2[2].includes('s-table-row-selected')).toBe(true);
   });
 
-  it('数据变更：memo 不会跳过内容更新（行文本随数据刷新）', async () => {
+  it('数据变更：行文本随数据刷新', async () => {
     const state = reactive<{ data: Row[] }>({
       data: [
         { id: 1, name: 'a' },
@@ -298,7 +406,7 @@ describe('行级 v-memo 正确', () => {
       host!.querySelector('tbody tr.s-table-row td.s-table-cell:nth-child(2)')?.textContent?.trim();
     expect(firstRowText()).toBe('a');
 
-    // 替换数据源（新行对象引用）→ memo key 中的 item.row 变化 ?行必须重渲染
+    // 替换数据源（新行对象引用）后必须重渲染。
     state.data = [
       { id: 1, name: 'AAA' },
       { id: 2, name: 'b' },
@@ -307,7 +415,7 @@ describe('行级 v-memo 正确', () => {
     expect(firstRowText()).toBe('AAA');
   });
 
-  it('原地修改 bodyCell style 时会使行memo 失效', async () => {
+  it('原地修改 bodyCell style 时刷新单元格样式', async () => {
     const styles = reactive<STableStyles>({ bodyCell: { color: 'red' } });
     const mounted = mountSTable<Row>(() => ({
       columns,

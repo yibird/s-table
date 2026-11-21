@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it } from 'vite-plus/test';
-import { h, nextTick, type App } from 'vue';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { h, nextTick, ref, type App } from 'vue';
+import { useTableContent } from '../../setup/useTableContent';
 import { mountSTable } from '../helpers';
 import type { STableColumn, STableFooterContext, STableTitleContext } from '../../types';
 
@@ -24,6 +25,72 @@ afterEach(() => {
 });
 
 describe('标题、页脚与汇总栏', () => {
+  it('静态 title/footer 不读取当前页行，函数内容按需共享当前页快照', () => {
+    const getPrePaginatedRowModel = vi.fn(() => ({
+      flatRows: dataSource.map((original) => ({ original })),
+    }));
+    const props = { title: 'Title', footer: 'Footer' } as {
+      title: string | ((scope: STableTitleContext<Row>) => string);
+      footer: string;
+    };
+    const content = useTableContent<Row>({
+      context: { props, dataSource: ref(dataSource) },
+      dataState: {
+        paginationEnabled: ref(false),
+        currentPage: ref(1),
+        currentPageSize: ref(10),
+        paginationState: ref({ total: 2 }),
+      },
+      tableModel: { table: { getPrePaginatedRowModel } },
+    } as never);
+    expect(content.titleContent.value).toBe('Title');
+    expect(content.footerContent.value).toBe('Footer');
+    expect(getPrePaginatedRowModel).not.toHaveBeenCalled();
+    expect(content.footerScope.value.currentPageData).toEqual(dataSource);
+    expect(content.currentPageData.value).toBe(content.footerScope.value.currentPageData);
+    expect(getPrePaginatedRowModel).toHaveBeenCalledTimes(1);
+  });
+
+  it('受控分页和 manualPagination 的函数与 slot 作用域保持一致，slot 优先', async () => {
+    const current = ref(1);
+    const manual = ref(false);
+    const title = vi.fn(() => 'hidden title');
+    const footer = vi.fn(() => 'hidden footer');
+    const mounted = mountSTable<Row>(
+      () => ({
+        columns: [{ id: 'id', accessorKey: 'id' }],
+        dataSource,
+        pagination: { current: current.value, pageSize: 1, total: 20 },
+        manualPagination: manual.value,
+        title,
+        footer,
+      }),
+      {
+        title: ({ currentPageData }) =>
+          h('span', { class: 'slot-title' }, currentPageData.map((row) => row.id).join(',')),
+        footer: ({ currentPageData, currentPage, pageSize, total }) =>
+          h(
+            'span',
+            { class: 'slot-footer' },
+            `${currentPageData.map((row) => row.id).join(',')}/${currentPage}/${pageSize}/${total}`
+          ),
+      }
+    );
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+    expect(host.querySelector('.slot-title')?.textContent).toBe('1');
+    current.value = 2;
+    await nextTick();
+    expect(host.querySelector('.slot-title')?.textContent).toBe('2');
+    manual.value = true;
+    await nextTick();
+    expect(host.querySelector('.slot-title')?.textContent).toBe('1,2');
+    expect(host.querySelector('.slot-footer')?.textContent).toBe('1,2/2/1/20');
+    expect(title).not.toHaveBeenCalled();
+    expect(footer).not.toHaveBeenCalled();
+  });
+
   it('title / footer 函数获得当前页数据与分页信息', async () => {
     const mounted = mountSTable<Row>({
       columns: [{ id: 'id', accessorKey: 'id', header: 'ID' }],

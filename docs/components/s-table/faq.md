@@ -70,7 +70,7 @@ Summary 渲染为与列对齐的 `<tfoot>`，适合合计；Footer 是表格下�
 
 ## 18. 如何清空排序、过滤和搜索？
 
-使用带 `STableInstance<TData>` 类型的组件 ref，依次调用 `clearSort()`、`clearFilter()`、`clearSearch()`。
+使用带 `STableInstance<TData>` 类型的组件 ref，依次调用 `clearSort()`、`clearFilter()`、`clearSearch()` 清空全部；传入 `columnId` 可只清理指定列（如 `clearSort('age')`），对应全量入口为 `clearSortAll()` / `clearFilterAll()` / `clearSearchAll()`。需要恢复默认值而不是清空时，使用 `resetSort()`、`resetFilter()`、`resetSearch()`。
 
 ## 19. 如何自定义某一行的 class 或 style？
 

@@ -11,6 +11,7 @@ export {
 } from '@zchengfeng/s-table-core';
 export type {
   STableCsvOptions,
+  STableCsvRowSource,
   STableExcelAdapter,
   STableExcelOptions,
   STableExcelSheet,

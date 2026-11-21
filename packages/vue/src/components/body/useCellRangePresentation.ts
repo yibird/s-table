@@ -20,7 +20,7 @@ const RANGE_CLASS_CACHE = Array.from({ length: 64 }, (_, state) => ({
 
 /**
  * 单元格框选呈现缓存：把边界状态位组合为稳定类名对象，
- * 命中缓存时返回同一引用，避免 v-memo 因类名对象重建而失效。
+ * 命中缓存时返回同一引用，避免无关的类名对象分配与组件 props 更新。
  */
 type CellRangePresentation = {
   rowMemoKey: string;
@@ -92,7 +92,7 @@ export const createCellRangePresentation = <TData extends RowData>({
    * 生成某一行的框选渲染键。
    *
    * 框选拖动时仅起止边界行、新进入/离开的行需要失效；范围外行返回同一个空键，
-   * 避免把完整 range 对象放进 `v-memo` 后导致每帧所有可见行都重建单元格子树。
+   * 让同一覆盖范围内的 Cell 命中呈现缓存，避免重新读取选择边界。
    */
   const getRowRangeMemoKey = (rowIndex: number, rowId?: string): string => {
     // 未启用框选时不读取 currentRange，避免首次渲染触发 TanStack 范围派生计算。

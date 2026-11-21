@@ -91,6 +91,12 @@ const salaryColumn: STableAccessorFnColumn<Employee, number> = {
 
 渲染上下文是底层 TanStack 上下文的稳定子集。需要完整 TanStack API 时，通过组件实例调用 `getTanStackTable()`，不要把内部运行时对象强制断言成未承诺的公开字段。
 
+根入口也导出 `STableRowKeyField<TData>`（值为 string/number 的行键字段）、`STableFilterValue`、`STableColumnFilterValue`、`STableBuiltInAggregation`、`STableAggregationFn<TData, TValue>` 和 `STableAggregation<TData, TValue>`，供独立声明行键、筛选和聚合配置使用。
+
+`STableProps<TData>['onCellRangeCopy']` 是返回 `boolean | void` 的回调类型；它不在 `STableEmits<TData>` 中。封装时透传此 prop 并保留返回值，普通通知才用 emits。`STableSelectionHeaderContext<TData>`、`STableTitleContext<TData>` 和 `STableFooterContext<TData>` 可显式标注相应渲染作用域。
+
+`getTanStackTable()` 的完整类型与当前 TanStack **9.3.1** 耦合，不承诺跨 TanStack 版本稳定，普通业务优先使用 STable 自有 API。
+
 ## 配置类型
 
 | 类型                        | 泛型      | 作用                                 |

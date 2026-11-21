@@ -268,12 +268,146 @@ test.describe('框选与右键菜单', () => {
 });
 
 test.describe('拖拽与列宽', () => {
+  test('默认拖拽句柄在所有尺寸和树层级内居中', async ({ page }) => {
+    const scope = page.getByTestId('tree-drag-table');
+    for (const size of ['small', 'middle', 'large']) {
+      await page.getByTestId('drag-size').selectOption(size);
+      const offsets = await scope.locator('.s-table-drag-handle').evaluateAll((handles) =>
+        handles.map((handle) => {
+          const cell = handle.closest('td')!;
+          const h = handle.getBoundingClientRect();
+          const c = cell.getBoundingClientRect();
+          return {
+            x: Math.abs(h.x + h.width / 2 - c.x - c.width / 2),
+            y: Math.abs(h.y + h.height / 2 - c.y - c.height / 2),
+            display: getComputedStyle(cell).display,
+          };
+        })
+      );
+      expect(offsets.length).toBe(4);
+      for (const offset of offsets) {
+        expect(offset.x).toBeLessThanOrEqual(1);
+        expect(offset.y).toBeLessThanOrEqual(1);
+        expect(offset.display).toBe('table-cell');
+      }
+    }
+  });
+
+  for (const mode of ['off', 'cell', 'row']) {
+    test(`树形真实拖拽在 ${mode} 模式不产生文本选区或整行框选`, async ({ page }) => {
+      const scope = page.getByTestId('tree-drag-table');
+      await page.getByTestId('drag-range-mode').selectOption(mode);
+      const source = scope.locator('.s-table-row[data-row-key="11"] .s-table-drag-handle');
+      const target = scope.locator('.s-table-row[data-row-key="2"]');
+      await source.hover();
+      const box = (await source.boundingBox())!;
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width / 2 + 8, box.y + box.height / 2, { steps: 2 });
+      await target.hover();
+      await target.hover();
+      await expect(target).toHaveClass(/s-table-row-drag-over-inside/);
+      await page.mouse.up();
+      await expect(page.getByTestId('tree-drop')).toHaveText('11:inside:2');
+      expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('');
+      expect(
+        await scope.evaluate((el) =>
+          Boolean(document.activeElement?.matches('td') && el.contains(document.activeElement))
+        )
+      ).toBe(false);
+      await page.getByTestId('read-drag-range').click();
+      await expect(page.getByTestId('tree-drag-range')).toHaveText('none');
+      await expect(scope.locator('.s-table-cell-range-selected')).toHaveCount(0);
+      await expect(scope.locator('.s-table-row-drag-source, .s-table-row-drag-over')).toHaveCount(
+        0
+      );
+      await expect(page.locator('.s-table-drag-preview')).toHaveCount(0);
+    });
+  }
+
+  for (const dark of [false, true]) {
+    test(`拖拽源、虚线树落点及桥接预览保留${dark ? '局部暗色' : '浅色'}主题`, async ({
+      page,
+    }, testInfo) => {
+      const scope = page.getByTestId('tree-drag-table');
+      if (dark) await scope.evaluate((el) => el.classList.add('dark'));
+      await scope.scrollIntoViewIfNeeded();
+      const source = scope.locator('.s-table-row[data-row-key="1"]');
+      const target = scope.locator('.s-table-row[data-row-key="2"]');
+      const targetBox = (await target.boundingBox())!;
+      const transfer = await page.evaluateHandle(() => new DataTransfer());
+      await source
+        .locator('.s-table-drag-handle')
+        .dispatchEvent('dragstart', { dataTransfer: transfer });
+      await target.dispatchEvent('dragover', {
+        dataTransfer: transfer,
+        clientY: targetBox.y + targetBox.height / 2,
+      });
+      await expect(source).toHaveClass(/s-table-row-drag-source/);
+      await expect(target).toHaveClass(/s-table-row-drag-over-inside/);
+      await expect
+        .poll(() =>
+          source
+            .locator('td[data-column-id="name"]')
+            .evaluate((el) => getComputedStyle(el).backgroundColor)
+        )
+        .toBe(dark ? 'rgb(17, 26, 44)' : 'rgb(230, 244, 255)');
+      expect(
+        await target
+          .locator('td[data-column-id="name"]')
+          .evaluate((el) => getComputedStyle(el).backgroundImage)
+      ).toContain('repeating-linear-gradient');
+      expect(
+        await target
+          .locator('td')
+          .first()
+          .evaluate((el) => getComputedStyle(el).position)
+      ).toBe('sticky');
+      await scope.screenshot({
+        path: testInfo.outputPath(`row-drag-${dark ? 'dark' : 'light'}.png`),
+      });
+      await source.dispatchEvent('dragend');
+      const header = scope.locator('th[data-column-id="name"]');
+      const destination = scope.locator('th[data-column-id="owner"]');
+      // 仅关闭 DOM 原生 draggable，保留组件配置，强制真实鼠标走桥接路径。
+      await header.evaluate((el) => el.setAttribute('draggable', 'false'));
+      await header.hover();
+      await page.mouse.down();
+      await destination.hover();
+      await expect(page.locator('.s-table-drag-preview')).toBeVisible();
+      await expect(destination).toHaveClass(/s-table-header-cell-drag-over-after/);
+      const indicator = destination.locator('.s-table-column-drop-indicator');
+      await expect(indicator).toHaveCount(1);
+      await expect(indicator).toHaveClass(/s-table-column-drop-indicator-after/);
+      expect(await indicator.evaluate((el) => getComputedStyle(el).zIndex)).toBe('3');
+      await expect(page.locator('.s-table-drag-preview')).toHaveCSS(
+        'background-color',
+        'rgb(255, 255, 255)'
+      );
+      await page.screenshot({
+        path: testInfo.outputPath(`column-drag-${dark ? 'dark' : 'light'}.png`),
+      });
+      await page.mouse.up();
+      await expect(page.locator('.s-table-drag-preview')).toHaveCount(0);
+      await header.hover();
+      await page.mouse.down();
+      await destination.hover();
+      await expect(destination).toHaveClass(/s-table-header-cell-drag-over-before/);
+      await expect(destination.locator('.s-table-column-drop-indicator')).not.toHaveClass(
+        /s-table-column-drop-indicator-after/
+      );
+      await page.keyboard.press('Escape');
+      await page.mouse.up();
+      await expect(page.locator('.s-table-drag-preview')).toHaveCount(0);
+    });
+  }
+
   test('HTML5 行拖拽重排数据并保留稳定 rowKey', async ({ page }) => {
     const scope = page.getByTestId('drag-resize-table');
     const source = scope.locator('.s-table-row[data-row-key="1"] .s-table-drag-handle');
     const target = scope.locator('.s-table-row[data-row-key="3"]');
 
-    await source.dragTo(target);
+    // 明确落在目标行下半区，避免行高奇偶导致中心点落在 before/after 边界上。
+    await source.dragTo(target, { targetPosition: { x: 10, y: 35 } });
     await expect(page.getByTestId('drag-event')).toHaveText('0->2');
     await expect.poll(() => publicRowKeys(scope)).toEqual(['2', '3', '1', '4', '5']);
   });
@@ -371,6 +505,28 @@ test.describe('拖拽与列宽', () => {
       'data-transform-transition-started',
       'true'
     );
+  });
+
+  test('拖拽句柄在句柄列内水平与垂直居中', async ({ page }) => {
+    const scope = page.getByTestId('drag-resize-table');
+    const cell = scope.locator('tbody td:has(> .s-table-drag-handle)').first();
+    const metrics = await cell.evaluate((td) => {
+      const handle = td.querySelector<HTMLElement>('.s-table-drag-handle')!;
+      const cellRect = td.getBoundingClientRect();
+      const handleRect = handle.getBoundingClientRect();
+      return {
+        left: handleRect.left - cellRect.left,
+        right: cellRect.right - handleRect.right,
+        top: handleRect.top - cellRect.top,
+        bottom: cellRect.bottom - handleRect.bottom,
+        paddingInline: getComputedStyle(td).paddingInlineStart,
+        textAlign: getComputedStyle(td).textAlign,
+      };
+    });
+    expect(metrics.paddingInline).toBe('4px');
+    expect(metrics.textAlign).toBe('center');
+    expect(Math.abs(metrics.left - metrics.right)).toBeLessThanOrEqual(1);
+    expect(Math.abs(metrics.top - metrics.bottom)).toBeLessThanOrEqual(1);
   });
 
   test('选择列下拉与右键菜单共用 scale-down 入场过渡', async ({ page }) => {

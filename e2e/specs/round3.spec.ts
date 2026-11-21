@@ -1,7 +1,7 @@
 import { expect, openFixture, test } from '../support/test';
 import { renderedRows } from '../support/table';
 
-/** 第三轮审计：省略/Tooltip、表头菜单、导出、分页、列汇总、响应式列。 */
+/** 第三轮审计：省略/Tooltip、表头菜单、导出、分页、列汇总。 */
 
 const csv = (text: string) =>
   text
@@ -173,7 +173,7 @@ test.describe('第三轮：导出', () => {
   });
 });
 
-test.describe('第三轮：分页、页脚与响应式', () => {
+test.describe('第三轮：分页与页脚', () => {
   test.beforeEach(async ({ page }) => {
     await openFixture(page, 'round3');
   });
@@ -258,25 +258,6 @@ test.describe('第三轮：分页、页脚与响应式', () => {
 
     await row.click();
     await expect(page.getByTestId('attrs-event')).toHaveText('row:1');
-  });
-
-  test('响应式列随视口断点显示/隐藏', async ({ page }) => {
-    const scope = page.getByTestId('responsive-table');
-    const ids = () =>
-      scope
-        .locator('thead th[data-column-id]')
-        .evaluateAll((cells) => cells.map((cell) => (cell as HTMLElement).dataset.columnId));
-
-    // 等首帧完成后再改视口，避免 resize 发生在表格挂载之前。
-    await expect(scope.locator('thead th[data-column-id]').first()).toBeAttached();
-    await page.setViewportSize({ width: 600, height: 700 });
-    await expect.poll(ids).toEqual(['id', 'score']);
-
-    await page.setViewportSize({ width: 900, height: 700 });
-    await expect.poll(ids).toEqual(['id', 'name', 'score']);
-
-    await page.setViewportSize({ width: 1200, height: 700 });
-    await expect.poll(ids).toEqual(['id', 'name', 'department', 'score']);
   });
 });
 

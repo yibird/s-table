@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef } from 'vue';
+import CustomLoadingDemo from '../../../../docs/demos/s-table/custom-loading.vue';
 import STable, {
   SummaryCell,
   SummaryRow,
@@ -114,6 +115,8 @@ const originalStateRows: Employee[] = [
 ];
 const stateRows = ref<Employee[]>(originalStateRows.map((row) => ({ ...row })));
 const loading = shallowRef(false);
+const customLoading = shallowRef(true);
+const loadingSize = shallowRef<'small' | 'middle' | 'large'>('middle');
 const uppercaseRenderer = shallowRef(false);
 
 const stateColumns = computed<STableColumn<Employee>[]>(() => [
@@ -223,6 +226,18 @@ const clearPipelineState = () => {
       <button data-testid="toggle-loading" type="button" @click="loading = !loading">
         Toggle loading
       </button>
+      <button
+        data-testid="toggle-loading-content"
+        type="button"
+        @click="customLoading = !customLoading"
+      >
+        Toggle loading content
+      </button>
+      <select v-model="loadingSize" data-testid="loading-size" aria-label="Loading table size">
+        <option value="small">Small</option>
+        <option value="middle">Middle</option>
+        <option value="large">Large</option>
+      </select>
       <button data-testid="clear-data" type="button" @click="stateRows = []">Clear data</button>
       <button data-testid="reset-data" type="button" @click="resetStateRows">Reset data</button>
       <button data-testid="replace-row" type="button" @click="replaceFirstRow">Replace row</button>
@@ -241,13 +256,14 @@ const clearPipelineState = () => {
       :columns="stateColumns"
       :data-source="stateRows"
       :loading="loading"
+      :size="loadingSize"
       :locale="zh_CN"
       @update:data-source="stateRows = $event"
     >
       <template #empty>
         <div data-testid="custom-empty">No fixture rows</div>
       </template>
-      <template #loading>
+      <template v-if="customLoading" #loading>
         <div data-testid="custom-loading">Fixture loading</div>
       </template>
       <template #summary>
@@ -260,5 +276,10 @@ const clearPipelineState = () => {
         <span data-testid="custom-footer">Fixture footer</span>
       </template>
     </STable>
+  </section>
+
+  <section class="fixture-section" data-testid="loading-demo">
+    <h2>Custom loading example</h2>
+    <CustomLoadingDemo />
   </section>
 </template>

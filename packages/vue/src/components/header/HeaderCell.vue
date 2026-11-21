@@ -10,10 +10,11 @@
           dragColumnFromIndex != null &&
           dragColumnFromIndex >= 0 &&
           userColumnIndex === dragColumnFromIndex,
-        's-table-header-cell-drag-over':
-          dragColumnOverIndex != null &&
-          dragColumnOverIndex >= 0 &&
-          userColumnIndex === dragColumnOverIndex,
+        's-table-header-cell-drag-over': isDragTarget,
+        's-table-header-cell-drag-over-before':
+          isDragTarget && (dragColumnFromIndex ?? -1) > userColumnIndex,
+        's-table-header-cell-drag-over-after':
+          isDragTarget && (dragColumnFromIndex ?? -1) < userColumnIndex,
         's-table-cell-drag-column': header.column.id === DRAG_COLUMN_ID,
       },
       classes?.headerCell,
@@ -31,6 +32,13 @@
     @dragend="onDragEnd"
     @drop.prevent="emit('columnDrop')"
   >
+    <!-- 独立指示器节点：位于 th 的层级上下文内，可覆盖列分割线（::before）绘制。 -->
+    <span
+      v-if="isDragTarget"
+      class="s-table-column-drop-indicator"
+      :class="{ 's-table-column-drop-indicator-after': showDropIndicatorAfter }"
+      aria-hidden="true"
+    />
     <template v-if="rowSpan > 0">
       <div class="s-table-cell-inner">
         <div
@@ -118,7 +126,7 @@ import Search from './Search.vue';
 import HeaderMenu from './HeaderMenu.vue';
 import { useColumnDragPreview } from './useColumnDragPreview';
 import { splitTableAttrs } from '../../utils/mergeTableAttrs';
-import { applyDragGhost } from '../../utils/dragGhost';
+import { isColumnDragExcludedTarget } from '../../utils/dom';
 
 import type { CSSProperties, VNodeChild } from 'vue';
 import type { Header, RowData, TableFeatures } from '@tanstack/vue-table';
@@ -261,12 +269,28 @@ const searchValue = computed<string>(() => {
 // ==================== 列拖拽 ====================
 
 const thRef = useTemplateRef<HTMLTableCellElement>('thRef');
+const isDragTarget = computed(
+  () =>
+    props.userColumnIndex >= 0 &&
+    (dragColumnFromIndex.value ?? -1) >= 0 &&
+    (dragColumnFromIndex.value ?? -1) !== props.userColumnIndex &&
+    dragColumnOverIndex.value === props.userColumnIndex
+);
+
+/** 拖拽源在目标右侧时，指示器绘制在目标列右边缘。 */
+const showDropIndicatorAfter = computed(
+  () => (dragColumnFromIndex.value ?? -1) < props.userColumnIndex
+);
 
 const { setCustomDragImage, clearCustomDragImage } = useColumnDragPreview({ thRef });
 
 /** 校验列拖拽能力、设置预览并上报拖拽开始。 */
 const onDragStart = (event: DragEvent) => {
-  if (!rawCol.value?.draggable) {
+  if (
+    event.defaultPrevented ||
+    !rawCol.value?.draggable ||
+    isColumnDragExcludedTarget(event.target)
+  ) {
     event.preventDefault();
     return;
   }
@@ -279,9 +303,7 @@ const onDragStart = (event: DragEvent) => {
     event.dataTransfer.effectAllowed = 'move';
   }
   const customGhost = presentation.getColumnDragGhost?.(rawCol.value, props.userColumnIndex);
-  if (!applyDragGhost(event, customGhost)) {
-    setCustomDragImage(event);
-  }
+  setCustomDragImage(event, customGhost);
   emit('columnDragStart', props.header.column.id);
 };
 

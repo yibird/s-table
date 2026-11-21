@@ -109,9 +109,6 @@ export interface STableCellTooltipContext<TData extends RowData = RowData> {
   columnId: string;
 }
 
-/** 响应式列断点。 */
-export type STableBreakpoint = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
-
 /** 表头通用菜单渲染上下文。 */
 export interface STableHeaderMenuContext<TData extends RowData = RowData> {
   column: STableColumn<TData>;
@@ -148,11 +145,11 @@ export interface STableCopyOptions {
 
 /** 单元格范围复制尝试的载荷。 */
 export interface STableCellRangeCopyEvent {
-  /** 当前框选范围快照。 */
+  /** 活动范围快照；多区间 API 复制时不代表完整文本边界。 */
   readonly range: STableCellRange;
-  /** 按当前分隔符序列化后的二维文本。 */
+  /** 按当前分隔符序列化的文本；多区间 API 复制时包含所有参与范围。 */
   readonly text: string;
-  /** 参与复制的可见列 ID，顺序与文本列一致。 */
+  /** 活动范围列 ID；多区间 API 时可能含内部列 ID，不是完整文本的列映射。 */
   readonly columnIds: readonly string[];
   /** 复制来源：键盘快捷键、浏览器原生 copy 事件或实例 API。 */
   readonly source: 'keyboard' | 'clipboard' | 'api';

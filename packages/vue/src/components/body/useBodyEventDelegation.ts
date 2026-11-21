@@ -62,6 +62,7 @@ type BodyEventDelegationOptions<TData extends RowData> = {
   getKeyboardNavigation: () => boolean;
   getCellRangeMode: () => 'cell' | 'row' | undefined;
   getDragRowFromIndex: () => number;
+  consumeDragClick?: (event: MouseEvent) => boolean;
   getOnRangeRowClick: () => ((rowIndex: number) => void) | undefined;
   onCellRangeMousedown: (rowId: string, columnId: string, event: MouseEvent) => void;
   onCellRangeMouseenter: (rowId: string, columnId: string, event: MouseEvent) => void;
@@ -189,17 +190,24 @@ export const useBodyEventDelegation = <TData extends RowData>(
   };
 
   const handleBodyClick = (event: MouseEvent) => {
+    const target = event.target as Element | null;
+    const isDragHandle = Boolean(target?.closest('.s-table-drag-handle'));
+    const dragClick = options.consumeDragClick?.(event) ?? false;
+    const suppressSelection = isDragHandle || dragClick || options.getDragRowFromIndex() >= 0;
     emitRowAndCell(
       event,
       (hit) => {
-        options.getOnRangeRowClick()?.(hit.index);
+        if (!suppressSelection) options.getOnRangeRowClick()?.(hit.index);
         options.emit('rowClick', hit.row, hit.index, event);
       },
       (cell) =>
         options.emit('cellClick', cell.row, cell.columnId, cell.index, cell.columnIndex, event)
     );
-    const target = event.target as Element | null;
-    if (options.getKeyboardNavigation() && !target?.closest('input,button,select,textarea,a')) {
+    if (
+      !suppressSelection &&
+      options.getKeyboardNavigation() &&
+      !target?.closest('input,button,select,textarea,a')
+    ) {
       target?.closest<HTMLElement>('td[tabindex]')?.focus();
     }
   };

@@ -48,3 +48,9 @@ npm install @zchengfeng/s-table-vue
 ```
 
 :::
+
+## 核心能力一览
+
+下面这个示例同时启用了行选择、排序、过滤、搜索、内联编辑、固定列、列宽拖拽、行列拖拽、分页、加载态、CSV 导出与数据快照读取，可作为业务表格的起点。
+
+<demo vue="./demos/s-table/home-overview.vue" />

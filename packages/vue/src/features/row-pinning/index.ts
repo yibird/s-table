@@ -8,7 +8,7 @@ import type {
   Updater,
 } from '@tanstack/vue-table';
 import { decodeRowKey, encodeRowKey, sameValues } from '../../utils';
-import { useModelState } from '../../hooks/useModelState';
+import { useModelState } from '../../hooks/common';
 import type { STablePinnedRowKeys, STableRowKey } from '../../types';
 
 type STableTanStackTable<TData extends RowData> = Table<TableFeatures, TData>;

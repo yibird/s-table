@@ -38,8 +38,11 @@ export const useApi = <TData extends RowData>(options: {
     sorting,
     setSorting,
     clearSort,
+    resetSort,
     clearFilter,
+    resetFilter,
     clearSearch,
+    resetSearch,
     editingState,
     startCellEdit,
     startRowEdit,
@@ -64,6 +67,7 @@ export const useApi = <TData extends RowData>(options: {
   } = dataState;
   const { table, topRows, centerRows, bottomRows } = tableModel;
   const exportApi = useExport({ context, dataState, tableModel });
+  const { getExportRows } = exportApi;
   const {
     getCellRangeSnapshot,
     getCellRanges,
@@ -101,10 +105,16 @@ export const useApi = <TData extends RowData>(options: {
     selectAll,
     clearSelection,
     clearSort,
+    clearSortAll: () => clearSort(),
+    resetSort,
     getSorting: () => sorting.value.map((item) => ({ ...item })),
     setSorting,
     clearFilter,
+    clearFilterAll: () => clearFilter(),
+    resetFilter,
     clearSearch,
+    clearSearchAll: () => clearSearch(),
+    resetSearch,
     getEditing: () =>
       editingState.value
         ? { ...editingState.value, values: { ...editingState.value.values } }
@@ -212,6 +222,9 @@ export const useApi = <TData extends RowData>(options: {
     swapColumns,
     moveColumn,
     moveColumnByIndex,
+    // 数据快照：供自定义导出 / 工作簿工具库直接消费。
+    getAllData: () => getExportRows('all'),
+    getCurrentPageData: () => getExportRows('currentPage'),
     // 导出
     ...exportApi,
   } satisfies STableInstance<TData>;

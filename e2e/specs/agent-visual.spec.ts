@@ -58,6 +58,104 @@ const attachJson = async (testInfo: TestInfo, name: string, value: unknown): Pro
   });
 };
 
+for (const theme of ['light', 'dark'] as const) {
+  test(`critical state baseline: ${theme}`, async ({ page, browserName }, testInfo) => {
+    const compareScreenshots = browserName === 'chromium' && process.platform === 'win32';
+    if (!compareScreenshots) {
+      testInfo.annotations.push({
+        type: 'visual-baseline',
+        description:
+          'Pixel comparisons require reviewed Windows Chromium baselines; behavioral assertions still run.',
+      });
+    }
+    await setViewport(page, 900, 700);
+    await openFixture(page, 'interaction');
+    await setDark(page, theme === 'dark');
+    await page.evaluate(() => document.fonts.ready);
+    const scope = page.getByTestId('contract-table');
+    const table = scope.locator('.s-table');
+    await scope.locator('.s-table-container').evaluate((element) => {
+      element.scrollLeft = 70;
+      element.dispatchEvent(new Event('scroll'));
+    });
+    const pinned = scope.locator('.s-table-row-pinned-top td[data-column-id="name"]');
+    await page.mouse.move(0, 0);
+    const before = await pinned.evaluate((element) => getComputedStyle(element).backgroundColor);
+    await pinned.hover();
+    const hoverColor = theme === 'dark' ? 'rgb(38, 38, 38)' : 'rgb(247, 247, 247)';
+    await expect(pinned).toHaveCSS('background-color', hoverColor);
+    expect(before).not.toBe(hoverColor);
+    await expect(scope.locator('.s-table-row[data-row-key="2"]')).toHaveClass(
+      /s-table-row-selected/
+    );
+    await attachJson(testInfo, `pinned-hover-${theme}`, { before, hovered: hoverColor });
+    const screenshotOptions = {
+      animations: 'disabled' as const,
+      caret: 'hide' as const,
+      scale: 'css' as const,
+      style: '* { transition: none !important; animation: none !important; }',
+    };
+    if (compareScreenshots) {
+      await expect(table).toHaveScreenshot(
+        `critical-pinned-selected-${theme}.png`,
+        screenshotOptions
+      );
+    }
+    await scope.locator('th[data-column-id="name"] .s-table-filter-trigger').click();
+    const popup = page.locator('.s-table-filter-dropdown');
+    await expect(popup).toBeVisible();
+    if (compareScreenshots) {
+      await expect(popup).toHaveScreenshot(`critical-filter-${theme}.png`, screenshotOptions);
+    }
+  });
+}
+
+test('header controls do not drag columns but sortable titles do', async ({ page }) => {
+  await setViewport(page, 1100, 800);
+  await openFixture(page, 'interaction');
+  const scope = page.getByTestId('contract-table');
+  const source = scope.locator('th[data-column-id="name"]');
+  const target = scope.locator('th[data-column-id="department"]');
+  const moveFrom = async (selector: string, distance = 24) => {
+    const control = source.locator(selector);
+    const box = await control.boundingBox();
+    expect(box).not.toBeNull();
+    const x = box!.x + box!.width / 2;
+    const y = box!.y + box!.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + distance, y, { steps: 5 });
+    await expect(scope.locator('.s-table-header-cell-drag-source')).toHaveCount(0);
+    await page.mouse.up();
+    await page.keyboard.press('Escape');
+    await expect(scope.getByTestId('contract-order')).toHaveText('idle');
+  };
+  for (const selector of [
+    '.s-table-filter-trigger',
+    '.s-table-search-trigger',
+    '.s-table-header-menu-trigger',
+    '.s-table-column-sorter',
+    '[data-testid="header-action"]',
+  ])
+    await moveFrom(selector);
+  const widthBefore = await source.evaluate((element) => element.getBoundingClientRect().width);
+  await moveFrom('.s-table-header-resizer', 32);
+  await expect
+    .poll(() => source.evaluate((element) => element.getBoundingClientRect().width))
+    .toBeGreaterThan(widthBefore + 20);
+  // Start on plain title text, not the custom button inside it.
+  const title = await source.locator('.s-table-cell-title').boundingBox();
+  const destination = await target.boundingBox();
+  await page.mouse.move(title!.x + 8, title!.y + title!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(title!.x + 16, title!.y + title!.height / 2, { steps: 2 });
+  await page.mouse.move(destination!.x + 20, destination!.y + destination!.height / 2, {
+    steps: 5,
+  });
+  await page.mouse.up();
+  await expect(scope.getByTestId('contract-order')).toHaveText('id,department,name,score');
+});
+
 // ────────────────────────────────────────────────────────────────────────────
 // 1. 六夹具 × 1280 明 / 暗 / 390 截图矩阵
 // ────────────────────────────────────────────────────────────────────────────

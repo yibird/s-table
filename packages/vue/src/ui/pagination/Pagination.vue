@@ -24,8 +24,7 @@
       :aria-label="`${pageText} ${Math.max(1, current - 1)}`"
       @click="handlePageClick($event, current - 1)"
     >
-      <RenderVNode v-if="itemRender" :value="resolveItem(current - 1, 'prev', prevIcon)" />
-      <RenderVNode v-else :value="prevIcon" />
+      <RenderVNode :value="prevIcon" />
     </button>
 
     <template v-if="simple">
@@ -46,11 +45,7 @@
           :aria-label="`${jumpToText} ${Math.max(1, current - 5)} ${pageText}`"
           @click="handlePageClick($event, current - 5)"
         >
-          <RenderVNode
-            v-if="itemRender"
-            :value="resolveItem(current - 5, 'jump-prev', jumpPrevIcon)"
-          />
-          <RenderVNode v-else :value="jumpPrevIcon" />
+          <RenderVNode :value="jumpPrevIcon" />
         </button>
         <button
           v-else-if="page.type === 'jump-next'"
@@ -60,11 +55,7 @@
           :aria-label="`${jumpToText} ${Math.min(totalPages, current + 5)} ${pageText}`"
           @click="handlePageClick($event, current + 5)"
         >
-          <RenderVNode
-            v-if="itemRender"
-            :value="resolveItem(Math.min(totalPages, current + 5), 'jump-next', jumpNextIcon)"
-          />
-          <RenderVNode v-else :value="jumpNextIcon" />
+          <RenderVNode :value="jumpNextIcon" />
         </button>
         <button
           v-else
@@ -75,11 +66,7 @@
           :aria-current="page.page === current ? 'page' : undefined"
           @click="handlePageClick($event, page.page!)"
         >
-          <RenderVNode
-            v-if="itemRender"
-            :value="resolveItem(page.page!, 'page', String(page.page))"
-          />
-          <template v-else>{{ page.page }}</template>
+          {{ page.page }}
         </button>
       </template>
     </template>
@@ -92,8 +79,7 @@
       :aria-label="`${pageText} ${Math.min(totalPages, current + 1)}`"
       @click="handlePageClick($event, current + 1)"
     >
-      <RenderVNode v-if="itemRender" :value="resolveItem(current + 1, 'next', nextIcon)" />
-      <RenderVNode v-else :value="nextIcon" />
+      <RenderVNode :value="nextIcon" />
     </button>
 
     <Select
@@ -124,13 +110,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, h, type VNodeChild } from 'vue';
+import { computed, h } from 'vue';
 import { RenderVNode } from '../render-vnode';
 import { useComponentSize } from '../useComponentSize';
 import { Select } from '../select';
 import { showWave } from '../wave';
 import { DoubleArrowIcon } from '../../components/icon';
-import type { PaginationProps, STablePaginationItemType } from './types';
+import type { PaginationProps } from './types';
 import './styles.less';
 
 const props = withDefaults(defineProps<PaginationProps>(), {
@@ -150,7 +136,6 @@ const props = withDefaults(defineProps<PaginationProps>(), {
   simple: false,
   showLessItems: false,
   hideOnSinglePage: false,
-  itemRender: undefined,
 });
 
 const emit = defineEmits<{
@@ -244,21 +229,6 @@ const pageList = computed<PageItem[]>(() => {
 
   return pages;
 });
-
-const paginationInfo = computed(() => ({
-  current: props.current,
-  totalPages: totalPages.value,
-}));
-
-/** itemRender 返回 undefined 时回退默认节点。 */
-const resolveItem = (
-  page: number,
-  type: STablePaginationItemType,
-  fallback: VNodeChild
-): VNodeChild => {
-  const rendered = props.itemRender?.(page, type, fallback, paginationInfo.value);
-  return rendered === undefined ? fallback : rendered;
-};
 
 const pageSizeSelectOptions = computed(() =>
   props.pageSizeOptions.map((n) => ({ label: `${n} ${props.itemsPerPageText}`, value: n }))

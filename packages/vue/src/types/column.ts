@@ -1,7 +1,6 @@
 import type { VNodeChild } from 'vue';
 import type { DeepKeys, RowData } from '@tanstack/table-core';
 import type {
-  STableBreakpoint,
   STableCellProps,
   STableCellTooltipContext,
   STableFilterIconContext,
@@ -290,10 +289,6 @@ interface STableColumnBase<TData extends RowData = RowData, TValue = unknown> {
    * @default false
    */
   hidden?: boolean;
-  /**
-   * @description 响应式断点：仅在命中的视口宽度下显示该列。
-   */
-  responsive?: STableBreakpoint[];
   /**
    * @description 排序：`true` 使用默认比较；函数自定义排序规则。
    */

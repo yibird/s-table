@@ -3,6 +3,7 @@ import STable, {
   createSTableColumnHelper,
   type STableColumns,
   type STableSlots,
+  type STableProps,
 } from '@zchengfeng/s-table-vue';
 
 interface User {
@@ -21,11 +22,26 @@ const columns = [
 const dataSource: User[] = [{ id: 1, name: 'Ada', score: 100 }];
 const slots = {
   contextMenu: ({ row }) => row.name,
-} satisfies Pick<STableSlots<User>, 'contextMenu'>;
+  title: ({ currentPageData }) => currentPageData[0]?.name,
+  footer: ({ currentPageData, currentPage, pageSize, total }) =>
+    `${currentPageData.length}/${total}: ${currentPage} (${pageSize})`,
+} satisfies Pick<STableSlots<User>, 'contextMenu' | 'title' | 'footer'>;
+
+// A wrapper must forward this prop, not re-emit it: false is the cancellation result.
+const props = defineProps<Pick<STableProps<User>, 'onCellRangeCopy'>>();
+const forwardCopy: STableProps<User>['onCellRangeCopy'] = (payload) =>
+  props.onCellRangeCopy?.(payload);
 </script>
 
 <template>
-  <STable :columns="columns" :data-source="dataSource" row-key="id">
+  <STable
+    :columns="columns"
+    :data-source="dataSource"
+    row-key="id"
+    :on-cell-range-copy="forwardCopy"
+  >
+    <template #title="scope">{{ slots.title(scope) }}</template>
+    <template #footer="scope">{{ slots.footer(scope) }}</template>
     <template #contextMenu="scope">
       {{ slots.contextMenu(scope) }}
     </template>

@@ -4,8 +4,6 @@
 :root {
   // ==================== 主题色 ====================
   --s-primary-color: #1677ff;
-  /// 主色作为正文文字时的对比度修正值（白底 ≥ 4.5:1）
-  --s-primary-color-text: #0958d9;
   // hover / active 不设固定值：由 color-mix 从当前主色派生，保证自定义主色时交互态同步。
   // 错误 / 危险操作
   --s-color-error: #ff4d4f;
@@ -38,10 +36,6 @@
   --s-color-bg-drag-source: #e6f4ff;
   /// 列拖拽源表头背景色
   --s-color-bg-column-drag-source: #e6f4ff;
-  /// 框选高亮背景色
-  --s-color-bg-cell-range: #dcebff;
-  /// 当前框选锚点背景色
-  --s-color-bg-cell-range-active: #bfd7ff;
   /// 禁用控件背景色
   --s-color-bg-disabled: #f5f5f5;
   /// 加载遮罩背景色
@@ -132,8 +126,6 @@
 // mixin 应用于主题标记节点，内部表格通过继承获取暗色值。
 .s-dark-tokens() {
   --s-primary-color: #1668dc;
-  /// 暗色正文主色（#141414 上 ≥ 4.5:1）
-  --s-primary-color-text: #3c89e8;
   --s-color-error: #ff4d4f;
   --s-color-error-hover: #ff7875;
   --s-color-error-active: #d9363e;
@@ -150,8 +142,6 @@
   --s-color-bg-summary: #1a1a1a;
   --s-color-bg-drag-source: #111a2c;
   --s-color-bg-column-drag-source: #111a2c;
-  --s-color-bg-cell-range: #0d2a4d;
-  --s-color-bg-cell-range-active: #123f6e;
   --s-color-bg-disabled: rgba(255, 255, 255, 0.08);
   --s-color-bg-loading: rgba(20, 20, 20, 0.7);
   --s-loading-track-opacity: 30%;

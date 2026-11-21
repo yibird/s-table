@@ -8,20 +8,22 @@ import {
   type Table,
   type TableFeatures,
 } from '@tanstack/vue-table';
-import { useRafValue } from '../../hooks/useRafValue';
+import { useRafValue } from '../../hooks/common';
 import { useTableAtoms } from '../../adapter';
 import { createCellRenderCache } from '../../components/body/cellRenderCache';
 import { useFlipAnimation } from '../../interaction/useFlipAnimation';
-import { useCellRange } from '../../hooks/useCellRange';
-import { buildRenderedColumnWindow } from '../../hooks/useColumnVirtual';
-import { useExpandable } from '../../hooks/useExpandable';
-import { useScroll } from '../../hooks/useScroll';
-import { measureVirtualRowBlock, useVirtual } from '../../hooks/useVirtual';
+import { useCellRange } from '../../hooks/interaction';
+import { buildRenderedColumnWindow } from '../../hooks/column';
+import { useExpandable } from '../../hooks/data';
+import { useRowSelection } from '../../hooks/data';
+import { useScroll } from '../../hooks/view';
+import { measureVirtualRowBlock, useVirtual } from '../../hooks/view';
 import type {
   STableColumn,
   STableExpandable,
   STableInstance,
   STableRowKey,
+  STableRowSelection,
   STableVirtualProps,
 } from '../../types';
 import { mountSTable } from '../helpers';
@@ -46,6 +48,55 @@ const mockAnimationFrame = () => {
 };
 
 describe('性能热路径回', () => {
+  it('选择表头 checkbox 和静态标题不物化 selectedRows，函数标题保留完整快照', () => {
+    type Row = { id: number };
+    const record = { id: 1 };
+    const getSelectedRowModel = vi.fn(() => ({ flatRows: [{ original: record }] }));
+    const table = {
+      getSelectedRowModel,
+      getIsAllRowsSelected: () => true,
+      getIsSomeRowsSelected: () => true,
+    } as unknown as Table<TableFeatures, Row>;
+    const rowSelection = shallowRef<STableRowSelection<Row>>({ preserveSelectedRowKeys: true });
+    let selection: ReturnType<typeof useRowSelection<Row>>;
+    app = createApp({
+      setup() {
+        selection = useRowSelection<Row>({
+          rowSelection,
+          selectedRowKeys: ref([1]),
+          defaultSelectedRowKeys: ref(undefined),
+          selectionIntent: ref(undefined),
+          defaultSelectionIntent: ref(undefined),
+          dataSource: ref([record]),
+          paginationEnabled: ref(false),
+          getTable: () => table,
+          onUpdateSelectedRowKeys: () => undefined,
+          onSelectChange: () => undefined,
+          onUpdateSelectionIntent: () => undefined,
+          onSelectionIntentChange: () => undefined,
+        });
+        return () => h('div');
+      },
+    });
+    app.mount(document.createElement('div'));
+    const renderHeader = () => (selection!.selectionColumn.value!.header as () => unknown)();
+    renderHeader();
+    expect(getSelectedRowModel).not.toHaveBeenCalled();
+    rowSelection.value = { ...rowSelection.value, columnTitle: 'Selected' };
+    renderHeader();
+    expect(getSelectedRowModel).not.toHaveBeenCalled();
+    const title = vi.fn(() => 'Selected');
+    rowSelection.value = { ...rowSelection.value, columnTitle: title };
+    renderHeader();
+    expect(getSelectedRowModel).toHaveBeenCalledTimes(1);
+    expect(title).toHaveBeenCalledWith({
+      selectedRowKeys: [1],
+      selectedRows: [record],
+      allSelected: true,
+      someSelected: true,
+    });
+  });
+
   it('展开配置的非结构字段变化不会重新扫描完整 Row Model', async () => {
     type Row = { id: number };
     const expandable = ref<STableExpandable<Row>>({ columnWidth: 40 });
@@ -834,6 +885,91 @@ describe('性能热路径回', () => {
     await nextTick();
 
     expect(queryRow).toHaveBeenCalledWith('.s-table-row[data-index][data-row-id="n:1"]');
+  });
+
+  it('函数行高替换、同长度数据换代和重排会重建布局，overscan 不重估', async () => {
+    type VirtualRow = { id: number; height: number };
+    const makeRow = (id: number, height: number) =>
+      ({ id: `n:${id}`, original: { id, height } }) as TanStackRow<TableFeatures, VirtualRow>;
+    const rowHeight = vi.fn((row: VirtualRow, index: number) => row.height + index);
+    const virtual = ref<STableVirtualProps<VirtualRow>>({ y: true, rowHeight });
+    const rows = shallowRef([makeRow(1, 40), makeRow(2, 60)]);
+    const scrollElement = document.createElement('div');
+    Object.defineProperties(scrollElement, {
+      clientHeight: { get: () => 50 },
+      clientWidth: { get: () => 100 },
+    });
+    const queryRows = vi.spyOn(scrollElement, 'querySelectorAll');
+    let virtualApi: ReturnType<typeof useVirtual<VirtualRow>>;
+    app = createApp({
+      setup() {
+        virtualApi = useVirtual({ virtual, rows, scrollElementRef: ref(scrollElement) });
+        return () => h('div');
+      },
+    });
+    app.mount(document.createElement('div'));
+    expect(virtualApi!.totalSize.value).toBe(101);
+    rowHeight.mockClear();
+    queryRows.mockClear();
+    virtual.value = { ...virtual.value, overscan: 9 };
+    await nextTick();
+    expect(virtualApi!.totalSize.value).toBe(101);
+    expect(rowHeight).not.toHaveBeenCalled();
+    expect(queryRows).not.toHaveBeenCalled();
+
+    virtual.value.rowHeight = (row, index) => row.height * (index + 1);
+    await nextTick();
+    await nextTick();
+    expect(virtualApi!.totalSize.value).toBe(160);
+    expect(queryRows).toHaveBeenCalledTimes(1);
+    rows.value = [makeRow(1, 50), makeRow(2, 80)];
+    await nextTick();
+    expect(virtualApi!.totalSize.value).toBe(210);
+    rows.value = [...rows.value].reverse();
+    await nextTick();
+    expect(virtualApi!.totalSize.value).toBe(180);
+    virtual.value.overscan = 0;
+    await nextTick();
+    expect(virtualApi!.virtualItems.value.map((item) => item.size)).toEqual([80]);
+    expect(virtualApi!.bottomSpacerHeight.value).toBe(100);
+  });
+
+  it('preserveRow 的旧实测高度不会覆盖新行高策略', async () => {
+    type VirtualRow = { id: number };
+    const virtual = ref<STableVirtualProps<VirtualRow>>({ y: true, rowHeight: () => 40 });
+    const scrollElement = document.createElement('div');
+    document.body.appendChild(scrollElement);
+    const main = document.createElement('tr');
+    main.dataset.index = '0';
+    Object.defineProperty(main, 'offsetHeight', { get: () => 90 });
+    scrollElement.appendChild(main);
+    let virtualApi: ReturnType<typeof useVirtual<VirtualRow>>;
+    app = createApp({
+      setup() {
+        virtualApi = useVirtual({
+          virtual,
+          rows: shallowRef([{ id: 'n:1', original: { id: 1 } }] as TanStackRow<
+            TableFeatures,
+            VirtualRow
+          >[]),
+          scrollElementRef: ref(scrollElement),
+          preserveRow: ref(true),
+        });
+        return () => h('div');
+      },
+    });
+    app.mount(document.createElement('div'));
+    virtualApi!.measureElement(main);
+    expect(virtualApi!.totalSize.value).toBe(90);
+    main.remove();
+    virtualApi!.measureElement(null);
+    virtual.value.rowHeight = () => 60;
+    await nextTick();
+    expect(virtualApi!.totalSize.value).toBe(60);
+    virtual.value.rowHeight = 70;
+    await nextTick();
+    expect(virtualApi!.totalSize.value).toBe(70);
+    scrollElement.remove();
   });
 
   it('虚拟行高策略动态变化后会失TanStack 测量缓存', async () => {

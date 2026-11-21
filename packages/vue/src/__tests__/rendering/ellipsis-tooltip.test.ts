@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vite-plus/test';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { nextTick, type App } from 'vue';
 import { mountSTable } from '../helpers';
 import type { STableColumn } from '../../types';
@@ -29,6 +29,7 @@ afterEach(() => {
   document.querySelectorAll('.s-table-tooltip').forEach((element) => element.remove());
   app = null;
   host = null;
+  vi.restoreAllMocks();
 });
 
 const mount = async (props: Record<string, unknown> = {}) => {
@@ -104,6 +105,49 @@ describe('ellipsis 与 Tooltip', () => {
     expect(
       host.querySelector<HTMLElement>('th[data-column-id="name"]')!.getAttribute('title')
     ).toBe('自定义表头');
+  });
+
+  it('卸载打开的 Tooltip 时移除容器和 window 的同一滚动监听器', async () => {
+    const addListener = vi.spyOn(HTMLElement.prototype, 'addEventListener');
+    const removeListener = vi.spyOn(HTMLElement.prototype, 'removeEventListener');
+    const addWindowListener = vi.spyOn(window, 'addEventListener');
+    const removeWindowListener = vi.spyOn(window, 'removeEventListener');
+    await mount();
+    const container = host!.querySelector<HTMLElement>('.s-table-container')!;
+    const registrations = addListener.mock.calls.map((args, index) => ({
+      target: addListener.mock.contexts[index],
+      args,
+    }));
+    const windowRegistration = addWindowListener.mock.calls.find(
+      (args) =>
+        args[0] === 'scroll' &&
+        registrations.some(
+          (entry) =>
+            entry.target === container && entry.args[0] === 'scroll' && entry.args[1] === args[1]
+        )
+    );
+    expect(windowRegistration).toBeDefined();
+    const listener = windowRegistration![1];
+    const cell = host!.querySelector<HTMLElement>('td[data-column-id="name"]')!;
+    Object.defineProperty(cell, 'scrollWidth', { value: 200, configurable: true });
+    Object.defineProperty(cell, 'clientWidth', { value: 100, configurable: true });
+    cell.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    await nextTick();
+    expect(document.querySelector('.s-table-tooltip')).not.toBeNull();
+
+    app!.unmount();
+    app = null;
+    await nextTick();
+    expect(document.querySelector('.s-table-tooltip')).toBeNull();
+    expect(
+      removeListener.mock.calls.some(
+        (args, index) =>
+          removeListener.mock.contexts[index] === container &&
+          args[0] === 'scroll' &&
+          args[1] === listener
+      )
+    ).toBe(true);
+    expect(removeWindowListener).toHaveBeenCalledWith('scroll', listener);
   });
 
   it('滚动后立即隐藏 Tooltip，避免虚拟行复用后指向过期内容', async () => {

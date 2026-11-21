@@ -5,8 +5,7 @@ import { decodeRowKey } from '../../utils';
 import { splitTableAttrs, type SplitTableAttrs } from '../../utils/mergeTableAttrs';
 import type { BodyEditingApi, BodyVirtualApi } from '../../types';
 
-// 行状态位掩码：把影响行渲染的四类布尔输入（选中 / 展开 / 拖拽源 / 拖拽目标）
-// 预计算为单个数字进入 v-memo，避免 memo 数组里每行做多次函数调用。
+// 行状态位掩码：一次计算选中 / 展开 / 拖拽 / 分组状态供模板复用。
 export const ROW_FLAG_SELECTED = 1;
 export const ROW_FLAG_EXPANDED = 1 << 1;
 export const ROW_FLAG_DRAG_SOURCE = 1 << 2;
@@ -23,11 +22,11 @@ export type RenderItem<TData extends RowData> = {
   expandedRef: ((el: unknown) => void) | undefined;
   dataIndex?: number;
   publicRowKey: string | number;
-  /** 行状态位掩码（选中/展开/拖拽源/拖拽目标），供 v-memo 与 class 纯值比较。 */
+  /** 行状态位掩码（选中/展开/拖拽/分组），供 class 与展开内容复用。 */
   flags: number;
   /** 框选渲染键，仅边界或覆盖列变化的行会更新。 */
   rangeMemoKey: string;
-  /** 只有当前编辑行持有编辑快照，输入时其余行保持稳定的 null memo key。 */
+  /** 只有当前编辑行持有编辑快照，其他行保持 null。 */
   editMemoKey: STableEditingState | null;
   rowClass?: string;
   rowStyle?: CSSProperties;
@@ -67,11 +66,7 @@ type UseRowRenderItemsOptions<TData extends RowData> = {
   getExpandedElementRef: (row: Row<TableFeatures, TData>) => (el: unknown) => void;
 };
 
-/**
- * 行渲染项纯计算模块：
- * 渲染项对象跨帧原地复用（Hidden Class 稳定），行展示（rowClassName/rowStyle）
- * 每次求值直接执行回调，保证响应式依赖变化立即反映到 DOM。
- */
+/** 行展示回调在 computed 内求值，持续追踪稳定回调读取的响应式依赖。 */
 export const useRowRenderItems = <TData extends RowData>({
   props,
   getDragRowFromIndex,
@@ -82,7 +77,7 @@ export const useRowRenderItems = <TData extends RowData>({
   mainElementRef,
   getExpandedElementRef,
 }: UseRowRenderItemsOptions<TData>) => {
-  /** 汇总影响行渲染的状态为单个位掩码，v-memo 数组只做数字比较。 */
+  /** 汇总影响行渲染的状态为单个位掩码。 */
   const getRowStateFlags = (row: Row<TableFeatures, TData>, index: number): number => {
     let flags = 0;
     if (props.isRowSelected?.(row) ?? row.getIsSelected()) flags |= ROW_FLAG_SELECTED;
@@ -103,9 +98,6 @@ export const useRowRenderItems = <TData extends RowData>({
     return flags;
   };
 
-  // 渲染项按求值创建新对象：memo 失效由 v-memo 的纯值比较负责，
-  // 不再跨帧复用/原地改写 item，避免隐式对象身份契约。
-
   const getRowEditingMemoKey = (rowKey: string | number): STableEditingState | null => {
     const editing = props.editingApi?.state;
     return editing?.rowKey === rowKey ? editing : null;
@@ -117,24 +109,6 @@ export const useRowRenderItems = <TData extends RowData>({
       : props.rowClassName;
   const resolveRowStyle = (record: TData, index: number) =>
     typeof props.rowStyle === 'function' ? props.rowStyle(record, index) : props.rowStyle;
-
-  /** customRow 结果按 Row + index + 回调身份缓存，避免虚拟滚动每帧重建 attrs 使 v-memo 失效。 */
-  const rowAttrsCache = new WeakMap<
-    object,
-    { index: number; fn: typeof props.customRow; attrs: SplitTableAttrs | undefined }
-  >();
-  const resolveRowAttrs = (
-    row: Row<TableFeatures, TData>,
-    index: number
-  ): SplitTableAttrs | undefined => {
-    const fn = props.customRow;
-    if (!fn) return undefined;
-    const cached = rowAttrsCache.get(row);
-    if (cached && cached.index === index && cached.fn === fn) return cached.attrs;
-    const attrs = splitTableAttrs(fn(row.original, index));
-    rowAttrsCache.set(row, { index, fn, attrs });
-    return attrs;
-  };
 
   /** 构建行的渲染项。 */
   const createRenderItem = (
@@ -162,7 +136,7 @@ export const useRowRenderItems = <TData extends RowData>({
       editMemoKey: getRowEditingMemoKey(publicRowKey),
       rowClass: resolveRowClass(row.original, index),
       rowStyle: resolveRowStyle(row.original, index),
-      rowAttrs: resolveRowAttrs(row, index),
+      rowAttrs: splitTableAttrs(props.customRow?.(row.original, index)),
       pinnedPosition,
       pinnedStyle: getPinnedStyle(row.id, pinnedPosition),
       section,

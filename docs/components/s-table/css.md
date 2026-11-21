@@ -6,39 +6,39 @@
 
 主题变量会作用于表格实例内部的控件；筛选、搜索、表头选择、Select 和右键菜单等 Teleport 浮层打开时，也会同步触发节点上的 `--s-*` 变量，因此实例级主题不会退回到根级默认值。未列出的 `--s-*` 自定义变量同样会被同步。
 
-主色 hover / active、框选边框和 loading 颜色在未显式配置时会从当前实例的 `--s-primary-color` 派生；只覆盖主色即可保持交互状态一致，显式配置对应变量时仍以配置值优先。组件同时尊重 `prefers-reduced-motion: reduce`。
+主色 hover / active、框选背景与边框、loading 颜色在未显式配置时会从当前实例的 `--s-primary-color` 派生；只覆盖主色即可保持交互状态一致，显式配置对应变量时仍以配置值优先。组件同时尊重 `prefers-reduced-motion: reduce`。
 
 变量在 `:root` 提供默认值，并由 `.s-table` 实例作用域继承和消费。放在某个表格外层或直接放在表格 class 上即可局部覆盖。
 
 ### 主题与背景
 
-| CSS Variable                      | 默认值                   | 描述               |
-| --------------------------------- | ------------------------ | ------------------ |
-| `--s-primary-color`               | `#1677ff`                | 主色               |
-| `--s-primary-color-hover`         | `color-mix(...)`         | 主色 hover 状态色  |
-| `--s-primary-color-active`        | `color-mix(...)`         | 主色 active 状态色 |
-| `--s-color-bg-header`             | `#fafafa`                | 表头背景           |
-| `--s-color-bg-cell`               | `#fff`                   | 表体单元格背景     |
-| `--s-color-bg-row-hover`          | `#f7f7f7`                | 行 hover 背景      |
-| `--s-color-bg-row-selected`       | `#e6f4ff`                | 选中行背景         |
-| `--s-color-bg-row-selected-hover` | `#bae0ff`                | 选中行 hover 背景  |
-| `--s-color-bg-row-striped`        | `#fafafa`                | 斑马纹偶数行背景   |
-| `--s-color-bg-row-striped-hover`  | `#f0f0f0`                | 斑马纹 hover 背景  |
-| `--s-color-bg-row-expanded`       | `#fafafa`                | 展开行背景         |
-| `--s-color-bg-footer`             | `#f2f2f2`                | Footer 背景        |
-| `--s-color-bg-summary`            | `#fafafa`                | Summary 背景       |
-| `--s-color-bg-drag-source`        | `#e6f4ff`                | 行拖拽源背景       |
-| `--s-color-bg-column-drag-source` | `#e6f4ff`                | 列拖拽源表头背景   |
-| `--s-color-bg-cell-range`         | `#dcebff`                | 框选范围背景       |
-| `--s-color-bg-cell-range-active`  | `#bfd7ff`                | 框选锚点背景       |
-| `--s-color-error`                 | `#ff4d4f`                | 错误 / 危险色      |
-| `--s-color-error-hover`           | `#ff7875`                | 危险态 hover       |
-| `--s-color-error-active`          | `#d9363e`                | 危险态 active      |
-| `--s-color-error-bg`              | `rgba(255,77,79,.1)`     | 危险态浅背景       |
-| `--s-color-bg-disabled`           | `#f5f5f5`                | 禁用控件背景       |
-| `--s-color-bg-loading`            | `rgba(255,255,255,.72)`  | 加载遮罩背景       |
-| `--s-color-loading-track`         | `color-mix(...)`         | 加载环轨道色       |
-| `--s-color-loading-active`        | `var(--s-primary-color)` | 加载活动色         |
+| CSS Variable                      | 默认值                          | 描述               |
+| --------------------------------- | ------------------------------- | ------------------ |
+| `--s-primary-color`               | `#1677ff`                       | 主色               |
+| `--s-primary-color-hover`         | `color-mix(...)`                | 主色 hover 状态色  |
+| `--s-primary-color-active`        | `color-mix(...)`                | 主色 active 状态色 |
+| `--s-color-bg-header`             | `#fafafa`                       | 表头背景           |
+| `--s-color-bg-cell`               | `#fff`                          | 表体单元格背景     |
+| `--s-color-bg-row-hover`          | `#f7f7f7`                       | 行 hover 背景      |
+| `--s-color-bg-row-selected`       | `#e6f4ff`                       | 选中行背景         |
+| `--s-color-bg-row-selected-hover` | `#bae0ff`                       | 选中行 hover 背景  |
+| `--s-color-bg-row-striped`        | `#fafafa`                       | 斑马纹偶数行背景   |
+| `--s-color-bg-row-striped-hover`  | `#f0f0f0`                       | 斑马纹 hover 背景  |
+| `--s-color-bg-row-expanded`       | `#fafafa`                       | 展开行背景         |
+| `--s-color-bg-footer`             | `#f2f2f2`                       | Footer 背景        |
+| `--s-color-bg-summary`            | `#fafafa`                       | Summary 背景       |
+| `--s-color-bg-drag-source`        | `#e6f4ff`                       | 行拖拽源背景       |
+| `--s-color-bg-column-drag-source` | `#e6f4ff`                       | 列拖拽源表头背景   |
+| `--s-color-bg-cell-range`         | 可选覆盖（默认主题色 8% 混合）  | 框选范围背景       |
+| `--s-color-bg-cell-range-active`  | 可选覆盖（默认主题色 14% 混合） | 框选锚点背景       |
+| `--s-color-error`                 | `#ff4d4f`                       | 错误 / 危险色      |
+| `--s-color-error-hover`           | `#ff7875`                       | 危险态 hover       |
+| `--s-color-error-active`          | `#d9363e`                       | 危险态 active      |
+| `--s-color-error-bg`              | `rgba(255,77,79,.1)`            | 危险态浅背景       |
+| `--s-color-bg-disabled`           | `#f5f5f5`                       | 禁用控件背景       |
+| `--s-color-bg-loading`            | `rgba(255,255,255,.72)`         | 加载遮罩背景       |
+| `--s-color-loading-track`         | `color-mix(...)`                | 加载环轨道色       |
+| `--s-color-loading-active`        | `var(--s-primary-color)`        | 加载活动色         |
 
 ### 边框、文本与交互
 

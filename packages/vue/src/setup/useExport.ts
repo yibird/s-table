@@ -141,17 +141,16 @@ export const useExport = <TData extends RowData>({
   const resolveOptions = (options: STableExportOptions<TData>) => {
     const columns = resolveColumns(options.columns);
     const rows = getExportRows(options.dataSource);
-    return {
-      columns,
-      rows,
-      matrix: buildMatrix(columns, rows, options.includeHeaders !== false),
-    };
+    return { columns, rows };
   };
 
   /** 同步导出 CSV 文本；可选触发下载。 */
   const exportCsv = (options: STableCsvOptions<TData> = {}): string => {
-    const { matrix } = resolveOptions(options);
-    const content = buildCsvContent(matrix, options);
+    const { columns, rows } = resolveOptions(options);
+    const content = buildCsvContent(
+      buildMatrix(columns, rows, options.includeHeaders !== false),
+      options
+    );
     if (options.download) {
       downloadBlob(
         new Blob([content], { type: 'text/csv;charset=utf-8' }),
@@ -163,8 +162,20 @@ export const useExport = <TData extends RowData>({
 
   /** 异步分块导出 CSV；默认触发下载并返回 Blob。 */
   const exportCsvAsync = async (options: STableCsvOptions<TData> = {}): Promise<Blob> => {
-    const { matrix } = resolveOptions(options);
-    const chunks = await buildCsvChunksAsync(matrix, options);
+    const { columns, rows } = resolveOptions(options);
+    const headerCount = options.includeHeaders !== false ? 1 : 0;
+    const chunks = await buildCsvChunksAsync(
+      {
+        length: rows.length + headerCount,
+        getRow: (index) => {
+          if (headerCount && index === 0)
+            return columns.map((column) => column.header ?? column.columnId);
+          const rowIndex = index - headerCount;
+          return columns.map((column) => resolveCellValue(column, rows[rowIndex]!, rowIndex));
+        },
+      },
+      options
+    );
     const blob = new Blob(chunks, { type: 'text/csv;charset=utf-8' });
     if (options.download !== false) {
       downloadBlob(blob, options.filename ?? 'table.csv');

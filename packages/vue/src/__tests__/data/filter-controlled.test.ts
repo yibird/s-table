@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vite-plus/test';
 import { nextTick, shallowRef } from 'vue';
-import { useSortFilter } from '../../hooks/useSortFilter';
+import { useSortFilter } from '../../hooks/data';
 import type { STableColumn } from '../../types';
 
 interface Row {

@@ -12,7 +12,6 @@ import type {
   PaginationPlacement,
   STableCellRangeCopyEvent,
   STableCellRangeSelection,
-  STableBreakpoint,
   STableClasses,
   STableColumn,
   STableColumnDragConfig,
@@ -150,16 +149,6 @@ export interface STableProps<TData extends RowData = RowData> {
    */
   summaryFixed?: boolean;
   /**
-   * @description 响应式断点阈值（px）。
-   * @default { xs: 0, sm: 576, md: 768, lg: 992, xl: 1200, xxl: 1600 }
-   */
-  breakpoints?: Partial<Record<STableBreakpoint, number>>;
-  /**
-   * @description SSR / 首帧使用的断点。
-   * @default 'lg'
-   */
-  defaultBreakpoint?: STableBreakpoint;
-  /**
    * @description 对 dataSource 做深度监听，原地修改嵌套字段也会触发更新。
    * @default false
    */
@@ -252,8 +241,9 @@ export interface STableProps<TData extends RowData = RowData> {
    */
   cellRangeSelection?: STableCellRangeSelection;
   /**
-   * @description 可取消的框选复制监听器。模板中使用 `@cell-range-copy`；返回 `false`
-   * 时不写入剪贴板，且 `copyCellRange()` 返回空串。未提供或返回其他值时默认允许复制。
+   * @description 可取消的同步 callback prop，不是 emit。模板可用 `:on-cell-range-copy` 或 `@cell-range-copy`。
+   * 包装组件须透传或返回回调结果；返回 `false` 不写入剪贴板、不拦截原生 copy，且 `copyCellRange()` 返回空串。
+   * 未提供或返回其他值时默认允许复制。
    */
   onCellRangeCopy?: (payload: STableCellRangeCopyEvent) => boolean | void;
   /** 启用单元格焦点与方向键导航，并派发 `cellKeydown`。 */

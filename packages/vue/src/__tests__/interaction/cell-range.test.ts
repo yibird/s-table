@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { nextTick, reactive, type App } from 'vue';
+import { createApp, defineComponent, h, nextTick, reactive, type App, type PropType } from 'vue';
+import STable from '../../STable.vue';
 import { mountSTable } from '../helpers';
 import { SELECTION_COLUMN_ID } from '../../constants';
-import type { STableCellRange, STableColumn, STableInstance } from '../../types';
+import type { STableCellRange, STableColumn, STableInstance, STableProps } from '../../types';
 import { createCellRangeClipboard } from '../../utils';
 
 interface Row {
@@ -378,6 +379,48 @@ describe('cellRangeSelection', () => {
     expect(blocked.event.defaultPrevented).toBe(false);
     expect(blocked.setData).not.toHaveBeenCalled();
     expect(copyAttempts).toHaveLength(3);
+  });
+
+  it('包装组件直接透传复制 callback，保留 false 取消和原生复制默认行为', async () => {
+    let instance: STableInstance<Row> | null = null;
+    const cancel = vi.fn(() => false);
+    const Wrapper = defineComponent({
+      props: {
+        onCellRangeCopy: Function as PropType<STableProps<Row>['onCellRangeCopy']>,
+      },
+      setup(props) {
+        return () =>
+          h(STable<Row>, {
+            columns,
+            dataSource,
+            rowKey: 'id',
+            cellRangeSelection: { mode: 'row' },
+            onCellRangeCopy: props.onCellRangeCopy,
+            ref: (value: unknown) => {
+              instance = value as STableInstance<Row>;
+            },
+          });
+      },
+    });
+    host = document.createElement('div');
+    document.body.append(host);
+    app = createApp(Wrapper, { onCellRangeCopy: cancel });
+    app.mount(host);
+    await nextTick();
+    const row = host.querySelector<HTMLElement>('tbody tr.s-table-row')!;
+    row.click();
+    await nextTick();
+    const setData = vi.fn();
+    const copy = new Event('copy', { bubbles: true, cancelable: true });
+    Object.defineProperty(copy, 'clipboardData', { value: { setData } });
+    row.querySelector('td')!.dispatchEvent(copy);
+    expect(copy.defaultPrevented).toBe(false);
+    expect(setData).not.toHaveBeenCalled();
+    expect(await instance!.copyCellRange({ writeToClipboard: false })).toBe('');
+    expect(cancel).toHaveBeenCalledTimes(2);
+    expect(cancel).toHaveBeenLastCalledWith(
+      expect.objectContaining({ source: 'api', text: '1\tA' })
+    );
   });
 
   it('copyCellRange 被拒绝时返回空串，且不复制内部列', async () => {

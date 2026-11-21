@@ -35,6 +35,10 @@ const pagination = computed<STablePaginationProps>(() => ({
 }));
 ```
 
+### 请求与通知的职责
+
+同一次分页操作仍会调用 `pagination.onChange(page, pageSize)` 并发出 `pageChange({ page, pageSize })`。推荐前者负责请求和受控状态回填，后者只做观察、日志或埋点；同时订阅不会互相压制，但不要重复请求。父组件直接回填 `current` 不会反向发出用户交互通知。
+
 ## 分页位置
 
 `paginationPlacement` 支持顶部/底部和左/中/右组合：`topStart`、`topCenter`、`topEnd`、`bottomStart`、`bottomCenter`、`bottomEnd`。
@@ -51,14 +55,13 @@ const pagination = computed<STablePaginationProps>(() => ({
 
 服务端分页设置 `manualPagination`，并提供 `pagination.total` 或 `pagination.pageCount`。组件只展示传入的当前页数据，不再切片。完整示例见[服务端数据](./server-side)。
 
-## 多位置、简洁模式与自定义条目
+## 多位置与简洁模式
 
 ```ts
 const pagination = {
   simple: true,
   showLessItems: true,
   hideOnSinglePage: true,
-  itemRender: (page, type, element) => (type === 'page' && page === 2 ? '②' : element),
 };
 
 // 顶部和底部同时渲染，共享同一分页状态

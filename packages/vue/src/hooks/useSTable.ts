@@ -58,7 +58,7 @@ import type { STableExpandable, STableProps } from '../types';
 import type { STableColumnMeta } from '../types/column';
 import { createRowIdAllocator, encodeRowKey, isInternalColumn, resolveRowKey } from '../utils';
 import { getTreeChildren } from '@zchengfeng/s-table-core';
-import { useColumnMetrics } from './useColumnMetrics';
+import { useColumnMetrics } from './column/useColumnMetrics';
 import { installPinnedRowsDisplayOrder, useTableAtoms } from '../adapter';
 
 /**
