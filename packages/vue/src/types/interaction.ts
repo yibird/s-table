@@ -262,8 +262,9 @@ export interface STableCellRangeSelection {
    * @description 框选模式。
    * - `cell`：Excel 式拖拽框选单元格。
    * - `row`：单击行选中整行范围。
+   * @default 'cell'
    */
-  mode: 'cell' | 'row';
+  mode?: 'cell' | 'row';
   /** 是否允许 Ctrl/Cmd 多区间选择。 @default true */
   multi?: boolean;
   /**
@@ -271,6 +272,12 @@ export interface STableCellRangeSelection {
    * @default false
    */
   selectRowOnClick?: boolean;
+  /**
+   * @description 仅 `mode='cell'` 且配置了 checkbox 选择列时有效。为 `true` 时框选覆盖行的选择状态同步取反。
+   * 默认为 `false`（与 Surely Vue 行为一致，框选单元格不改动行选择状态）。
+   * @default false
+   */
+  toggleRowSelection?: boolean;
 }
 
 // 单元格合并属性

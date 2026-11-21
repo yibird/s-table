@@ -2,6 +2,7 @@ import type { ComputedRef, EmitFn, Ref, ShallowRef, Slots } from 'vue';
 import type { RowData, Table, TableFeatures } from '@tanstack/vue-table';
 import type { STableLocale } from '../locales';
 import type {
+  STableCellRangeSelection,
   STableClasses,
   STableEmits,
   STableExpandable,
@@ -47,7 +48,12 @@ type STablePropRefs<TData extends RowData> = {
  * 各 setup composable 从这里读取 props 派生 ref、emit、slots 与表格实例，
  * 保证拆分后仍然只有一份响应式来源。
  */
-export type STableSetupContext<TData extends RowData> = STablePropRefs<TData> & {
+export type STableSetupContext<TData extends RowData> = Omit<
+  STablePropRefs<TData>,
+  'cellRangeSelection'
+> & {
+  /** 归一化后的单元格框选配置。 */
+  cellRangeSelection: ComputedRef<STableCellRangeSelection | undefined>;
   /** 原始 props（withDefaults 后的只读对象）。 */
   props: Readonly<STableProps<TData>>;
   /** 组件事件派发器。 */

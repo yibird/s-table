@@ -56,7 +56,13 @@ import {
 } from '@tanstack/vue-table';
 import type { STableExpandable, STableProps } from '../types';
 import type { STableColumnMeta } from '../types/column';
-import { createRowIdAllocator, encodeRowKey, isInternalColumn, resolveRowKey } from '../utils';
+import {
+  createRowIdAllocator,
+  encodeRowKey,
+  isInternalColumn,
+  resolveCellRangeSelection,
+  resolveRowKey,
+} from '../utils';
 import { getTreeChildren } from '@zchengfeng/s-table-core';
 import { useColumnMetrics } from './column/useColumnMetrics';
 import { installPinnedRowsDisplayOrder, useTableAtoms } from '../adapter';
@@ -263,7 +269,7 @@ export const useSTable = <TData extends RowData>({
    * - cell 模式：排除内部列，避免框选/复制进入功能列。
    */
   const canSelectCell = (cell: Cell<TableFeatures, TData>): boolean => {
-    const config = props.cellRangeSelection;
+    const config = resolveCellRangeSelection(props.rangeSelection, props.cellRangeSelection);
     if (!config) return false;
     return config.mode === 'row' || !isInternalColumn(cell.column.id);
   };
@@ -384,13 +390,16 @@ export const useSTable = <TData extends RowData>({
     // 单元格范围只由 TanStack 管理；组件层仅把 ID 角点适配成公开的索引范围。
     enableCellSelection: canSelectCell,
     get enableCellRangeSelection() {
-      return props.cellRangeSelection?.mode === 'cell';
+      const config = resolveCellRangeSelection(props.rangeSelection, props.cellRangeSelection);
+      return config?.mode === 'cell';
     },
     get enableMultiCellRangeSelection() {
-      return props.cellRangeSelection ? props.cellRangeSelection.multi !== false : false;
+      const config = resolveCellRangeSelection(props.rangeSelection, props.cellRangeSelection);
+      return config ? config.multi !== false : false;
     },
     get enableCellSelectionDrag() {
-      return props.cellRangeSelection?.mode === 'cell';
+      const config = resolveCellRangeSelection(props.rangeSelection, props.cellRangeSelection);
+      return config?.mode === 'cell';
     },
     get enableCellSpanning() {
       return hasCellSpanning.value;

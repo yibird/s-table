@@ -237,9 +237,13 @@ export interface STableProps<TData extends RowData = RowData> {
    */
   seq?: boolean | STableSeq<TData>;
   /**
-   * @description 单元格框选配置。
+   * @description 单元格框选配置。可传入布尔值直接启停 cell 框选，或传入配置对象。
    */
-  cellRangeSelection?: STableCellRangeSelection;
+  cellRangeSelection?: boolean | 'single' | STableCellRangeSelection;
+  /**
+   * @description 单元格框选配置别名（对齐 Surely Vue 的 `rangeSelection` 属性）。
+   */
+  rangeSelection?: boolean | 'single' | STableCellRangeSelection;
   /**
    * @description 可取消的同步 callback prop，不是 emit。模板可用 `:on-cell-range-copy` 或 `@cell-range-copy`。
    * 包装组件须透传或返回回调结果；返回 `false` 不写入剪贴板、不拦截原生 copy，且 `copyCellRange()` 返回空串。

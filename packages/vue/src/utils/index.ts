@@ -5,6 +5,7 @@ export * from './columnIndex';
 export * from './columnMetrics';
 export * from './columnTree';
 export * from './cachedCell';
+export * from './cellRange';
 export * from './cellRangeClipboard';
 export * from './dom';
 export * from './hasRenderableSlot';

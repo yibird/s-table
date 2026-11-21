@@ -244,6 +244,7 @@ import {
   useView,
   type STableSetupContext,
 } from './setup';
+import { resolveCellRangeSelection } from './utils';
 import type { STableColumn, STableEmits, STableProps, STableSlots } from './types';
 import { LocaleContextKey, defaultLocale, mergeLocale } from './locales';
 
@@ -340,8 +341,14 @@ const dataSource = computed(() => {
 const tableInstance = shallowRef<Table<TableFeatures, TData>>();
 const getTable = () => tableInstance.value;
 
+// 归一化后的单元格框选配置（兼容布尔值、'single' 以及 rangeSelection 别名）。
+const cellRangeSelection = computed(() =>
+  resolveCellRangeSelection(props.rangeSelection, props.cellRangeSelection)
+);
+
 const context: STableSetupContext<TData> = {
   ...propRefs,
+  cellRangeSelection,
   props,
   emit,
   slots,
