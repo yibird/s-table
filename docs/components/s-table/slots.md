@@ -74,6 +74,8 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
 </STable>
 ```
 
+<demo vue="../../demos/s-table/custom-loading.vue" />
+
 ## expandedRowRender
 
 必须同时提供 `expandable`。`expanded` 表示当前展开状态，`record` 保留 `TData` 类型。
@@ -88,6 +90,8 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
 </STable>
 ```
 
+<demo vue="../../demos/s-table/expandable.vue" />
+
 ## contextMenu
 
 ```vue
@@ -99,6 +103,8 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
 ```
 
 操作结束后调用 `close()`。右键点击空状态或表头不会提供数据行。
+
+<demo vue="../../demos/s-table/context-menu.vue" />
 
 ## scrollToBottom
 
@@ -115,6 +121,8 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
 </STable>
 ```
 
+<demo vue="../../demos/s-table/scroll-to-bottom.vue" />
+
 ## rowDragHandle
 
 ```vue
@@ -124,6 +132,8 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
   </template>
 </STable>
 ```
+
+<demo vue="../../demos/s-table/drag-advanced.vue" />
 
 ## cellEditor
 
@@ -140,6 +150,8 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
 </template>
 ```
 
+<demo vue="../../demos/s-table/editing-custom-editor.vue" />
+
 ## filterPanel
 
 列设置 `filterMode: 'custom'` 后使用该插槽。`setSelectedKeys` 更新面板草稿，`confirm` 应用过滤，`reset` 清空草稿，`close` 只关闭浮层。可运行示例见[自定义过滤面板](./sorting-filtering#自定义过滤面板)。
@@ -152,6 +164,8 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
 </template>
 ```
 
+<demo vue="../../demos/s-table/filter-custom-panel.vue" />
+
 ## groupRow
 
 行分组激活后，可用该插槽替换默认分组行。作用域包含 `groupRowId`、`columnId`、`groupValue`、`count`、`depth`、`expanded` 和 `toggle()`。`groupRowId` 可传给实例方法 `toggleGroup`。
@@ -163,6 +177,8 @@ STable 的插槽用于替换状态内容或扩展特定区域。列头和单元�
   </button>
 </template>
 ```
+
+<demo vue="../../demos/s-table/columns-grouping.vue" />
 
 ## summary
 

@@ -43,6 +43,8 @@ const pagination = computed<STablePaginationProps>(() => ({
 
 `paginationPlacement` 支持顶部/底部和左/中/右组合：`topStart`、`topCenter`、`topEnd`、`bottomStart`、`bottomCenter`、`bottomEnd`。
 
+<demo vue="../../demos/s-table/pagination-advanced-modes.vue" />
+
 ## 序号列
 
 `seq: true` 插入默认序号列。对象形式可调整标题、宽度、起始值、固定位置与跨页编号方式。
@@ -54,6 +56,8 @@ const pagination = computed<STablePaginationProps>(() => ({
 ## 服务端分页
 
 服务端分页设置 `manualPagination`，并提供 `pagination.total` 或 `pagination.pageCount`。组件只展示传入的当前页数据，不再切片。完整示例见[服务端数据](./server-side)。
+
+<demo vue="../../demos/s-table/server-side.vue" />
 
 ## 多位置与简洁模式
 

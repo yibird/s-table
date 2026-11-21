@@ -72,6 +72,8 @@ STable 提供面向数据工作台的框选和右键菜单能力。两者都依�
 
 组件已公开行和单元格的点击、双击、右键、悬浮进入/离开事件；开启 `keyboardNavigation` 后还会触发 `cellKeydown`。完整载荷参阅[行与单元格事件](./events)。不要绕过公开事件绑定内部 DOM class，因为虚拟滚动和内部结构调整会使这种做法不稳定。
 
+<demo vue="../../demos/s-table/events.vue" />
+
 ## 键盘框选与多区间 API
 
 聚焦单元格后支持 Ctrl/Cmd+A、Shift+方向键、Escape。实例 API 可读取和操作多个区间：

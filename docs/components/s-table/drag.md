@@ -72,6 +72,8 @@ const rowDrag = {
 
 实例提供 `getColumnOrder()`、`setColumnOrder()`、`resetColumnOrder()`、`swapColumns()`、`moveColumn()` 和 `moveColumnByIndex()`。这些方法只处理用户叶子列，内置拖拽、选择、展开和序号列不包含在返回顺序中。
 
+<demo vue="../../demos/s-table/column-order-api.vue" />
+
 ## 整行拖拽与自定义预览
 
 ```ts

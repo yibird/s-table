@@ -38,6 +38,8 @@ const virtual: STableVirtualProps = {
 };
 ```
 
+<demo vue="../../demos/s-table/virtual-dynamic-height.vue" manual />
+
 ## 横向与双向虚拟化
 
 开启 `x` 后仅渲染横向视口附近的中心列，左右 fixed 列始终保留。`columnOverscan` 控制额外渲染的中心列数；未显式设置列宽时，使用 `columnEstimateSize` 估算。

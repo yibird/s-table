@@ -34,4 +34,6 @@ const tree = {
 
 树形数据务必提供全树唯一且稳定的 `rowKey`。未提供时组件会生成路径型内部 ID，但它只适合展示，不适合持久化展开、选择和拖拽状态。
 
+<demo vue="../../demos/s-table/tree-drag.vue" />
+
 `tree` 与 `groupBy` 互斥。需要按列聚合时请使用行分组，不要把同一份数据同时配成树。
