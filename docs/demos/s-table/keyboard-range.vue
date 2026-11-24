@@ -55,7 +55,7 @@ const clear = () => {
       :columns="columns"
       :data-source="dataSource"
       row-key="id"
-      :cell-range-selection="{ mode: 'cell' }"
+      :cell-range-selection="true"
       :pagination="false"
       style="max-height: 360px"
       @cell-range-change="refresh"

@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 import type { ColumnDef, Row, RowData, TableFeatures } from '@tanstack/vue-table';
 import { useColumnDrag, useColumns, useRowDrag, useSeq } from '../hooks';
-import { EXPAND_COLUMN_ID } from '../constants';
+import { EXPAND_COLUMN_ID, SELECTION_COLUMN_ID } from '../constants';
 import type { useDataState } from './useDataState';
 import type { STableSetupContext } from './types';
 
@@ -31,7 +31,6 @@ export const useColumnState = <TData extends RowData>(
     seq,
     slots,
     emit,
-    cellRangeSelection,
     expandable,
   } = context;
   const {
@@ -124,10 +123,11 @@ export const useColumnState = <TData extends RowData>(
     if (treeColumn.value) extraCols.push(treeColumn.value);
     if (expandColumn.value) extraCols.push(expandColumn.value);
     if (seqColumn.value) extraCols.push(seqColumn.value);
-    // row 模式需要整行高亮（含选择/展开/拖拽/序号），内部列必须参与框选；
-    // cell 模式仍通过 columnDef opt-out 排除内部列，保持复制与范围索引对齐。
-    const enableCellSelection = cellRangeSelection.value?.mode === 'row';
-    return extraCols.map((column) => ({ ...column, enableCellSelection }));
+    // 选择列允许参与框选；展开/拖拽/序号仍排除，复制阶段统一过滤内部列。
+    return extraCols.map((column) => ({
+      ...column,
+      enableCellSelection: column.id === SELECTION_COLUMN_ID,
+    }));
   });
 
   const tanstackColumnOrder = computed(() => {

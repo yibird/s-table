@@ -90,4 +90,19 @@ const columnDrag = {
 
 `rowDrag` 也可以直接传函数：`rowDrag: ({ record }) => record.status !== 'locked'`，等价于只配置 `canDrag`。
 
+### 拖拽二次确认
+
+`rowDrag.rowDragEnd` 是 `beforeDrop` 的别名（对齐 Surely Vue 命名），在提交移动前调用，支持返回 Promise。载荷包含落点位置与重排后的完整数据：
+
+```ts
+const rowDrag = {
+  async rowDragEnd({ rowKeys, targetRowKey, position, fromIndex, toIndex }) {
+    return await confirmMove({ rowKeys, targetRowKey, position, fromIndex, toIndex });
+    // 返回 false / Promise resolve false：不更新 dataSource，也不触发 rowOrderChange
+  },
+};
+```
+
+`position` 为 `before`、`after` 或 `inside`（树形换层）；`targetRowKey` / `targetParentKey` 可用于提示与后端校验。
+
 <demo vue="../../demos/s-table/drag-advanced.vue" />

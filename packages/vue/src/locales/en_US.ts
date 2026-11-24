@@ -40,6 +40,7 @@ const en_US: STableLocale = {
     table: 'Data table',
     filterColumn: 'Filter column',
     searchColumn: 'Search column',
+    clearSearch: 'Clear search',
     contextMenu: 'Row actions',
     expandTrigger: 'Expand or collapse row',
     selectionDropdown: 'Selection actions menu',

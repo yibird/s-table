@@ -59,7 +59,8 @@
 | `rowClassName`           | `string \| ((record, index) => string)`               | -             | 否   | 逐行 class                                          |
 | `rowStyle`               | `CSSProperties \| ((record, index) => CSSProperties)` | -             | 否   | 逐行 style                                          |
 | `seq`                    | `boolean \| STableSeq<TData>`                         | `false`       | 否   | 启用序号列                                          |
-| `cellRangeSelection`     | `STableCellRangeSelection`                            | -             | 否   | 框选模式配置                                        |
+| `cellRangeSelection`     | `boolean \| 'single' \| STableCellRangeSelection`     | -             | 否   | 框选配置；布尔值直接启用 cell 框选                  |
+| `rangeSelection`         | `boolean \| 'single' \| STableCellRangeSelection`     | -             | 否   | 框选配置别名（对齐 Surely Vue）                     |
 | `onCellRangeCopy`        | `(payload) => boolean \| void`                        | -             | 否   | 返回 false 时不写入框选文本，也不拦截浏览器原生复制 |
 | `keyboardNavigation`     | `boolean`                                             | `true`        | 否   | 单元格焦点与方向键                                  |
 | `rowDrag`                | `boolean \| fn \| STableRowDragConfig<TData>`         | `false`       | 否   | 行拖拽开关、按行判定函数或配置                      |
@@ -224,21 +225,20 @@ function resetQueryState() {
 
 列头和单元格通过列定义的 `header` / `cell` 渲染，不走命名插槽。完整说明见 [插槽](./slots)。
 
-| Slot                | 作用域                         | 描述                 |
-| ------------------- | ------------------------------ | -------------------- |
-| `empty`             | 无                             | 替换空状态           |
-| `emptyAction`       | 无                             | 默认空状态后的操作区 |
-| `loading`           | 无                             | 替换加载指示器       |
-| `expandedRowRender` | `record`, `index`, `expanded`  | 展开行内容           |
-| `contextMenu`       | `row`, `rowIndex`, `close`     | 行右键菜单           |
-| `scrollToBottom`    | 无                             | 触底状态内容         |
-| `rowDragHandle`     | `record`, `index`              | 行拖拽句柄           |
-| `cellEditor`        | `STableCellEditorSlotContext`  | 自定义单元格编辑器   |
-| `filterPanel`       | `STableFilterPanelSlotContext` | 自定义列过滤面板     |
-| `groupRow`          | `STableGroupRowSlotContext`    | 自定义整行分组内容   |
-| `summary`           | 无                             | `<tfoot>` 汇总       |
-| `title`             | `STableTitleContext<TData>`    | 表格上方标题         |
-| `footer`            | `STableFooterContext<TData>`   | 表格下方页脚         |
+| Slot                | 作用域                         | 描述               |
+| ------------------- | ------------------------------ | ------------------ |
+| `empty`             | 无                             | 替换空状态         |
+| `loading`           | 无                             | 替换加载指示器     |
+| `expandedRowRender` | `record`, `index`, `expanded`  | 展开行内容         |
+| `contextMenu`       | `row`, `rowIndex`, `close`     | 行右键菜单         |
+| `scrollToBottom`    | 无                             | 触底状态内容       |
+| `rowDragHandle`     | `record`, `index`              | 行拖拽句柄         |
+| `cellEditor`        | `STableCellEditorSlotContext`  | 自定义单元格编辑器 |
+| `filterPanel`       | `STableFilterPanelSlotContext` | 自定义列过滤面板   |
+| `groupRow`          | `STableGroupRowSlotContext`    | 自定义整行分组内容 |
+| `summary`           | 无                             | `<tfoot>` 汇总     |
+| `title`             | `STableTitleContext<TData>`    | 表格上方标题       |
+| `footer`            | `STableFooterContext<TData>`   | 表格下方页脚       |
 
 `title` / `footer` 插槽优先于同名 prop；`currentPageData` 和分页字段语义详见[插槽](./slots)。
 
@@ -363,15 +363,16 @@ function resetQueryState() {
 
 ### STableRowDragConfig
 
-| 属性                | 类型                                          | 默认值     | 描述                                  |
-| ------------------- | --------------------------------------------- | ---------- | ------------------------------------- |
-| `trigger`           | `'handle' \| 'row'`                           | `'handle'` | 拖拽触发区域（手柄或整行）            |
-| `ghost`             | `({ record, index }) => VNode \| HTMLElement` | -          | 自定义拖拽预览                        |
-| `animation`         | `boolean`                                     | `false`    | 启用行 FLIP 动画                      |
-| `multiple`          | `boolean`                                     | `false`    | 拖动选中行有序块                      |
-| `allowTreeReparent` | `boolean`                                     | `false`    | 允许投放到树节点内部                  |
-| `canDrag`           | `({ record, index }) => boolean`              | -          | 返回 `false` 阻止该行拖拽并展示禁用态 |
-| `beforeDrop`        | `(payload) => boolean \| Promise<boolean>`    | -          | 提交移动前拦截                        |
+| 属性                | 类型                                          | 默认值     | 描述                                   |
+| ------------------- | --------------------------------------------- | ---------- | -------------------------------------- |
+| `trigger`           | `'handle' \| 'row'`                           | `'handle'` | 拖拽触发区域（手柄或整行）             |
+| `ghost`             | `({ record, index }) => VNode \| HTMLElement` | -          | 自定义拖拽预览                         |
+| `animation`         | `boolean`                                     | `false`    | 启用行 FLIP 动画                       |
+| `multiple`          | `boolean`                                     | `false`    | 拖动选中行有序块                       |
+| `allowTreeReparent` | `boolean`                                     | `false`    | 允许投放到树节点内部                   |
+| `canDrag`           | `({ record, index }) => boolean`              | -          | 返回 `false` 阻止该行拖拽并展示禁用态  |
+| `beforeDrop`        | `(payload) => boolean \| Promise<boolean>`    | -          | 提交移动前拦截                         |
+| `rowDragEnd`        | `(payload) => boolean \| Promise<boolean>`    | -          | `beforeDrop` 的别名（Surely Vue 命名） |
 
 ### STableColumnDragConfig
 
@@ -396,10 +397,11 @@ function resetQueryState() {
 
 ### STableCellRangeSelection
 
-| 属性               | 类型              | 默认值  | 描述                   |
-| ------------------ | ----------------- | ------- | ---------------------- |
-| `mode`             | `'cell' \| 'row'` | 必填    | 框选模式               |
-| `selectRowOnClick` | `boolean`         | `false` | 行范围点击时同步行选择 |
+| 属性                  | 类型                  | 默认值  | 描述                       |
+| --------------------- | --------------------- | ------- | -------------------------- |
+| `multi`               | `boolean`             | `true`  | 是否允许 Ctrl/Cmd 多区间   |
+| `toggleRowSelection`  | `boolean`             | `false` | 框选覆盖行时是否同步行选择 |
+| `formatRangeCellText` | `(context) => string` | -       | 自定义复制文本             |
 
 翻页后当前页不再包含框选行时，组件会清空框选并派发 `cellRangeChange(null)`。
 

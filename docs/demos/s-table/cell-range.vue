@@ -60,26 +60,7 @@ const handleCellRangeSelect1 = (_range: STableCellRange, records: DemoData[]) =>
   selectedRecords1.value = records;
 };
 
-// ── 示例 2：row 模式行框选 ──
-const cellRange2 = ref<STableCellRange | null>(null);
-
-const handleCellRangeChange2 = (range: STableCellRange | null) => {
-  cellRange2.value = range;
-};
-
-// ── 示例 3：row 模式 + 行选择联动 ──
-const cellRange3 = ref<STableCellRange | null>(null);
-const selectedKeys3 = ref<(string | number)[]>([]);
-
-const rowSelection3: STableRowSelection<DemoData> = {
-  type: 'checkbox',
-};
-
-const handleCellRangeChange3 = (range: STableCellRange | null) => {
-  cellRange3.value = range;
-};
-
-// ── 示例 4：滚动 + 框选 ──
+// ── 示例 2：滚动 + 框选 ──
 const cellRange4 = ref<STableCellRange | null>(null);
 
 const scrollColumns: STableColumn<DemoData>[] = [
@@ -99,7 +80,7 @@ const handleCellRangeChange4 = (range: STableCellRange | null) => {
   cellRange4.value = range;
 };
 
-// ── 示例 5：cell 模式 + 选择列联动 ──
+// ── 示例 3：cell 模式 + 选择列联动 ──
 const cellRange5 = ref<STableCellRange | null>(null);
 const selectedKeys5 = ref<(string | number)[]>([]);
 
@@ -134,40 +115,12 @@ const formatRange = (range: STableCellRange | null): string => {
     :columns="columns"
     :row-key="'id'"
     style="height: 400px"
-    :cell-range-selection="{ mode: 'cell' }"
+    :cell-range-selection="true"
     @cell-range-change="handleCellRangeChange1"
     @cell-range-select="handleCellRangeSelect1"
   />
 
-  <h2 style="margin-top: 48px">示例 2：行框选（row 模式）</h2>
-  <p>单击任意行即可高亮整行，适合需要逐行查看的场景。</p>
-  <p class="range-info"><strong>当前范围：</strong>{{ formatRange(cellRange2) }}</p>
-  <STable
-    bordered
-    :data-source="data"
-    :columns="columns"
-    :row-key="'id'"
-    :cell-range-selection="{ mode: 'row' }"
-    @cell-range-change="handleCellRangeChange2"
-  />
-
-  <h2 style="margin-top: 48px">示例 3：行框选 + 行选择联动</h2>
-  <p>
-    单击行同时触发框选高亮和 Checkbox 选中（<code>selectRowOnClick: true</code>）。
-    <span v-if="selectedKeys3.length > 0"> | 已选 {{ selectedKeys3.length }} 行</span>
-  </p>
-  <p class="range-info"><strong>当前范围：</strong>{{ formatRange(cellRange3) }}</p>
-  <STable
-    bordered
-    :data-source="data"
-    :columns="columns"
-    :row-key="'id'"
-    :row-selection="rowSelection3"
-    v-model:selected-row-keys="selectedKeys3"
-    :cell-range-selection="{ mode: 'row', selectRowOnClick: true }"
-    @cell-range-change="handleCellRangeChange3"
-  />
-  <h2 style="margin-top: 48px">示例 4：表格滚动 + 框选</h2>
+  <h2 style="margin-top: 48px">示例 2：表格滚动 + 框选</h2>
   <p>
     表格同时存在横向和纵向滚动时，拖拽框选仍然正常工作。
     包含左右固定列，验证固定列与框选高亮的协同表现。
@@ -179,11 +132,11 @@ const formatRange = (range: STableCellRange | null): string => {
     :columns="scrollColumns"
     :row-key="'id'"
     style="height: 300px"
-    :cell-range-selection="{ mode: 'cell' }"
+    :cell-range-selection="true"
     @cell-range-change="handleCellRangeChange4"
   />
 
-  <h2 style="margin-top: 48px">示例 5：单元格框选联动选择列</h2>
+  <h2 style="margin-top: 48px">示例 3：单元格框选联动选择列</h2>
   <p>框选单元格后，范围内未选中的行会被选中，已选中的行会被取消选中（仅 checkbox 模式）。</p>
   <p class="range-info">
     <strong>当前范围：</strong>{{ formatRange(cellRange5) }}
@@ -196,7 +149,7 @@ const formatRange = (range: STableCellRange | null): string => {
     :row-key="'id'"
     :row-selection="rowSelection5"
     v-model:selected-row-keys="selectedKeys5"
-    :cell-range-selection="{ mode: 'cell' }"
+    :cell-range-selection="true"
     @cell-range-change="handleCellRangeChange5"
   />
 </template>

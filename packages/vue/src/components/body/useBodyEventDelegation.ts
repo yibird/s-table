@@ -60,15 +60,20 @@ type BodyEventDelegationOptions<TData extends RowData> = {
   getRows: () => readonly Row<TableFeatures, TData>[];
   getColumnIndex: (columnId: string) => number;
   getKeyboardNavigation: () => boolean;
-  getCellRangeMode: () => 'cell' | 'row' | undefined;
+  getCellRangeEnabled: () => boolean;
+  /** 当前框选活动单元格（TanStack 焦点角点）。 */
+  getFocusedCell?: () => { rowId: string; columnId: string } | undefined;
   getDragRowFromIndex: () => number;
   consumeDragClick?: (event: MouseEvent) => boolean;
-  getOnRangeRowClick: () => ((rowIndex: number) => void) | undefined;
   onCellRangeMousedown: (rowId: string, columnId: string, event: MouseEvent) => void;
   onCellRangeMouseenter: (rowId: string, columnId: string, event: MouseEvent) => void;
   onCellRangeSelectAll?: () => void;
+  onCellRangeMove?: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onCellRangeExtend?: (direction: 'up' | 'down' | 'left' | 'right') => void;
+  onCellRangeExtendToEdge?: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onCellRangeClear?: () => void;
+  /** Tab / Shift+Tab：移动到下一个 / 上一个单元格，返回 false 时交给浏览器离开表格。 */
+  onTabNavigate?: (rowIndex: number, columnIndex: number, backwards: boolean) => boolean;
   /** 虚拟窗口边缘没有相邻 DOM 时的跨窗口导航。 */
   onBoundaryNavigate?: (
     rowIndex: number,
@@ -167,7 +172,7 @@ export const useBodyEventDelegation = <TData extends RowData>(
   };
 
   const handleBodyMousedown = (event: MouseEvent) => {
-    if (options.getCellRangeMode() !== 'cell') return;
+    if (!options.getCellRangeEnabled()) return;
     const target = event.target as Element | null;
     if (target?.closest(INTERACTIVE_SELECTOR)) return;
     const cell = getEventCell(event);
@@ -196,10 +201,7 @@ export const useBodyEventDelegation = <TData extends RowData>(
     const suppressSelection = isDragHandle || dragClick || options.getDragRowFromIndex() >= 0;
     emitRowAndCell(
       event,
-      (hit) => {
-        if (!suppressSelection) options.getOnRangeRowClick()?.(hit.index);
-        options.emit('rowClick', hit.row, hit.index, event);
-      },
+      (hit) => options.emit('rowClick', hit.row, hit.index, event),
       (cell) =>
         options.emit('cellClick', cell.row, cell.columnId, cell.index, cell.columnIndex, event)
     );
@@ -208,7 +210,15 @@ export const useBodyEventDelegation = <TData extends RowData>(
       options.getKeyboardNavigation() &&
       !target?.closest('input,button,select,textarea,a')
     ) {
-      target?.closest<HTMLElement>('td[tabindex]')?.focus();
+      // 框选激活时 DOM 焦点跟随 TanStack 的活动单元格：
+      // Shift+Click / 拖拽只移动范围角点，不应把焦点留在范围外的点击格上。
+      const focused = options.getCellRangeEnabled() ? options.getFocusedCell?.() : undefined;
+      const focusedElement = focused
+        ? (event.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>(
+            `td[data-row-id="${escapeCssAttributeValue(focused.rowId)}"][data-column-id="${escapeCssAttributeValue(focused.columnId)}"][tabindex]`
+          )
+        : undefined;
+      (focusedElement ?? target?.closest<HTMLElement>('td[tabindex]'))?.focus();
     }
   };
 
@@ -270,7 +280,7 @@ export const useBodyEventDelegation = <TData extends RowData>(
     );
     if (relatedCell === cell.cellElement) return;
     options.emit('cellMouseenter', cell.row, cell.columnId, cell.index, cell.columnIndex, event);
-    if (options.getCellRangeMode() === 'cell') {
+    if (options.getCellRangeEnabled()) {
       options.onCellRangeMouseenter(cell.row.id, cell.columnId, event);
     }
   };
@@ -308,41 +318,29 @@ export const useBodyEventDelegation = <TData extends RowData>(
     );
     if (isEditableTarget) return;
 
-    // Tab 从表格首格离开时先把焦点交给同表表头操作控件。
-    // 表头在 DOM 中位于 tbody 之前，正常正向 Tab 会跳过它们；仅对首格做一次衔接，
-    // 后续 Tab 继续按文档顺序离开表格，不改变网格内部的方向键导航。
-    if (
-      event.key === 'Tab' &&
-      !event.shiftKey &&
-      !event.ctrlKey &&
-      !event.altKey &&
-      !event.metaKey
-    ) {
-      const body = event.currentTarget as HTMLElement;
-      const firstCell = body.querySelector<HTMLElement>(
-        'td.s-table-cell[data-column-id][tabindex]'
-      );
-      const currentCell = findOwnedElement<HTMLTableCellElement>(
+    // Tab / Shift+Tab：在单元格之间移动；到达首/末格时交还浏览器，正常离开表格。
+    if (event.key === 'Tab' && !event.ctrlKey && !event.altKey && !event.metaKey) {
+      const tabCell = findOwnedElement<HTMLTableCellElement>(
         event.target,
         'td[tabindex]',
         event.currentTarget
       );
-      if (firstCell && currentCell && firstCell === currentCell) {
-        const headerTarget = currentCell
-          .closest<HTMLElement>('.s-table')
-          ?.querySelector<HTMLElement>(
-            'thead .s-table-cell-title[tabindex], thead button:not([disabled]), thead [tabindex="0"]'
-          );
-        if (headerTarget) {
-          event.preventDefault();
-          headerTarget.focus();
-          return;
-        }
+      const tabRow = tabCell?.closest('tr.s-table-row');
+      const rowIndex = Number(tabRow?.getAttribute('data-row-index'));
+      const columnIndex = Number(tabCell?.dataset.colIndex);
+      if (
+        tabCell &&
+        Number.isFinite(rowIndex) &&
+        Number.isFinite(columnIndex) &&
+        options.onTabNavigate?.(rowIndex, columnIndex, event.shiftKey)
+      ) {
+        event.preventDefault();
+        return;
       }
     }
 
-    // 框选快捷键：Ctrl/Cmd+A、Escape、Shift+方向键。
-    if (options.getCellRangeMode()) {
+    // 框选快捷键：Ctrl/Cmd+A、Escape、方向键移动 / 扩展 / 延伸到边界。
+    if (options.getCellRangeEnabled()) {
       if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 'a') {
         event.preventDefault();
         options.onCellRangeSelectAll?.();
@@ -352,8 +350,7 @@ export const useBodyEventDelegation = <TData extends RowData>(
         options.onCellRangeClear?.();
         return;
       }
-      if (event.shiftKey && ARROW_KEYS.has(event.key)) {
-        event.preventDefault();
+      if (ARROW_KEYS.has(event.key)) {
         const direction =
           event.key === 'ArrowUp'
             ? 'up'
@@ -362,7 +359,16 @@ export const useBodyEventDelegation = <TData extends RowData>(
               : event.key === 'ArrowLeft'
                 ? 'left'
                 : 'right';
-        options.onCellRangeExtend?.(direction);
+        if (event.shiftKey) {
+          event.preventDefault();
+          if (event.ctrlKey || event.metaKey) {
+            options.onCellRangeExtendToEdge?.(direction);
+            return;
+          }
+          options.onCellRangeExtend?.(direction);
+        } else if (!event.ctrlKey && !event.metaKey && !event.altKey) {
+          options.onCellRangeMove?.(direction);
+        }
       }
     }
 

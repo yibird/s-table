@@ -40,7 +40,7 @@
 
 ## 空数据
 
-`dataSource` 为空数组时显示默认空状态。使用 `#empty` 替换整个空状态，使用 `#emptyAction` 只追加操作区。
+`dataSource` 为空数组时显示默认空状态。使用 `#empty` 替换整个空状态，可在自定义内容中包含操作按钮。
 
 <demo vue="../../demos/s-table/empty.vue" />
 

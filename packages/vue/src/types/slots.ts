@@ -62,10 +62,6 @@ export interface STableSlots<TData extends RowData = RowData> {
    */
   empty?: () => VNodeChild;
   /**
-   * @desc 空状态操作区（渲染在默认空状态描述之后，如"新增数据"按钮）。
-   */
-  emptyAction?: () => VNodeChild;
-  /**
    * @desc 表格加载状态。
    */
   loading?: () => VNodeChild;

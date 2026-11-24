@@ -97,6 +97,52 @@ describe('行拖拽排', () => {
     expect(events[0]!.dataSource.map((row) => row.id)).toEqual([1, 4, 2, 3]);
   });
 
+  it('rowDragEnd 接收到落点信息并可通过 Promise 取消移动', async () => {
+    const events: STableRowOrderChangeEvent<Row>[] = [];
+    const calls: STableRowOrderChangeEvent<Row>[] = [];
+    const mounted = mountSTable<Row>({
+      columns,
+      dataSource: [
+        { id: 1, name: 'A' },
+        { id: 2, name: 'B' },
+      ],
+      rowKey: 'id',
+      rowDrag: {
+        rowDragEnd: async (payload: STableRowOrderChangeEvent<Row>) => {
+          calls.push(payload);
+          return false;
+        },
+      },
+      onRowOrderChange: (payload: STableRowOrderChangeEvent<Row>) => events.push(payload),
+    } as never);
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    const rows = [...host.querySelectorAll<HTMLElement>('tbody tr.s-table-row')];
+    rows[0]!
+      .querySelector<HTMLElement>('.s-table-drag-handle')!
+      .dispatchEvent(new Event('dragstart', { bubbles: true, cancelable: true }));
+    vi.spyOn(rows[1]!, 'getBoundingClientRect').mockReturnValue({
+      top: 0,
+      height: 100,
+    } as DOMRect);
+    rows[1]!.dispatchEvent(
+      new MouseEvent('dragover', { bubbles: true, cancelable: true, clientY: 90 })
+    );
+    rows[1]!.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+
+    await vi.waitFor(() => expect(calls).toHaveLength(1));
+    expect(calls[0]).toMatchObject({
+      fromIndex: 0,
+      toIndex: 1,
+      position: 'after',
+      targetRowKey: 2,
+    });
+    expect(calls[0]!.dataSource.map((row) => row.id)).toEqual([2, 1]);
+    expect(events).toHaveLength(0);
+  });
+
   it('多选拖拽高亮整个选中块，块内行不作为投放目标', async () => {
     const dataSource: Row[] = Array.from({ length: 4 }, (_, index) => ({
       id: index + 1,
@@ -155,7 +201,7 @@ describe('行拖拽排', () => {
       ],
       rowKey: 'id',
       rowDrag: true,
-      cellRangeSelection: { mode: 'cell' },
+      cellRangeSelection: {},
     } as never);
     app = mounted.app;
     host = mounted.host;
@@ -170,83 +216,44 @@ describe('行拖拽排', () => {
     expect(host.querySelectorAll('.s-table-cell-range-selected')).toHaveLength(0);
   });
 
-  it.each(['cell', 'row'] as const)(
-    '树表 %s 框选下句柄点击不改变范围或焦点，仍派发事件',
-    async (mode) => {
-      const onRowClick = vi.fn();
-      const onCellClick = vi.fn();
-      const mounted = mountSTable<Row>({
-        columns,
-        dataSource: [
-          { id: 1, name: 'parent', children: [{ id: 11, name: 'child' }] },
-          { id: 2, name: 'other' },
-        ],
-        rowKey: 'id',
-        tree: {},
-        defaultExpandAllRows: true,
-        rowDrag: true,
-        cellRangeSelection: { mode },
-        onRowClick,
-        onCellClick,
-      } as never);
-      app = mounted.app;
-      host = mounted.host;
-      await nextTick();
-      const rows = [...host.querySelectorAll<HTMLElement>('tbody tr.s-table-row')];
-      const cell = rows[2]!.querySelector<HTMLElement>('td[data-column-id="name"]')!;
-      cell.dispatchEvent(
-        new MouseEvent(mode === 'cell' ? 'mousedown' : 'click', { bubbles: true })
-      );
-      document.dispatchEvent(new MouseEvent('mouseup'));
-      cell.focus();
-      await nextTick();
-      const selected = [...host.querySelectorAll('.s-table-cell-range-selected')];
-      expect(selected.length).toBeGreaterThan(0);
-      onRowClick.mockClear();
-      onCellClick.mockClear();
-      const handle = rows[1]!.querySelector<HTMLElement>('.s-table-drag-handle')!;
-      handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-      handle.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-      await nextTick();
-      expect([...host.querySelectorAll('.s-table-cell-range-selected')]).toEqual(selected);
-      expect(document.activeElement).toBe(cell);
-      expect(onRowClick).toHaveBeenCalledTimes(1);
-      expect(onCellClick).toHaveBeenCalledTimes(1);
-    }
-  );
-
-  it('整行拖拽保留控件起点，拖拽后的 click 不框选，后续普通点击仍有效', async () => {
+  it('树表 cell 框选下句柄点击不改变范围或焦点，仍派发事件', async () => {
+    const onRowClick = vi.fn();
+    const onCellClick = vi.fn();
     const mounted = mountSTable<Row>({
       columns,
       dataSource: [
-        { id: 1, name: 'A' },
-        { id: 2, name: 'B' },
+        { id: 1, name: 'parent', children: [{ id: 11, name: 'child' }] },
+        { id: 2, name: 'other' },
       ],
       rowKey: 'id',
-      rowDrag: { trigger: 'row' },
-      cellRangeSelection: { mode: 'row' },
-    });
+      tree: {},
+      defaultExpandAllRows: true,
+      rowDrag: true,
+      cellRangeSelection: {},
+      onRowClick,
+      onCellClick,
+    } as never);
     app = mounted.app;
     host = mounted.host;
     await nextTick();
-    const row = host.querySelector<HTMLElement>('tbody tr.s-table-row')!;
-    const cell = row.querySelector<HTMLElement>('td[data-column-id="name"]')!;
-    const button = document.createElement('button');
-    cell.append(button);
-    button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    const blocked = new Event('dragstart', { bubbles: true, cancelable: true });
-    row.dispatchEvent(blocked);
-    expect(blocked.defaultPrevented).toBe(true);
+    const rows = [...host.querySelectorAll<HTMLElement>('tbody tr.s-table-row')];
+    const cell = rows[2]!.querySelector<HTMLElement>('td[data-column-id="name"]')!;
     cell.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    row.dispatchEvent(new Event('dragstart', { bubbles: true, cancelable: true }));
-    row.dispatchEvent(new Event('dragend', { bubbles: true }));
-    cell.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    cell.focus();
     await nextTick();
-    expect(host.querySelectorAll('.s-table-cell-range-selected')).toHaveLength(0);
-    cell.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    cell.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    const selected = [...host.querySelectorAll('.s-table-cell-range-selected')];
+    expect(selected.length).toBeGreaterThan(0);
+    onRowClick.mockClear();
+    onCellClick.mockClear();
+    const handle = rows[1]!.querySelector<HTMLElement>('.s-table-drag-handle')!;
+    handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    handle.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
     await nextTick();
-    expect(host.querySelectorAll('.s-table-cell-range-selected').length).toBeGreaterThan(0);
+    expect([...host.querySelectorAll('.s-table-cell-range-selected')]).toEqual(selected);
+    expect(document.activeElement).toBe(cell);
+    expect(onRowClick).toHaveBeenCalledTimes(1);
+    expect(onCellClick).toHaveBeenCalledTimes(1);
   });
 
   it.each(['before', 'after', 'inside'] as const)(

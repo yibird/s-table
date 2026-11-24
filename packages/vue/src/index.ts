@@ -67,6 +67,7 @@ export type {
   STableColumnOrderChangeEvent,
   STableCopyOptions,
   STableCellRangeCopyEvent,
+  STableRangeCellTextContext,
   STableExpandable,
   STableSeq,
   STableCellRange,

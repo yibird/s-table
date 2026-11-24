@@ -393,6 +393,36 @@ describe('内置排序/过滤/分页迁移', () => {
     expect(getBodyCol(1)).toEqual(['Alice-B']);
   });
 
+  it('搜索输入框支持快速清除草稿', async () => {
+    const columns: STableColumn<Row>[] = [
+      { id: 'id', accessorKey: 'id', header: 'ID' },
+      { id: 'name', accessorKey: 'name', header: 'Name', search: true },
+    ];
+    const mounted = mountSTable<Row>({ columns, dataSource: mkData(), rowKey: 'id' });
+    app = mounted.app;
+    host = mounted.host;
+    await nextTick();
+
+    host.querySelector<HTMLElement>('.s-table-search-trigger')!.click();
+    await nextTick();
+    // 前面的搜索用例可能留下 Teleport 节点，取当前新增的最后一个输入框。
+    const inputs = document.querySelectorAll<HTMLInputElement>('.s-table-search-input');
+    const input = inputs[inputs.length - 1]!;
+    input.value = 'alice';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await nextTick();
+
+    const clear = input.parentElement!.querySelector<HTMLElement>('.s-table-search-clear')!;
+    expect(clear).not.toBeNull();
+    clear.click();
+    await nextTick();
+
+    expect(input.value).toBe('');
+    expect(input.parentElement!.querySelector('.s-table-search-clear')).toBeNull();
+    // 快速清除只处理草稿，不直接提交过滤。
+    expect(getBodyCol(0)).toEqual(['3', '1', '2', '5', '4']);
+  });
+
   it('分页：pageSize=2 时只渲染当前页行数，total 反映全量', async () => {
     const columns: STableColumn<Row>[] = [
       { id: 'id', accessorKey: 'id', header: 'ID' },

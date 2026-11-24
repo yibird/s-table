@@ -30,9 +30,6 @@
       <td :colspan="colSpan" class="s-table-cell s-table-empty-cell">
         <Empty>
           <slot name="empty" />
-          <template #action>
-            <slot name="emptyAction" />
-          </template>
         </Empty>
       </td>
     </tr>
@@ -306,7 +303,6 @@ const props = withDefaults(
     /** 编辑 API（状态快照 / 提交 / 取消）。 */
     editingApi?: BodyEditingApi;
     /** 行点击回调（row 模式）。 */
-    onRangeRowClick?: (rowIndex: number) => void;
     /** 可见列 ID 列表（用于列索引查找）。 */
     visibleColumnIds?: string[];
     /** 树节点每层缩进宽度；未启用树形数据时为 undefined。 */
@@ -336,6 +332,8 @@ const props = withDefaults(
     /** 整行拖拽权限；仅 trigger=row 时消费，用于同步禁用态。 */
     canRowDrag?: (rowIndex: number) => boolean;
     onRowDragStart?: (rowIndex: number, event: DragEvent) => boolean | void;
+    /** Tab / Shift+Tab 跨单元格移动；返回 false 时交给浏览器离开表格。 */
+    onTabNavigate?: (rowIndex: number, columnIndex: number, backwards: boolean) => boolean;
     /** 虚拟窗口边缘的跨窗口单元格导航。 */
     onNavigateCell?: (
       rowIndex: number,
@@ -386,12 +384,7 @@ const getExpandedElementRef = (row: Row<TableFeatures, TData>) => {
   return elementRef;
 };
 
-defineSlots<
-  Pick<
-    STableSlots<TData>,
-    'empty' | 'emptyAction' | 'expandedRowRender' | 'cellEditor' | 'groupRow'
-  >
->();
+defineSlots<Pick<STableSlots<TData>, 'empty' | 'expandedRowRender' | 'cellEditor' | 'groupRow'>>();
 
 const emit = defineEmits<BodyEventMap<TData>>();
 
@@ -405,7 +398,7 @@ const { getPinnedStyle } = usePinnedRowMeasurements({
 
 const { getRangeClasses, getRowRangeMemoKey } = createCellRangePresentation<TData>({
   getCellRange: () => ctx.cellRange,
-  getCellRangeMode: () => ctx.cellRangeMode,
+  getCellRangeEnabled: () => ctx.cellRangeEnabled,
   getFocusedCell: () => ctx.getFocusedCell(),
 });
 
@@ -455,17 +448,21 @@ const {
   getRows: () => props.rows,
   getColumnIndex: getColIndex,
   getKeyboardNavigation: () => props.keyboardNavigation,
-  getCellRangeMode: () => ctx.cellRangeMode,
+  getCellRangeEnabled: () => ctx.cellRangeEnabled,
+  getFocusedCell: () => ctx.getFocusedCell(),
   getDragRowFromIndex: () => ctx.dragRowFromIndex,
   consumeDragClick: consumeRowDragClick,
-  getOnRangeRowClick: () => props.onRangeRowClick,
   onCellRangeMousedown: (rowId, columnId, event) =>
     ctx.onCellRangeMousedown(rowId, columnId, event),
   onCellRangeMouseenter: (rowId, columnId, event) =>
     ctx.onCellRangeMouseenter(rowId, columnId, event),
   onCellRangeSelectAll: () => ctx.onCellRangeSelectAll(),
+  onCellRangeMove: (direction) => ctx.onCellRangeMove(direction),
   onCellRangeExtend: (direction) => ctx.onCellRangeExtend(direction),
+  onCellRangeExtendToEdge: (direction) => ctx.onCellRangeExtendToEdge(direction),
   onCellRangeClear: () => ctx.onCellRangeClear(),
+  onTabNavigate: (rowIndex, columnIndex, backwards) =>
+    props.onTabNavigate?.(rowIndex, columnIndex, backwards) ?? false,
   onBoundaryNavigate: (rowIndex, columnIndex, direction) =>
     props.onNavigateCell?.(rowIndex, columnIndex, direction) ?? false,
   onRowDragOver: (rowIndex, event) => ctx.onRowDragOver(rowIndex, event),
@@ -473,7 +470,7 @@ const {
 });
 
 /** 是否启用框选（cell 或 row 模式）。关闭时热路径完全不进入 range class 计算。 */
-const cellRangeEnabled = computed(() => ctx.cellRangeMode !== undefined);
+const cellRangeEnabled = computed(() => ctx.cellRangeEnabled);
 
 const { bodyColumnFeatures, getAlignStyle, isSimpleCell } = useBodyColumnFeatures<TData>({
   getVisibleColumnIds: () => props.visibleColumnIds,

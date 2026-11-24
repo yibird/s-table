@@ -22,9 +22,6 @@
         </g>
       </svg>
       <div class="s-table-empty-default-title">{{ locale.empty.title }}</div>
-      <div v-if="hasActionSlot" class="s-table-empty-default-action">
-        <slot name="action" />
-      </div>
     </div>
   </div>
 </template>
@@ -38,5 +35,4 @@ const locale = useLocales();
 const slots = useSlots();
 
 const hasSlot = computed(() => hasRenderableSlot(slots.default));
-const hasActionSlot = computed(() => hasRenderableSlot(slots.action));
 </script>

@@ -183,22 +183,27 @@ export default defineConfig({
           ],
         },
         {
-          text: '框选、右键菜单与事件',
+          text: '框选与交互事件',
           items: [
             {
-              text: '单元格与行范围选择',
-              link: '/components/s-table/interactions#单元格与行范围选择',
+              text: '单元格范围选择',
+              link: '/components/s-table/interactions#单元格范围选择',
             },
             { text: '复制框选内容', link: '/components/s-table/interactions#复制框选内容' },
-            { text: '基础右键菜单', link: '/components/s-table/interactions#基础右键菜单' },
-            { text: '动态业务菜单', link: '/components/s-table/interactions#动态业务菜单' },
             { text: '原生交互事件', link: '/components/s-table/interactions#原生交互事件' },
             {
               text: '键盘框选与多区间 API',
               link: '/components/s-table/interactions#键盘框选与多区间-api',
             },
-            { text: '自定义浮层容器', link: '/components/s-table/interactions#自定义浮层容器' },
             { text: '事件清单', link: '/components/s-table/events#事件清单' },
+          ],
+        },
+        {
+          text: '右键菜单',
+          items: [
+            { text: '基础右键菜单', link: '/components/s-table/context-menu#基础右键菜单' },
+            { text: '动态业务菜单', link: '/components/s-table/context-menu#动态业务菜单' },
+            { text: '自定义浮层容器', link: '/components/s-table/context-menu#自定义浮层容器' },
           ],
         },
         {

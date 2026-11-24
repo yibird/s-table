@@ -78,6 +78,12 @@
       cursor: col-resize;
       user-select: none;
     }
+
+    // 调整某一列宽度时，忽略其他列的 resizer：
+    // onEnd 模式下列宽尚未跟随指针，鼠标可能滑到相邻列手柄并误触发 hover / 二次拖拽。
+    .@{prefix}-header-resizer:not(.@{prefix}-header-resizer-active) {
+      pointer-events: none;
+    }
   }
 
   // 列拖拽中
@@ -512,7 +518,11 @@
       }
     }
 
+    // 固定行需要额外的 1px 分隔线，避免滚动内容盖住单元格边框。
+    // 顶部固定行把自身 border 改成背景色，仅由 inset shadow 绘制单条 1px 线，
+    // 既保证分隔明显，也避免 border + shadow 叠成 2px。
     .@{prefix}-row-pinned-top .@{prefix}-cell {
+      border-bottom-color: var(--s-table-cell-bg);
       box-shadow: inset 0 -1px 0 var(--s-color-border);
     }
 
@@ -658,14 +668,14 @@
       font-size: 0;
     }
 
-    // 单元格框选高亮：使用稳定的半透明填充，和行选择保持清晰层级。
-    // 同时匹配行和单元格以提高选区层级，避免通用单元格及行选择背景覆盖框选填充。
+    // 单元格框选高亮：用不透明渐变覆盖行 hover / 行选择背景，保证框选优先；
+    // 固定列也因此保持不透明，横向滚动时不会透出下层列。
     .@{prefix}-row .@{prefix}-cell.@{prefix}-cell-range-selected {
-      --s-table-cell-bg: var(
+      --s-cell-range-fill: var(
         --s-color-bg-cell-range,
-        color-mix(in srgb, var(--s-primary-color) 8%, transparent)
+        color-mix(in srgb, var(--s-primary-color) 8%, var(--s-color-bg-cell))
       );
-      background-color: var(--s-table-cell-bg);
+      background-image: linear-gradient(var(--s-cell-range-fill), var(--s-cell-range-fill));
       position: relative;
       z-index: 1;
 
@@ -689,25 +699,24 @@
 
     // 选中行与框选交集使用更深的填充，避免两种状态叠加后难以区分。
     .@{prefix}-row.@{prefix}-row-selected .@{prefix}-cell.@{prefix}-cell-range-selected {
-      --s-table-cell-bg: var(
+      --s-cell-range-fill: var(
         --s-color-bg-cell-range-active,
-        color-mix(in srgb, var(--s-primary-color) 14%, transparent)
+        color-mix(in srgb, var(--s-primary-color) 14%, var(--s-color-bg-row-selected))
       );
-      background-color: var(--s-table-cell-bg);
     }
 
-    // 四条外围边缘由上面的伪元素绘制为 Excel 风格实线。
+    // 四条外围边缘由上面的伪元素绘制为 Excel 风格细实线。
     .@{prefix}-cell-range-edge-top {
-      --s-cell-range-top: 2px;
+      --s-cell-range-top: 1px;
     }
     .@{prefix}-cell-range-edge-bottom {
-      --s-cell-range-bottom: -2px;
+      --s-cell-range-bottom: -1px;
     }
     .@{prefix}-cell-range-edge-left {
-      --s-cell-range-left: 2px;
+      --s-cell-range-left: 1px;
     }
     .@{prefix}-cell-range-edge-right {
-      --s-cell-range-right: -2px;
+      --s-cell-range-right: -1px;
     }
 
     .@{prefix}-cell {
@@ -1131,8 +1140,14 @@
       .s-focus-ring();
     }
 
-    &-active {
+    // 已激活（存在过滤条件）时保持主色高亮，hover 只提供背景反馈。
+    &-active,
+    &-active:hover {
       color: var(--s-primary-color, #1677ff);
+    }
+
+    &-active:hover {
+      background-color: color-mix(in srgb, var(--s-primary-color) 10%, transparent);
     }
   }
 
@@ -1170,8 +1185,14 @@
       .s-focus-ring();
     }
 
-    &-active {
+    // 已激活（存在搜索词）时保持主色高亮，hover 只提供背景反馈。
+    &-active,
+    &-active:hover {
       color: var(--s-primary-color, #1677ff);
+    }
+
+    &-active:hover {
+      background-color: color-mix(in srgb, var(--s-primary-color) 10%, transparent);
     }
   }
 }

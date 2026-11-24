@@ -46,7 +46,7 @@ const handleCellRangeCopy = (payload: STableCellRangeCopyEvent) => {
     row-key="id"
     :columns="columns"
     :data-source="data"
-    :cell-range-selection="{ mode: 'cell' }"
+    :cell-range-selection="true"
     @cell-range-copy="handleCellRangeCopy"
   />
 </template>

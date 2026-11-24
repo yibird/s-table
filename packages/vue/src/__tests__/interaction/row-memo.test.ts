@@ -261,7 +261,7 @@ describe('行响应式与单元格渲染缓存', () => {
       columns: [{ id: 'name', accessorKey: 'name', header: 'Name', cell: renderCell }],
       dataSource: [{ id: 1, name: 'a' }],
       rowKey: 'id',
-      cellRangeSelection: { mode: 'cell' },
+      cellRangeSelection: {},
     });
     app = mounted.app;
     host = mounted.host;

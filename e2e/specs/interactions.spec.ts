@@ -293,8 +293,8 @@ test.describe('拖拽与列宽', () => {
     }
   });
 
-  for (const mode of ['off', 'cell', 'row']) {
-    test(`树形真实拖拽在 ${mode} 模式不产生文本选区或整行框选`, async ({ page }) => {
+  for (const mode of ['off', 'cell']) {
+    test(`树形真实拖拽在 ${mode} 模式不产生文本选区或单元格框选`, async ({ page }) => {
       const scope = page.getByTestId('tree-drag-table');
       await page.getByTestId('drag-range-mode').selectOption(mode);
       const source = scope.locator('.s-table-row[data-row-key="11"] .s-table-drag-handle');

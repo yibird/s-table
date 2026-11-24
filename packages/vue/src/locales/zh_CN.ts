@@ -40,6 +40,7 @@ const zh_CN: STableLocale = {
     table: '数据表格',
     filterColumn: '筛选列',
     searchColumn: '搜索列',
+    clearSearch: '清除搜索词',
     contextMenu: '行操作',
     expandTrigger: '展开或收起行',
     selectionDropdown: '选择操作菜单',

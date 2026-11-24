@@ -93,7 +93,13 @@ export const setNativeDragPreview = (
   if (!event.dataTransfer) return () => {};
   const ghost = options.ghost;
   if (ghost != null && typeof ghost === 'object' && 'nodeType' in ghost) {
-    event.dataTransfer.setDragImage(ghost as HTMLElement, 12, 12);
+    const element = ghost as HTMLElement;
+    // 以幽灵元素中心作为拖拽热点，让浮层居中跟随指针。
+    event.dataTransfer.setDragImage(
+      element,
+      (element.offsetWidth || 24) / 2,
+      (element.offsetHeight || 24) / 2
+    );
     return () => {};
   }
   const doc = source.ownerDocument;
@@ -112,7 +118,12 @@ export const setNativeDragPreview = (
   let pointerX = event.clientX || rect.left;
   let pointerY = event.clientY || rect.top;
   const positionPreview = () => {
-    preview.element.style.transform = `translate3d(${pointerX + 12}px, ${pointerY + 12}px, 0)`;
+    // 以浮层中心对齐指针，而不是从指针右下角展开。
+    const width = preview.element.offsetWidth;
+    const height = preview.element.offsetHeight;
+    preview.element.style.transform = `translate3d(${pointerX - width / 2}px, ${
+      pointerY - height / 2
+    }px, 0)`;
   };
   const handleDragOver = (dragEvent: DragEvent) => {
     // 部分浏览器在拖拽开始时派发 clientX/Y 为 0 的占位事件。

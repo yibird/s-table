@@ -175,7 +175,7 @@ export const useRowDrag = <TData extends RowData>({
         targetParentKey: parentId ? decodeRowKey(parentId) : null,
         position,
       };
-      const beforeDrop = config.value?.beforeDrop;
+      const beforeDrop = config.value?.beforeDrop ?? config.value?.rowDragEnd;
       if (beforeDrop && (await beforeDrop(payload)) === false) return;
       const latestRows = getRows();
       if (

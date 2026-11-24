@@ -64,6 +64,7 @@ import {
   resolveRowKey,
 } from '../utils';
 import { getTreeChildren } from '@zchengfeng/s-table-core';
+import { SELECTION_COLUMN_ID } from '../constants';
 import { useColumnMetrics } from './column/useColumnMetrics';
 import { installPinnedRowsDisplayOrder, useTableAtoms } from '../adapter';
 
@@ -263,15 +264,13 @@ export const useSTable = <TData extends RowData>({
     !props.rowSelection?.getCheckboxProps?.(row.original)?.disabled;
 
   /**
-   * 单元格是否参与框选：
-   * - 未启用框选：全部不可选；
-   * - row 模式：整行可选（含选择/展开/拖拽/序号等内部列），行点击才能真正覆盖整行；
-   * - cell 模式：排除内部列，避免框选/复制进入功能列。
+   * 单元格是否参与框选：未启用时全部不可选；启用时选择列可参与框选，
+   * 展开、拖拽、序号等功能列排除在外。
    */
   const canSelectCell = (cell: Cell<TableFeatures, TData>): boolean => {
     const config = resolveCellRangeSelection(props.rangeSelection, props.cellRangeSelection);
     if (!config) return false;
-    return config.mode === 'row' || !isInternalColumn(cell.column.id);
+    return !isInternalColumn(cell.column.id) || cell.column.id === SELECTION_COLUMN_ID;
   };
 
   // v9 adapter 会同时观察 options 级依赖和受控 state 切片。
@@ -390,16 +389,14 @@ export const useSTable = <TData extends RowData>({
     // 单元格范围只由 TanStack 管理；组件层仅把 ID 角点适配成公开的索引范围。
     enableCellSelection: canSelectCell,
     get enableCellRangeSelection() {
-      const config = resolveCellRangeSelection(props.rangeSelection, props.cellRangeSelection);
-      return config?.mode === 'cell';
+      return Boolean(resolveCellRangeSelection(props.rangeSelection, props.cellRangeSelection));
     },
     get enableMultiCellRangeSelection() {
       const config = resolveCellRangeSelection(props.rangeSelection, props.cellRangeSelection);
       return config ? config.multi !== false : false;
     },
     get enableCellSelectionDrag() {
-      const config = resolveCellRangeSelection(props.rangeSelection, props.cellRangeSelection);
-      return config?.mode === 'cell';
+      return Boolean(resolveCellRangeSelection(props.rangeSelection, props.cellRangeSelection));
     },
     get enableCellSpanning() {
       return hasCellSpanning.value;

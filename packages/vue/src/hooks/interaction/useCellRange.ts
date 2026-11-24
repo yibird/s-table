@@ -1,6 +1,5 @@
 import { computed, onBeforeUnmount, shallowRef, watch, type Ref } from 'vue';
 import {
-  type Cell,
   type CellSelectionState,
   type Row,
   type RowData,
@@ -117,7 +116,7 @@ export const useCellRange = <TData extends RowData>({
 
   /** cell 模式按下：通过适配层调用 TanStack 内置开始处理器。 */
   const handleCellMouseDown = (rowId: string, columnId: string, event: MouseEvent) => {
-    if (!isEnabled() || cellRangeSelection.value?.mode !== 'cell') return;
+    if (!isEnabled()) return;
     const cell = getCell(rowId, columnId);
     if (!cell?.getCanSelect()) return;
 
@@ -145,57 +144,9 @@ export const useCellRange = <TData extends RowData>({
 
   /** cell 模式移入：直接调用 TanStack 内置扩展处理器。 */
   const handleCellMouseEnter = (rowId: string, columnId: string, event?: MouseEvent) => {
-    if (!isEnabled() || !isDragging.value || cellRangeSelection.value?.mode !== 'cell') return;
+    if (!isEnabled() || !isDragging.value) return;
     const cell = getCell(rowId, columnId);
     if (cell) cell.getSelectionExtendHandler()(event);
-  };
-
-  /** row 模式仍是 STable 扩展语义，但范围写入统一走官方 selectCellRange。 */
-  const handleRowClick = (rowIndex: number) => {
-    if (!isEnabled() || cellRangeSelection.value?.mode !== 'row') return;
-    const row = rows.value[rowIndex];
-    if (!row) return;
-    const columnGroups = [
-      table.getStartVisibleLeafColumns(),
-      table.getCenterVisibleLeafColumns(),
-      table.getEndVisibleLeafColumns(),
-    ];
-    let firstCell: Cell<TableFeatures, TData> | undefined;
-    let lastCell: Cell<TableFeatures, TData> | undefined;
-    for (const columns of columnGroups) {
-      for (const column of columns) {
-        const cell = getCachedCell(row, column);
-        if (cell.getCanSelect()) {
-          firstCell = cell;
-          break;
-        }
-      }
-      if (firstCell) break;
-    }
-    for (let groupIndex = columnGroups.length - 1; groupIndex >= 0; groupIndex--) {
-      const columns = columnGroups[groupIndex]!;
-      for (let columnIndex = columns.length - 1; columnIndex >= 0; columnIndex--) {
-        const column = columns[columnIndex];
-        if (!column) continue;
-        const cell = getCachedCell(row, column);
-        if (cell.getCanSelect()) {
-          lastCell = cell;
-          break;
-        }
-      }
-      if (lastCell) break;
-    }
-    if (!firstCell || !lastCell) return;
-
-    table.selectCellRange({
-      anchorRowId: row.id,
-      anchorColumnId: firstCell.column.id,
-      focusRowId: row.id,
-      focusColumnId: lastCell.column.id,
-    });
-    if (dataSource) previousRowKeys ??= collectRowKeys();
-    const range = currentRange.value;
-    if (range) onSelectionEnd?.(range);
   };
 
   /** 清除框选时使用适配层 reset API，并同步结束组件侧拖拽。 */
@@ -216,11 +167,13 @@ export const useCellRange = <TData extends RowData>({
     return table.getCoreRowModel().flatRows.map((row) => row.id);
   };
 
-  // 配置对象常以内联字面量传入；只监听真正影响选择语义的 mode，避免父组件重渲染
+  // 配置对象常以内联字面量传入；只监听框选启用状态，避免父组件重渲染
   // 产生新对象引用时误清空 TanStack 已维护的范围。
   watch(
-    () => cellRangeSelection.value?.mode,
-    () => clearRange()
+    () => Boolean(cellRangeSelection.value),
+    (enabled, previous) => {
+      if (previous && !enabled) clearRange();
+    }
   );
   if (dataSource) {
     // 只在数据身份或行身份配置变化时检查范围；不要把 TanStack atom 放进 getter，
@@ -276,7 +229,6 @@ export const useCellRange = <TData extends RowData>({
     isDragging,
     handleCellMouseDown,
     handleCellMouseEnter,
-    handleRowClick,
     clearRange,
   };
 };

@@ -283,16 +283,16 @@ test.describe('框选键盘', () => {
       .toBe(expected);
   });
 
-  test('row 模式点击整行、Ctrl+A 与 Escape', async ({ page }) => {
+  test('单元格框选点击、Ctrl+A 与 Escape', async ({ page }) => {
     await page.goto('/agent-row-mode.html', { waitUntil: 'commit' });
     const scope = page.getByTestId('agent-row-mode-table');
     const rangeValue = page.getByTestId('agent-range-value');
 
     await scope.locator('.s-table-row[data-row-key="2"] td[data-column-id="name"]').click();
     await expect(rangeValue).toHaveText(
-      JSON.stringify({ startRow: 1, startCol: 0, endRow: 1, endCol: 2 })
+      JSON.stringify({ startRow: 1, startCol: 1, endRow: 1, endCol: 1 })
     );
-    await expect(scope.locator('.s-table-cell-range-selected')).toHaveCount(3);
+    await expect(scope.locator('.s-table-cell-range-selected')).toHaveCount(1);
 
     await cellOf(scope, 0, 0).focus();
     await page.keyboard.press('Control+A');

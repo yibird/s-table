@@ -29,13 +29,34 @@
           @keydown.esc.stop.prevent="closeDropdown(true)"
         >
           <div class="s-table-search-dropdown-content">
-            <input
-              v-model="localValue"
-              class="s-table-search-input"
-              type="text"
-              :placeholder="resolvedPlaceholder"
-              @keydown.enter="handleConfirm"
-            />
+            <div class="s-table-search-input-wrapper">
+              <input
+                ref="inputRef"
+                v-model="localValue"
+                class="s-table-search-input"
+                :class="{ 's-table-search-input-clearable': localValue }"
+                type="text"
+                :placeholder="resolvedPlaceholder"
+                @keydown.enter="handleConfirm"
+              />
+              <button
+                v-if="localValue"
+                type="button"
+                class="s-table-search-clear"
+                :aria-label="locale.accessibility.clearSearch"
+                @click="handleClear"
+              >
+                <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+                  <path
+                    d="M4 4l8 8M12 4l-8 8"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    fill="none"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="s-table-search-dropdown-footer">
             <Button
@@ -93,6 +114,7 @@ const props = withDefaults(
 const triggerRef = useTemplateRef<HTMLElement>('triggerRef');
 const triggerButtonRef = useTemplateRef<HTMLButtonElement>('triggerButtonRef');
 const floatingRef = useTemplateRef<HTMLElement>('floatingRef');
+const inputRef = useTemplateRef<HTMLInputElement>('inputRef');
 const dropdownId = `s-table-search-${useId()}`;
 const { getPopupContainer } = injectTablePresentationContext();
 const { isOpen, floatingStyles, placement, teleportTarget } = useFloatingDropdown(
@@ -137,6 +159,12 @@ const closeDropdown = (restoreFocus = false) => {
 const handleConfirm = () => {
   props.onConfirm?.(localValue.value);
   closeDropdown(true);
+};
+
+/** 快速清空输入框草稿，保留确认按钮流程并把焦点留在输入框。 */
+const handleClear = () => {
+  localValue.value = '';
+  inputRef.value?.focus();
 };
 
 /** 清空搜索词并通知外部重置，焦点回到触发器。 */

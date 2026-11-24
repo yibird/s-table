@@ -64,11 +64,15 @@ export interface TableBodyContext {
   onCellRangeMouseenter: (rowId: string, columnId: string, event?: MouseEvent) => void;
   /** Ctrl/Cmd+A 全选当前行模型中的可选单元格。 */
   onCellRangeSelectAll: () => void;
-  /** Shift+方向键扩展框选。 */
+  /** 方向键把选区折叠到相邻单元格。 */
+  onCellRangeMove: (direction: 'up' | 'down' | 'left' | 'right') => void;
+  /** Shift+方向键扩展框选一格。 */
   onCellRangeExtend: (direction: 'up' | 'down' | 'left' | 'right') => void;
+  /** Ctrl/Cmd+Shift+方向键扩展到该方向最后一个单元格。 */
+  onCellRangeExtendToEdge: (direction: 'up' | 'down' | 'left' | 'right') => void;
   /** Escape 清除框选。 */
   onCellRangeClear: () => void;
-  cellRangeMode: Readonly<Ref<'cell' | 'row' | undefined>>;
+  cellRangeEnabled: Readonly<Ref<boolean>>;
   /** 当前 TanStack 框选焦点的稳定坐标，仅用于精确失效焦点所在行。 */
   getFocusedCell: () => { rowId: string; columnId: string } | undefined;
 }

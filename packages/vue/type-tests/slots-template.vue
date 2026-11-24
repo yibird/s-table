@@ -80,6 +80,6 @@ const expectUser = (user: User) => user.name;
     </template>
 
     <template #scrollToBottom>加载中</template>
-    <template #emptyAction>新增</template>
+    <template #empty>暂无数据</template>
   </STable>
 </template>

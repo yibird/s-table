@@ -45,12 +45,12 @@ describe('cellRangeSelection', () => {
   });
 
   it('运行时启停框选仍保留简单单元格快路径，不受行级 v-memo 阻断', async () => {
-    const state = reactive<{ mode?: 'cell' | 'row' }>({});
+    const state = reactive<{ enabled?: boolean }>({});
     const mounted = mountSTable<Row>(() => ({
       columns,
       dataSource,
       rowKey: 'id',
-      cellRangeSelection: state.mode ? { mode: state.mode } : undefined,
+      cellRangeSelection: state.enabled ? {} : undefined,
     }));
     app = mounted.app;
     host = mounted.host;
@@ -59,7 +59,7 @@ describe('cellRangeSelection', () => {
     const firstCell = () => host!.querySelector<HTMLElement>('tbody td.s-table-cell')!;
     expect(firstCell().classList.contains('s-table-cell-range-selected')).toBe(false);
 
-    state.mode = 'cell';
+    state.enabled = true;
     await nextTick();
     const componentName = (
       firstCell() as HTMLElement & {
@@ -71,7 +71,7 @@ describe('cellRangeSelection', () => {
     await nextTick();
     expect(firstCell().classList.contains('s-table-cell-range-selected')).toBe(true);
 
-    state.mode = undefined;
+    state.enabled = undefined;
     await nextTick();
     expect(firstCell().classList.contains('s-table-cell-range-selected')).toBe(false);
   });
@@ -88,7 +88,7 @@ describe('cellRangeSelection', () => {
       rowKey: 'id',
       rowSelection: { type: 'checkbox' },
       defaultSelectedRowKeys: [2],
-      cellRangeSelection: { mode: 'cell' },
+      cellRangeSelection: {},
       onSelectChange: (keys: Array<string | number>) => selections.push(keys),
     } as never);
     app = mounted.app;
@@ -115,30 +115,6 @@ describe('cellRangeSelection', () => {
     expect(selections.at(-1)).toEqual([2]);
   });
 
-  it('row 模式首次点击也会触发 cellRangeSelect', async () => {
-    const selected: Array<{ range: STableCellRange; rows: Row[] }> = [];
-    const mounted = mountSTable<Row>({
-      columns,
-      dataSource,
-      rowKey: 'id',
-      cellRangeSelection: { mode: 'row' },
-      onCellRangeSelect: (range: STableCellRange, rows: Row[]) => selected.push({ range, rows }),
-    } as never);
-    app = mounted.app;
-    host = mounted.host;
-    await nextTick();
-
-    host.querySelector<HTMLElement>('tbody tr.s-table-row')!.click();
-    await nextTick();
-
-    expect(selected).toEqual([
-      {
-        range: { startRow: 0, startCol: 0, endRow: 0, endCol: 1 },
-        rows: [{ id: 1, name: 'A' }],
-      },
-    ]);
-  });
-
   it('固定行使用 top/center/bottom 视觉顺序计算范围、记录和 mouseleave', async () => {
     const pinnedData: Row[] = [
       { id: 1, name: 'A' },
@@ -153,7 +129,7 @@ describe('cellRangeSelection', () => {
       dataSource: pinnedData,
       rowKey: 'id',
       defaultPinnedRowKeys: { top: [3], bottom: [1] },
-      cellRangeSelection: { mode: 'row' },
+      cellRangeSelection: {},
       onCellRangeSelect: (range: STableCellRange, rows: Row[]) => selected.push({ range, rows }),
       onRowMouseleave: ({ record }: { record: Row }) => leaves.push(record.id),
     } as never);
@@ -163,13 +139,16 @@ describe('cellRangeSelection', () => {
 
     const rows = [...host.querySelectorAll<HTMLElement>('tbody tr.s-table-row')];
     expect(rows.map((row) => row.dataset.rowKey)).toEqual(['3', '2', '4', '1']);
-    rows[1]!.click();
+    rows[1]!
+      .querySelector<HTMLElement>('td[data-column-id="name"]')!
+      .dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    document.dispatchEvent(new MouseEvent('mouseup'));
     rows[0]!.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
     await nextTick();
 
     expect(selected).toEqual([
       {
-        range: { startRow: 1, startCol: 0, endRow: 1, endCol: 1 },
+        range: { startRow: 1, startCol: 1, endRow: 1, endCol: 1 },
         rows: [{ id: 2, name: 'B' }],
       },
     ]);
@@ -188,7 +167,7 @@ describe('cellRangeSelection', () => {
       columns,
       dataSource: pinnedData,
       rowKey: 'id',
-      cellRangeSelection: { mode: 'row' },
+      cellRangeSelection: {},
       ref: (value: unknown) => {
         instance = value as STableInstance<Row>;
       },
@@ -199,8 +178,13 @@ describe('cellRangeSelection', () => {
     host = mounted.host;
     await nextTick();
 
-    const clickRow = (key: number) =>
-      host!.querySelector<HTMLElement>(`tbody tr[data-row-key="${key}"]`)!.click();
+    const clickRow = (key: number) => {
+      const cell = host!.querySelector<HTMLElement>(
+        `tbody tr[data-row-key="${key}"] td.s-table-cell`
+      )!;
+      cell.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mouseup'));
+    };
     clickRow(2);
     instance!.clearCellRange();
     instance!.pinRow(3, 'top');
@@ -217,29 +201,8 @@ describe('cellRangeSelection', () => {
       startRow: 1,
       startCol: 0,
       endRow: 1,
-      endCol: 1,
+      endCol: 0,
     });
-  });
-
-  it('row 模式联动行选择时使用公开 rowKey，避免对 TanStack row.id 重复编码', async () => {
-    const selections: Array<Array<string | number>> = [];
-    const mounted = mountSTable<Row>({
-      columns,
-      dataSource,
-      rowKey: 'id',
-      rowSelection: {},
-      cellRangeSelection: { mode: 'row', selectRowOnClick: true },
-      onSelectChange: (keys: Array<string | number>) => selections.push(keys),
-    } as never);
-    app = mounted.app;
-    host = mounted.host;
-    await nextTick();
-
-    host.querySelector<HTMLElement>('tbody tr.s-table-row')!.click();
-    await nextTick();
-
-    expect(selections.at(-1)).toEqual([1]);
-    expect(host.querySelector('tbody tr.s-table-row')?.classList).toContain('s-table-row-selected');
   });
 
   it('父组件重渲染并重建同 mode 配置对象时保留范围，公开清除会发null', async () => {
@@ -254,7 +217,7 @@ describe('cellRangeSelection', () => {
           rowKey: 'id',
           bordered: state.bordered,
           // 每次父组件 render 都产生新对象，用于覆盖真实模板中的内联配置写法
-          cellRangeSelection: { mode: 'row' },
+          cellRangeSelection: {},
           ref: (value: unknown) => {
             instance = value as STableInstance<Row>;
           },
@@ -267,20 +230,22 @@ describe('cellRangeSelection', () => {
     // TanStack 首次构建 core row model 会用 microtask 执行一次初?auto-reset
     await Promise.resolve();
 
-    host.querySelector<HTMLElement>('tbody tr.s-table-row')!.click();
+    const firstCell = host.querySelector<HTMLElement>('tbody tr.s-table-row td.s-table-cell')!;
+    firstCell.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    document.dispatchEvent(new MouseEvent('mouseup'));
     await nextTick();
 
     const selectedCount = () => host!.querySelectorAll('.s-table-cell-range-selected').length;
-    expect(instance!.getCellRange()).toEqual({ startRow: 0, startCol: 0, endRow: 0, endCol: 1 });
+    expect(instance!.getCellRange()).toEqual({ startRow: 0, startCol: 0, endRow: 0, endCol: 0 });
     const rangeSnapshot = instance!.getCellRange()!;
-    rangeSnapshot.endCol = 0;
-    expect(instance!.getCellRange()).toEqual({ startRow: 0, startCol: 0, endRow: 0, endCol: 1 });
-    expect(selectedCount()).toBe(2);
+    rangeSnapshot.endCol = 1;
+    expect(instance!.getCellRange()).toEqual({ startRow: 0, startCol: 0, endRow: 0, endCol: 0 });
+    expect(selectedCount()).toBe(1);
 
     state.bordered = true;
     await nextTick();
-    expect(instance!.getCellRange()).toEqual({ startRow: 0, startCol: 0, endRow: 0, endCol: 1 });
-    expect(selectedCount()).toBe(2);
+    expect(instance!.getCellRange()).toEqual({ startRow: 0, startCol: 0, endRow: 0, endCol: 0 });
+    expect(selectedCount()).toBe(1);
     expect(changes).toHaveLength(1);
 
     instance!.clearCellRange();
@@ -288,7 +253,8 @@ describe('cellRangeSelection', () => {
     expect(instance!.getCellRange()).toBeNull();
     expect(changes.at(-1)).toBeNull();
 
-    host.querySelector<HTMLElement>('tbody tr.s-table-row')!.click();
+    firstCell.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    document.dispatchEvent(new MouseEvent('mouseup'));
     await nextTick();
     instance!.clearCellRange();
     await nextTick();
@@ -304,7 +270,7 @@ describe('cellRangeSelection', () => {
           columns,
           dataSource: state.data,
           rowKey: 'id',
-          cellRangeSelection: { mode: 'row' },
+          cellRangeSelection: {},
           onCellRangeChange: (range: STableCellRange | null) => changes.push(range),
         }) as never
     );
@@ -313,7 +279,9 @@ describe('cellRangeSelection', () => {
     await nextTick();
     await Promise.resolve();
 
-    host.querySelector<HTMLElement>('tbody tr.s-table-row')!.click();
+    const firstCell = host.querySelector<HTMLElement>('tbody tr.s-table-row td.s-table-cell')!;
+    firstCell.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    document.dispatchEvent(new MouseEvent('mouseup'));
     await nextTick();
     expect(changes).toHaveLength(1);
 
@@ -331,15 +299,19 @@ describe('cellRangeSelection', () => {
 
   it('原生 copy 默认复制框选文本，监听器返回 false 时阻止写入', async () => {
     let blockCopy = false;
+    let instance: STableInstance<Row> | null = null;
     const copyAttempts: Array<{ text: string; source: string }> = [];
     const mounted = mountSTable<Row>({
       columns,
       dataSource,
       rowKey: 'id',
-      cellRangeSelection: { mode: 'row' },
+      cellRangeSelection: {},
       onCellRangeCopy: (payload) => {
         copyAttempts.push({ text: payload.text, source: payload.source });
         return !blockCopy;
+      },
+      ref: (value: unknown) => {
+        instance = value as STableInstance<Row>;
       },
     });
     app = mounted.app;
@@ -348,7 +320,7 @@ describe('cellRangeSelection', () => {
 
     const row = host.querySelector<HTMLElement>('tbody tr.s-table-row')!;
     const cell = row.querySelector<HTMLElement>('td.s-table-cell')!;
-    row.click();
+    instance!.setCellRange({ startRow: 0, startCol: 0, endRow: 0, endCol: 1 });
     await nextTick();
 
     const dispatchCopy = () => {
@@ -394,7 +366,7 @@ describe('cellRangeSelection', () => {
             columns,
             dataSource,
             rowKey: 'id',
-            cellRangeSelection: { mode: 'row' },
+            cellRangeSelection: {},
             onCellRangeCopy: props.onCellRangeCopy,
             ref: (value: unknown) => {
               instance = value as STableInstance<Row>;
@@ -407,9 +379,9 @@ describe('cellRangeSelection', () => {
     app = createApp(Wrapper, { onCellRangeCopy: cancel });
     app.mount(host);
     await nextTick();
-    const row = host.querySelector<HTMLElement>('tbody tr.s-table-row')!;
-    row.click();
+    instance!.setCellRange({ startRow: 0, startCol: 0, endRow: 0, endCol: 1 });
     await nextTick();
+    const row = host.querySelector<HTMLElement>('tbody tr.s-table-row')!;
     const setData = vi.fn();
     const copy = new Event('copy', { bubbles: true, cancelable: true });
     Object.defineProperty(copy, 'clipboardData', { value: { setData } });
@@ -430,7 +402,7 @@ describe('cellRangeSelection', () => {
       dataSource,
       rowKey: 'id',
       rowSelection: { type: 'checkbox' },
-      cellRangeSelection: { mode: 'row' },
+      cellRangeSelection: {},
       onCellRangeCopy: () => false,
       ref: (value: unknown) => {
         instance = value as STableInstance<Row>;
@@ -440,19 +412,19 @@ describe('cellRangeSelection', () => {
     host = mounted.host;
     await nextTick();
 
-    host.querySelector<HTMLElement>('tbody tr.s-table-row')!.click();
+    instance!.setCellRange({ startRow: 0, startCol: 0, endRow: 0, endCol: 1 });
     await nextTick();
     expect(await instance!.copyCellRange({ writeToClipboard: false })).toBe('');
   });
 
-  it('行框选覆盖选择列，复制仍跳过内部列', async () => {
+  it('选择列可参与框选，复制仍只输出业务列', async () => {
     let instance: STableInstance<Row> | null = null;
     const mounted = mountSTable<Row>({
       columns,
       dataSource,
       rowKey: 'id',
       rowSelection: { type: 'checkbox' },
-      cellRangeSelection: { mode: 'row' },
+      cellRangeSelection: {},
       ref: (value: unknown) => {
         instance = value as STableInstance<Row>;
       },
@@ -461,16 +433,26 @@ describe('cellRangeSelection', () => {
     host = mounted.host;
     await nextTick();
 
-    host.querySelector<HTMLElement>('tbody tr.s-table-row')!.click();
+    // 选择列占据显示索引 0，业务列是 1..2；范围可以覆盖选择列。
+    instance!.setCellRange({ startRow: 0, startCol: 0, endRow: 0, endCol: 2 });
     await nextTick();
     const table = instance!.getTanStackTable();
-    // row 模式整行高亮，范围包含内部选择列。
     expect(table.getCellSelectionColumnIds()).toEqual([SELECTION_COLUMN_ID, 'id', 'name']);
     expect(table.getSelectedCellRangesData()).toEqual([[[undefined, 1, 'A']]]);
     expect(
-      host.querySelector<HTMLElement>('tbody tr.s-table-row td.s-table-cell')?.classList
+      host.querySelector<HTMLElement>('tbody tr.s-table-row td[data-column-id="id"]')?.classList
     ).toContain('s-table-cell-range-selected');
-    // 复制仍然只输出业务列。
+    expect(
+      host.querySelector<HTMLElement>(
+        `tbody tr.s-table-row td[data-column-id="${SELECTION_COLUMN_ID}"]`
+      )?.classList
+    ).toContain('s-table-cell-range-selected');
+    expect(instance!.getCellRange()).toEqual({
+      startRow: 0,
+      startCol: 0,
+      endRow: 0,
+      endCol: 2,
+    });
     expect(await instance!.copyCellRange({ writeToClipboard: false })).toBe('1\tA');
   });
 
@@ -486,7 +468,7 @@ describe('cellRangeSelection', () => {
       dataSource: rows,
       rowKey: 'id',
       pagination: { defaultPageSize: 10 },
-      cellRangeSelection: { mode: 'row' },
+      cellRangeSelection: {},
       ref: (value: unknown) => {
         instance = value as STableInstance<Row>;
       },
@@ -497,7 +479,7 @@ describe('cellRangeSelection', () => {
     await nextTick();
     await Promise.resolve();
 
-    host.querySelector<HTMLElement>('tbody tr.s-table-row')!.click();
+    instance!.setCellRange({ startRow: 0, startCol: 0, endRow: 0, endCol: 1 });
     await nextTick();
     expect(instance!.getCellRange()).not.toBeNull();
 
@@ -526,7 +508,7 @@ describe('cellRangeSelection', () => {
       columns,
       dataSource,
       rowKey: 'id',
-      cellRangeSelection: { mode: 'row' },
+      cellRangeSelection: {},
       onCellRangeCopy,
     });
     app = mounted.app;
@@ -534,7 +516,8 @@ describe('cellRangeSelection', () => {
     await nextTick();
 
     const row = host.querySelector<HTMLElement>('tbody tr.s-table-row')!;
-    row.click();
+    row.querySelector('td')!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    document.dispatchEvent(new MouseEvent('mouseup'));
     await nextTick();
     const input = document.createElement('input');
     row.querySelector('td')!.append(input);

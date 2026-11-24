@@ -8,18 +8,15 @@ export const normalizeCellRangeSelection = (
   config: boolean | 'single' | STableCellRangeSelection | undefined
 ): STableCellRangeSelection | undefined => {
   if (config === true) {
-    return { mode: 'cell', multi: true };
+    return { multi: true };
   }
   if (config === 'single') {
-    return { mode: 'cell', multi: false };
+    return { multi: false };
   }
   if (!config || typeof config !== 'object') {
     return undefined;
   }
-  return {
-    ...config,
-    mode: config.mode ?? 'cell',
-  };
+  return { ...config };
 };
 
 /**

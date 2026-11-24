@@ -193,7 +193,7 @@ const treeDragColumns: STableColumn<TreeRow>[] = [
   { accessorKey: 'owner', header: 'Owner', width: 180, draggable: true },
 ];
 const dragSize = ref<'small' | 'middle' | 'large'>('middle');
-const dragRangeMode = ref<'off' | 'cell' | 'row'>('off');
+const dragRangeMode = ref<'off' | 'cell'>('off');
 const treeDragRange = ref<STableCellRange | null>(null);
 const treeDrop = ref('idle');
 const treeDragRef = ref<STableInstance<TreeRow> | null>(null);
@@ -279,7 +279,7 @@ const treeDragRef = ref<STableInstance<TreeRow> | null>(null);
       row-key="id"
       :columns="rangeColumns"
       :data-source="baseRows"
-      :cell-range-selection="{ mode: 'cell' }"
+      :cell-range-selection="true"
       @cell-range-change="handleRangeChange"
       @cell-range-copy="handleRangeCopy"
       @cell-range-select="
@@ -343,7 +343,6 @@ const treeDragRef = ref<STableInstance<TreeRow> | null>(null);
       <select v-model="dragRangeMode" data-testid="drag-range-mode">
         <option>off</option>
         <option>cell</option>
-        <option>row</option>
       </select></label
     >
     <button
@@ -367,7 +366,7 @@ const treeDragRef = ref<STableInstance<TreeRow> | null>(null);
       :tree="{}"
       :columns="treeDragColumns"
       :row-drag="{ allowTreeReparent: true }"
-      :cell-range-selection="dragRangeMode === 'off' ? undefined : { mode: dragRangeMode }"
+      :cell-range-selection="dragRangeMode === 'off' ? undefined : true"
       @cell-range-change="treeDragRange = $event"
       @row-order-change="
         treeDrop = `${$event.rowKeys.join(',')}:${$event.position}:${$event.targetRowKey}`

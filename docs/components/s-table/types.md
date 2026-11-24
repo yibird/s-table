@@ -113,7 +113,7 @@ const salaryColumn: STableAccessorFnColumn<Employee, number> = {
 | `STableExpandable`          | `<TData>` | 展开列行为                           |
 | `STableSeq`                 | `<TData>` | 序号列行为与渲染                     |
 | `STableCellRange`           | 无        | 起止行列索引组成的矩形范围           |
-| `STableCellRangeSelection`  | 无        | `cell` / `row` 框选模式              |
+| `STableCellRangeSelection`  | 无        | 单元格框选配置                       |
 | `STableCellProps`           | 无        | `rowSpan` / `colSpan`                |
 | `STableRowSelection`        | `<TData>` | 选择列行为                           |
 | `STableSelectionOption`     | `<TData>` | 自定义批量选择项                     |

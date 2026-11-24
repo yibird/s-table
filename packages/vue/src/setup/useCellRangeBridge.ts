@@ -25,7 +25,7 @@ export const useCellRangeBridge = <TData extends RowData>(
   columnState: ReturnType<typeof useColumnState<TData>>
 ) => {
   const { props, cellRangeSelection, dataSource, rowKey, tree, rowSelection, emit } = context;
-  const { toggleRow, toggleRows } = dataState;
+  const { toggleRows } = dataState;
   const { table, rows, cellSelectionState } = tableModel;
   const { getColumnById } = columnState;
 
@@ -37,12 +37,9 @@ export const useCellRangeBridge = <TData extends RowData>(
     const minRow = Math.min(range.startRow, range.endRow);
     const maxRow = Math.max(range.startRow, range.endRow);
     const records: TData[] = [];
-    // cell 模式且存在 checkbox 选择列时，范围覆盖行的选择状态同步取反。
+    // 存在 checkbox 选择列时，范围覆盖行的选择状态同步取反。
     // radio 模式只能保留一个值，不参与批量切换。
-    const toggleSelection =
-      cellRangeSelection.value?.mode === 'cell' &&
-      rowSelection.value !== undefined &&
-      rowSelection.value.type !== 'radio';
+    const toggleSelection = rowSelection.value !== undefined && rowSelection.value.type !== 'radio';
     const rowKeysToToggle: STableRowKey[] = [];
     for (let index = minRow; index <= maxRow; index++) {
       const row = rows.value[index];
@@ -61,7 +58,6 @@ export const useCellRangeBridge = <TData extends RowData>(
     isDragging: isCellRangeDragging,
     handleCellMouseDown,
     handleCellMouseEnter,
-    handleRowClick: handleCellRangeRowClick,
     clearRange: clearCellRange,
   } = useCellRange<TData>({
     table,
@@ -191,10 +187,52 @@ export const useCellRangeBridge = <TData extends RowData>(
     if (active) emit('cellRangeChange', active);
   };
 
+  /** 方向键：将选区折叠为相邻单元格。 */
+  const moveCellRange = (direction: 'up' | 'down' | 'left' | 'right') => {
+    if (!cellRangeSelection.value) return;
+    table.moveCellSelection(direction);
+    const active = cellRange.value;
+    if (active) emit('cellRangeChange', active);
+  };
+
   /** Shift+方向键：扩展当前区间，并同步公开的范围变化事件。 */
   const extendCellRange = (direction: 'up' | 'down' | 'left' | 'right') => {
     if (!cellRangeSelection.value) return;
     table.extendCellSelection(direction);
+    const active = cellRange.value;
+    if (active) emit('cellRangeChange', active);
+  };
+
+  /** Ctrl/Cmd+Shift+方向键：把活动区间扩展到该方向最后一个可选中单元格。 */
+  const extendCellRangeToEdge = (direction: 'up' | 'down' | 'left' | 'right') => {
+    const range = cellSelectionState.value.at(-1);
+    if (!cellRangeSelection.value || !range) return;
+    const renderedRows = rows.value;
+    if (renderedRows.length === 0) return;
+
+    let focusRowId = range.focusRowId;
+    let focusColumnId = range.focusColumnId;
+    if (direction === 'up' || direction === 'down') {
+      const edgeRow = direction === 'up' ? renderedRows[0] : renderedRows.at(-1);
+      if (edgeRow) focusRowId = edgeRow.id;
+    } else {
+      const displayColumns = getDisplayColumns();
+      const ordered = direction === 'left' ? displayColumns : [...displayColumns].reverse();
+      const edgeColumn = ordered.find(
+        (column) => !isInternalColumn(column.id) && column.getIsVisible()
+      );
+      if (edgeColumn) focusColumnId = edgeColumn.id;
+    }
+
+    table.selectCellRange(
+      {
+        anchorRowId: range.anchorRowId,
+        anchorColumnId: range.anchorColumnId,
+        focusRowId,
+        focusColumnId,
+      },
+      { mode: 'replace' }
+    );
     const active = cellRange.value;
     if (active) emit('cellRangeChange', active);
   };
@@ -230,6 +268,7 @@ export const useCellRangeBridge = <TData extends RowData>(
     getSelectedValues: getCopySelectedValues,
     getColumnHeader: (columnId) => getColumnById(columnId)?.header,
     isInternalColumn,
+    formatCellText: (textContext) => cellRangeSelection.value?.formatRangeCellText?.(textContext),
   });
 
   /**
@@ -262,12 +301,32 @@ export const useCellRangeBridge = <TData extends RowData>(
             const column = displayColumns[rangeBounds.minColumnIndex + index];
             if (column && !isInternalColumn(column.id)) keepIndexes.push(index);
           }
-          return serializeDelimitedRows(
-            grid.map((row) => keepIndexes.map((index) => row[index])),
-            {
+          const values = grid.map((row) => keepIndexes.map((index) => row[index]));
+          const columnIds = keepIndexes
+            .map((index) => displayColumns[rangeBounds.minColumnIndex + index]?.id)
+            .filter((id): id is string => Boolean(id));
+          const publicRange = toPublicRange(rangeBounds);
+          const formatted =
+            publicRange && cellRangeSelection.value?.formatRangeCellText
+              ? cellRangeSelection.value.formatRangeCellText({
+                  range: publicRange,
+                  values,
+                  columnIds,
+                  headers: columnIds.map((id) => {
+                    const header = getColumnById(id)?.header;
+                    return typeof header === 'string' || typeof header === 'number'
+                      ? String(header)
+                      : id;
+                  }),
+                  source: 'api',
+                })
+              : undefined;
+          return (
+            formatted ??
+            serializeDelimitedRows(values, {
               delimiter: options.delimiter ?? '\t',
               preventFormulaInjection: options.preventFormulaInjection,
-            }
+            })
           );
         })
         .filter(Boolean)
@@ -334,27 +393,11 @@ export const useCellRangeBridge = <TData extends RowData>(
     const writePromise = navigator.clipboard?.writeText?.(payload.text);
     writePromise?.catch(() => undefined);
   };
-  // 行点击处理（row 模式，可能联动行选择）
-  /** 处理整行框选，并按配置联动行选择状态。 */
-  const handleRowClick = (rowIndex: number) => {
-    const config = cellRangeSelection.value;
-    if (!config || config.mode !== 'row') return;
-    handleCellRangeRowClick(rowIndex);
-    if (config.selectRowOnClick && rowSelection.value) {
-      const row = rows.value[rowIndex];
-      if (row) {
-        // row.id 已由 STable 编码，直接恢复公开 key，避免再次执行用户 rowKey 函数。
-        toggleRow(decodeRowKey(row.id));
-      }
-    }
-  };
-
   return {
     cellRange,
     isCellRangeDragging,
     handleCellMouseDown,
     handleCellMouseEnter,
-    handleCellRangeRowClick,
     clearCellRange,
     focusedCell,
     getCellRangeSnapshot,
@@ -364,10 +407,11 @@ export const useCellRangeBridge = <TData extends RowData>(
     clearCellRangeAt,
     focusCell,
     selectAllCellRange,
+    moveCellRange,
     extendCellRange,
+    extendCellRangeToEdge,
     copyCellRange,
     handleCellRangeCopy,
     handleCellRangeCopyShortcut,
-    handleRowClick,
   };
 };

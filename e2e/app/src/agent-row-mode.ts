@@ -31,7 +31,7 @@ const app = createApp({
     return () =>
       h('main', { class: 'e2e-app' }, [
         h('section', { class: 'fixture-section', 'data-testid': 'agent-row-mode-table' }, [
-          h('h2', 'Row mode cell range'),
+          h('h2', 'Cell range keyboard'),
           h(
             'output',
             { class: 'fixture-status', 'data-testid': 'agent-range-value' },
@@ -44,7 +44,7 @@ const app = createApp({
               bordered: true,
               columns,
               dataSource: rows,
-              cellRangeSelection: { mode: 'row' },
+              cellRangeSelection: true,
               onCellRangeChange,
             } as never
           ),

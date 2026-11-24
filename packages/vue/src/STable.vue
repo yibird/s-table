@@ -76,7 +76,6 @@
             :col-span="visibleLeafColumns.length || 1"
             :virtual-api="virtualApi"
             :editing-api="editingApi"
-            :on-range-row-click="handleRowClick"
             :visible-column-ids="visibleColumnIds"
             :rendered-columns="renderedColumns"
             :tree-indent-size="treeIndentSize"
@@ -93,6 +92,7 @@
             :can-row-drag="canDragRow"
             :on-row-drag-start="handleRowDragStart"
             :on-navigate-cell="navigateCell"
+            :on-tab-navigate="navigateTab"
             :is-row-selected="isRowSelected"
             :keyboard-navigation="props.keyboardNavigation"
             :fixed-header="fixedHeader"
@@ -110,9 +110,6 @@
           >
             <template #empty>
               <slot name="empty" />
-            </template>
-            <template #emptyAction>
-              <slot name="emptyAction" />
             </template>
             <template v-if="$slots.expandedRowRender" #expandedRowRender="scope">
               <slot
@@ -386,6 +383,20 @@ const view = useView<TData>(context, dataState, tableModel, cellRangeState, {
   scrollContainerRef,
   scrollBottomSentinelRef,
 });
+/** 滚动到目标行/列后聚焦对应单元格。 */
+const focusCellElement = (rowIndex: number, columnIndex: number) => {
+  const columnId = tableModel.visibleColumnIds.value[columnIndex];
+  view.scrollToIndex(rowIndex);
+  if (columnId) view.scrollToColumn(columnId);
+  nextTick(() => {
+    rootRef.value
+      ?.querySelector<HTMLElement>(
+        `tbody td[data-row-index="${rowIndex}"][data-col-index="${columnIndex}"][tabindex]`
+      )
+      ?.focus();
+  });
+};
+
 /** 虚拟窗口边缘：滚动到目标行/列后重新聚焦对应单元格。 */
 const navigateCell = (
   rowIndex: number,
@@ -401,16 +412,23 @@ const navigateCell = (
   if (nextRow < 0 || nextRow >= rows.length || nextColumn < 0 || nextColumn >= columns.length) {
     return false;
   }
-  view.scrollToIndex(nextRow);
-  const columnId = columns[nextColumn];
-  if (columnId) view.scrollToColumn(columnId);
-  nextTick(() => {
-    rootRef.value
-      ?.querySelector<HTMLElement>(
-        `tbody td[data-row-index="${nextRow}"][data-col-index="${nextColumn}"][tabindex]`
-      )
-      ?.focus();
-  });
+  focusCellElement(nextRow, nextColumn);
+  return true;
+};
+
+/** Tab / Shift+Tab：按行优先顺序移动，跨行自动首尾衔接。 */
+const navigateTab = (rowIndex: number, columnIndex: number, backwards: boolean): boolean => {
+  const rowCount = tableModel.rows.value.length;
+  const columnCount = tableModel.visibleColumnIds.value.length;
+  if (rowCount === 0 || columnCount === 0) return false;
+  const nextFlat = rowIndex * columnCount + columnIndex + (backwards ? -1 : 1);
+  if (nextFlat < 0 || nextFlat >= rowCount * columnCount) return false;
+  const nextRow = Math.floor(nextFlat / columnCount);
+  const nextColumn = nextFlat % columnCount;
+  if (context.cellRangeSelection.value) {
+    cellRangeState.focusCell(nextRow, nextColumn);
+  }
+  focusCellElement(nextRow, nextColumn);
   return true;
 };
 
@@ -505,7 +523,6 @@ const {
 const {
   handleCellRangeCopy,
   handleCellRangeCopyShortcut,
-  handleRowClick,
   cellRange,
   isCellRangeDragging,
   handleCellMouseDown,
@@ -592,9 +609,11 @@ provide(TableBodyContextKey, {
   onCellRangeMousedown: handleCellMouseDown,
   onCellRangeMouseenter: handleCellMouseEnter,
   onCellRangeSelectAll: cellRangeState.selectAllCellRange,
+  onCellRangeMove: cellRangeState.moveCellRange,
   onCellRangeExtend: cellRangeState.extendCellRange,
+  onCellRangeExtendToEdge: cellRangeState.extendCellRangeToEdge,
   onCellRangeClear: () => cellRangeState.clearCellRangeAt(),
-  cellRangeMode: toRef(() => context.cellRangeSelection.value?.mode),
+  cellRangeEnabled: toRef(() => context.cellRangeSelection.value !== undefined),
   getFocusedCell: () => focusedCell.value,
 });
 

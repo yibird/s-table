@@ -47,6 +47,7 @@ export interface STableLocale {
     table: string;
     filterColumn: string;
     searchColumn: string;
+    clearSearch: string;
     contextMenu: string;
     expandTrigger: string;
     selectionDropdown: string;

@@ -37,8 +37,8 @@ const EMPTY_RANGE_PRESENTATION: CellRangePresentation = {
 type CellRangePresentationOptions = {
   /** 当前框选范围（context ref 解包后的值）。 */
   getCellRange: () => STableCellRange | null;
-  /** 框选模式；未启用框选时热路径完全不进入 range 计算。 */
-  getCellRangeMode: () => 'cell' | 'row' | undefined;
+  /** 是否启用框选；未启用时热路径完全不进入 range 计算。 */
+  getCellRangeEnabled: () => boolean;
   /** 读取 TanStack 当前焦点角点；不物化整张选区。 */
   getFocusedCell: () => { rowId: string; columnId: string } | undefined;
 };
@@ -49,7 +49,7 @@ type CellRangePresentationOptions = {
  */
 export const createCellRangePresentation = <TData extends RowData>({
   getCellRange,
-  getCellRangeMode,
+  getCellRangeEnabled,
   getFocusedCell,
 }: CellRangePresentationOptions) => {
   const cellRangePresentationCache = new WeakMap<
@@ -96,7 +96,7 @@ export const createCellRangePresentation = <TData extends RowData>({
    */
   const getRowRangeMemoKey = (rowIndex: number, rowId?: string): string => {
     // 未启用框选时不读取 currentRange，避免首次渲染触发 TanStack 范围派生计算。
-    if (getCellRangeMode() === undefined) return '';
+    if (!getCellRangeEnabled()) return '';
     const range = getCellRange();
     if (!range) return '';
     const minRow = Math.min(range.startRow, range.endRow);

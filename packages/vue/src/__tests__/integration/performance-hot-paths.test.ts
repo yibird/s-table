@@ -155,7 +155,7 @@ describe('性能热路径回', () => {
       dataSource: [{ id: 1, value: 'value' }],
       rowKey: 'id',
       virtual: { y: false, x: true, columnOverscan: 3 },
-      cellRangeSelection: { mode: 'cell' },
+      cellRangeSelection: {},
       ref: tableRef,
     } as never);
     app = mounted.app;
@@ -523,7 +523,7 @@ describe('性能热路径回', () => {
           table,
           cellSelectionState: useTableAtoms(table).cellSelection,
           rows: computed(() => table.getRowModel().rows),
-          cellRangeSelection: computed(() => ({ mode: 'cell' as const })),
+          cellRangeSelection: computed(() => ({})),
         });
         return () => h('div');
       },
@@ -565,7 +565,7 @@ describe('性能热路径回', () => {
         { id: 'r1', a: 3, b: 4 },
       ],
       rowKey: 'id',
-      cellRangeSelection: { mode: 'cell' },
+      cellRangeSelection: {},
       ref: tableRef,
     } as never);
     app = mounted.app;
@@ -623,7 +623,7 @@ describe('性能热路径回', () => {
           table,
           cellSelectionState: useTableAtoms(table).cellSelection,
           rows: computed(() => table.getRowModel().rows),
-          cellRangeSelection: computed(() => ({ mode: 'cell' as const })),
+          cellRangeSelection: computed(() => ({})),
         });
         return () => h('div');
       },

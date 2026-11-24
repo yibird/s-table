@@ -34,6 +34,11 @@ export interface STableRowDragConfig<TData extends RowData = RowData> {
   canDrag?: (context: STableRowDragStartContext<TData>) => boolean;
   /** Drop 前同步或异步拦截。 */
   beforeDrop?: (payload: STableRowOrderChangeEvent<TData>) => boolean | Promise<boolean>;
+  /**
+   * `beforeDrop` 的语义别名，对齐 Surely Vue 的命名。
+   * 返回 `false` 或 Promise resolve 为 `false` 时取消本次移动。
+   */
+  rowDragEnd?: (payload: STableRowOrderChangeEvent<TData>) => boolean | Promise<boolean>;
 }
 
 /** 行拖拽开始前的判定上下文。 */
@@ -141,6 +146,20 @@ export interface STableCopyOptions {
    * @default true
    */
   preventFormulaInjection?: boolean;
+}
+
+/** 自定义框选复制文本的上下文。 */
+export interface STableRangeCellTextContext {
+  /** 当前活动范围。 */
+  readonly range: STableCellRange;
+  /** 复制值矩阵（已排除内部列，行优先）。 */
+  readonly values: readonly (readonly unknown[])[];
+  /** 与 values 列对应的列 ID。 */
+  readonly columnIds: readonly string[];
+  /** 与 columnIds 对应的列标题；无法渲染为文本时为列 ID。 */
+  readonly headers: readonly string[];
+  /** 复制来源。 */
+  readonly source: 'keyboard' | 'clipboard' | 'api';
 }
 
 /** 单元格范围复制尝试的载荷。 */
@@ -258,26 +277,17 @@ export interface STableCellRange {
 
 // 单元格框选配置
 export interface STableCellRangeSelection {
-  /**
-   * @description 框选模式。
-   * - `cell`：Excel 式拖拽框选单元格。
-   * - `row`：单击行选中整行范围。
-   * @default 'cell'
-   */
-  mode?: 'cell' | 'row';
   /** 是否允许 Ctrl/Cmd 多区间选择。 @default true */
   multi?: boolean;
   /**
-   * @description 仅 `mode='row'` 时有效。为 `true` 时单击行同时触发 `rowSelection` 选中行。
-   * @default false
-   */
-  selectRowOnClick?: boolean;
-  /**
-   * @description 仅 `mode='cell'` 且配置了 checkbox 选择列时有效。为 `true` 时框选覆盖行的选择状态同步取反。
-   * 默认为 `false`（与 Surely Vue 行为一致，框选单元格不改动行选择状态）。
+   * @description 配置了 checkbox 选择列时有效。为 `true` 时框选覆盖行的选择状态同步取反。
    * @default false
    */
   toggleRowSelection?: boolean;
+  /**
+   * @description 自定义框选复制的文本。返回字符串时覆盖默认的制表符分隔格式。
+   */
+  formatRangeCellText?: (context: STableRangeCellTextContext) => string;
 }
 
 // 单元格合并属性

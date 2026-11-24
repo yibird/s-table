@@ -1,4 +1,9 @@
-import type { STableCellRange, STableCellRangeCopyEvent, STableCopyOptions } from '../types';
+import type {
+  STableCellRange,
+  STableCellRangeCopyEvent,
+  STableCopyOptions,
+  STableRangeCellTextContext,
+} from '../types';
 import { serializeDelimitedCell } from '@zchengfeng/s-table-core';
 
 type CellRangeCopySource = STableCellRangeCopyEvent['source'];
@@ -9,6 +14,8 @@ type CellRangeClipboardOptions = {
   getSelectedValues: () => readonly (readonly unknown[])[] | undefined;
   getColumnHeader: (columnId: string) => unknown;
   isInternalColumn: (columnId: string) => boolean;
+  /** 自定义复制文本；返回字符串时不再使用内置分隔符序列化。 */
+  formatCellText?: (context: STableRangeCellTextContext) => string | undefined;
 };
 
 const escapeCopiedValue = (
@@ -33,6 +40,7 @@ export const createCellRangeClipboard = ({
   getSelectedValues,
   getColumnHeader,
   isInternalColumn,
+  formatCellText,
 }: CellRangeClipboardOptions) => {
   const serialize = (
     options: STableCopyOptions = {},
@@ -47,6 +55,28 @@ export const createCellRangeClipboard = ({
     const columnIds = getColumnIds().filter((id) => !isInternalColumn(id));
     const selectedValues = getSelectedValues();
     if (!selectedValues) return null;
+
+    const headers = columnIds.map((id) => {
+      const header = getColumnHeader(id);
+      return typeof header === 'string' || typeof header === 'number' ? String(header) : id;
+    });
+
+    const formattedText = formatCellText?.({
+      range: { ...range },
+      values: selectedValues,
+      columnIds,
+      headers,
+      source,
+    });
+    if (typeof formattedText === 'string') {
+      return {
+        range: { ...range },
+        text: formattedText,
+        columnIds,
+        source,
+        nativeEvent,
+      };
+    }
 
     const lines: string[] = [];
     if (options.includeHeaders) {

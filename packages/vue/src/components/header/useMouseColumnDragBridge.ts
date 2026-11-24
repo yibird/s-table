@@ -70,8 +70,13 @@ export const useMouseColumnDragBridge = ({
     };
     const positionPreview = () => {
       frame = undefined;
-      if (preview)
-        preview.element.style.transform = `translate3d(${pointerX + 14}px, ${pointerY + 14}px, 0)`;
+      if (!preview) return;
+      // 拖拽浮层中心对齐指针，避免视觉上偏移到右下角。
+      const width = preview.element.offsetWidth;
+      const height = preview.element.offsetHeight;
+      preview.element.style.transform = `translate3d(${pointerX - width / 2}px, ${
+        pointerY - height / 2
+      }px, 0)`;
     };
     const handleMouseMove = (pointerEvent: MouseEvent) => {
       pointerX = pointerEvent.clientX;
